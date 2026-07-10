@@ -77,20 +77,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Parkashala — Premium South Indian Fine Dining" },
-      { name: "description", content: "Parkashala — a premium South Indian dining experience. Explore signature biryanis, tandoori classics and Andhra specials, and order via WhatsApp." },
+      { title: "Paakashala — Premium South Indian Fine Dining" },
+      { name: "description", content: "Paakashala — a premium South Indian dining experience. Explore signature biryanis, tandoori classics and Andhra specials, and order via WhatsApp." },
       { name: "author", content: "Parkashala" },
-      { property: "og:title", content: "Parkashala — Premium South Indian Fine Dining" },
-      { property: "og:description", content: "A premium dining experience rooted in flavor. Signature biryanis, tandoori classics, and Andhra specials." },
+      { property: "og:title", content: "Paakashala — Premium South Indian Fine Dining" },
+      { property: "og:description", content: "Paakashala — a premium South Indian dining experience. Explore signature biryanis, tandoori classics and Andhra specials, and order via WhatsApp." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Paakashala — Premium South Indian Fine Dining" },
+      { name: "twitter:description", content: "Paakashala — a premium South Indian dining experience. Explore signature biryanis, tandoori classics and Andhra specials, and order via WhatsApp." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/e2ce1358-24af-41e8-aac5-f7d929c1957a" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/e2ce1358-24af-41e8-aac5-f7d929c1957a" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
