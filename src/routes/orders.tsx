@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Receipt, CheckCircle2 } from "lucide-react";
-import { AppShell } from "@/components/parkashala/AppShell";
-import { EmptyState } from "@/components/parkashala/EmptyState";
-import { useOrders } from "@/lib/parkashala-store";
+import { AppShell } from "@/components/paakashala/AppShell";
+import { EmptyState } from "@/components/paakashala/EmptyState";
+import { useOrders } from "@/lib/paakashala-store";
 
 export const Route = createFileRoute("/orders")({
   component: OrdersPage,
@@ -38,11 +38,12 @@ function OrdersPage() {
                     <CheckCircle2 className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-brown-deep">{o.status}</div>
+                    <div className="truncate text-lg font-bold text-brown-deep">Order #{o.id}</div>
                     <div className="text-[11px] text-muted-foreground">
                       {d.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })} ·{" "}
                       {d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                     </div>
+                    <div className="mt-0.5 text-[11px] font-semibold text-gold">{o.status}</div>
                   </div>
                   <div className="text-right shrink-0">
                     <div className="text-[10px] uppercase tracking-widest text-gold">Total</div>

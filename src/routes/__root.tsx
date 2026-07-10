@@ -79,7 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Paakashala — Premium South Indian Fine Dining" },
       { name: "description", content: "Paakashala — a premium South Indian dining experience. Explore signature biryanis, tandoori classics and Andhra specials, and order via WhatsApp." },
-      { name: "author", content: "Parkashala" },
+      { name: "author", content: "Paakashala" },
       { property: "og:title", content: "Paakashala — Premium South Indian Fine Dining" },
       { property: "og:description", content: "Paakashala — a premium South Indian dining experience. Explore signature biryanis, tandoori classics and Andhra specials, and order via WhatsApp." },
       { property: "og:type", content: "website" },

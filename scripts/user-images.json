@@ -1,0 +1,538 @@
+[
+  {
+    "name": "Sweet Corn Soup",
+    "image": null
+  },
+  {
+    "name": "Veg Hot & Sour Soup",
+    "image": null
+  },
+  {
+    "name": "Veg Manchow Soup",
+    "image": null
+  },
+  {
+    "name": "Lemon Coriander Soup",
+    "image": null
+  },
+  {
+    "name": "Mushroom Clear Soup",
+    "image": null
+  },
+  {
+    "name": "Chicken Corn Soup",
+    "image": null
+  },
+  {
+    "name": "Chicken Hot & Sour",
+    "image": null
+  },
+  {
+    "name": "Chicken Manchow Soup",
+    "image": null
+  },
+  {
+    "name": "Chicken Lemon Coriander",
+    "image": null
+  },
+  {
+    "name": "Chicken Miryala Charu",
+    "image": null
+  },
+  {
+    "name": "Mutton Charu",
+    "image": null
+  },
+  {
+    "name": "Chilli Corn",
+    "image": null
+  },
+  {
+    "name": "Chilli Paneer",
+    "image": null
+  },
+  {
+    "name": "Chilli Mushroom",
+    "image": null
+  },
+  {
+    "name": "Crispy Corn",
+    "image": null
+  },
+  {
+    "name": "Crispy Mushroom",
+    "image": null
+  },
+  {
+    "name": "Paneer 65",
+    "image": null
+  },
+  {
+    "name": "Mushroom 65",
+    "image": null
+  },
+  {
+    "name": "Stuffed Cheese Mushroom",
+    "image": null
+  },
+  {
+    "name": "Egg 65",
+    "image": null
+  },
+  {
+    "name": "Chilli Egg",
+    "image": null
+  },
+  {
+    "name": "Chicken Lollipop",
+    "image": null
+  },
+  {
+    "name": "Crunchy Chicken",
+    "image": null
+  },
+  {
+    "name": "Chilli Chicken (Dry/Wet)",
+    "image": null
+  },
+  {
+    "name": "Chilli Wings",
+    "image": null
+  },
+  {
+    "name": "Lemon Chicken",
+    "image": null
+  },
+  {
+    "name": "Garlic Chicken",
+    "image": null
+  },
+  {
+    "name": "Mango Chicken",
+    "image": null
+  },
+  {
+    "name": "Chilli Mutton",
+    "image": null
+  },
+  {
+    "name": "Mutton 65",
+    "image": null
+  },
+  {
+    "name": "Chilli Prawns",
+    "image": null
+  },
+  {
+    "name": "Loose Prawns",
+    "image": null
+  },
+  {
+    "name": "Butter Garlic Prawns",
+    "image": null
+  },
+  {
+    "name": "Chilli Fish",
+    "image": null
+  },
+  {
+    "name": "Apollo Fish",
+    "image": null
+  },
+  {
+    "name": "Fish Roast",
+    "image": null
+  },
+  {
+    "name": "Chicken Cheese Baji",
+    "image": null
+  },
+  {
+    "name": "Kaju Chicken Pakodi",
+    "image": null
+  },
+  {
+    "name": "Miryala Kodi Vepudu",
+    "image": null
+  },
+  {
+    "name": "Pachi Mirchi Kodi Vepudu",
+    "image": null
+  },
+  {
+    "name": "Andhra Chicken Vepudu",
+    "image": null
+  },
+  {
+    "name": "Karivepaku Kodi Vepudu",
+    "image": null
+  },
+  {
+    "name": "Pandu Mirchi Kodi Vepudu",
+    "image": null
+  },
+  {
+    "name": "Velluli Kaaram Kodi Wings",
+    "image": null
+  },
+  {
+    "name": "Velluli Kaaram Kodi Chips",
+    "image": null
+  },
+  {
+    "name": "Gongura Chicken Vepudu",
+    "image": null
+  },
+  {
+    "name": "Gongura Mutton Vepudu",
+    "image": null
+  },
+  {
+    "name": "Gongura Royyala Vepudu",
+    "image": null
+  },
+  {
+    "name": "Pachi Mirchi Royyalu Vepudu",
+    "image": null
+  },
+  {
+    "name": "Mutton Ghee Roast",
+    "image": null
+  },
+  {
+    "name": "Chitti Royyala Vepudu",
+    "image": null
+  },
+  {
+    "name": "Goan Rava Fish Fry",
+    "image": null
+  },
+  {
+    "name": "Tawa Fish Fry",
+    "image": null
+  },
+  {
+    "name": "Chicken Tikka",
+    "image": null
+  },
+  {
+    "name": "Chicken Malai Tikka",
+    "image": null
+  },
+  {
+    "name": "Al-faham Chicken (Half)",
+    "image": null
+  },
+  {
+    "name": "Al-faham Chicken (Full)",
+    "image": null
+  },
+  {
+    "name": "Kalmi Kebab (Half)",
+    "image": null
+  },
+  {
+    "name": "Kalmi Kebab (Full)",
+    "image": null
+  },
+  {
+    "name": "Chicken Tangdi Kebab (Half)",
+    "image": null
+  },
+  {
+    "name": "Chicken Tangdi Kebab (Full)",
+    "image": null
+  },
+  {
+    "name": "Tandoori Chicken (Half)",
+    "image": null
+  },
+  {
+    "name": "Tandoori Chicken (Full)",
+    "image": null
+  },
+  {
+    "name": "Pomfret Tikka",
+    "image": null
+  },
+  {
+    "name": "Peri Peri Prawn Tikka",
+    "image": null
+  },
+  {
+    "name": "Malai Paneer Tikka",
+    "image": null
+  },
+  {
+    "name": "Paneer Tikka",
+    "image": null
+  },
+  {
+    "name": "Mushroom Tikka",
+    "image": null
+  },
+  {
+    "name": "Hara Bhara Kebab",
+    "image": null
+  },
+  {
+    "name": "Pineapple BBQ",
+    "image": null
+  },
+  {
+    "name": "Naan",
+    "image": null
+  },
+  {
+    "name": "Butter Naan",
+    "image": null
+  },
+  {
+    "name": "Garlic Naan",
+    "image": null
+  },
+  {
+    "name": "Pulka",
+    "image": null
+  },
+  {
+    "name": "Veg Fried Rice",
+    "image": null
+  },
+  {
+    "name": "Kaju Fried Rice",
+    "image": null
+  },
+  {
+    "name": "Mushroom Fried Rice",
+    "image": null
+  },
+  {
+    "name": "Paneer Fried Rice",
+    "image": null
+  },
+  {
+    "name": "Mixed Vegetable Fried Rice",
+    "image": null
+  },
+  {
+    "name": "Veg Schezwan Fried Rice",
+    "image": null
+  },
+  {
+    "name": "SP Veg Fried Rice",
+    "image": null
+  },
+  {
+    "name": "Egg Fried Rice",
+    "image": null
+  },
+  {
+    "name": "Chicken Fried Rice",
+    "image": "https://b.zmtcdn.com/data/dish_photos/de7/6eaa295849657c63f6b87cdc38ea2de7.png"
+  },
+  {
+    "name": "SP Chicken Fried Rice",
+    "image": "https://b.zmtcdn.com/data/dish_photos/08a/f1aa0c897f6f0452b557282c0ac0d08a.jpg"
+  },
+  {
+    "name": "Chicken Fry Piece Fried Rice",
+    "image": "https://as1.ftcdn.net/jpg/03/02/74/52/1000_F_302745235_maAnfTrL9ypDoUUHcnWTLPjOEJlXygcb.jpg"
+  },
+  {
+    "name": "Mutton Fried Rice",
+    "image": "https://thumbs.dreamstime.com/b/popular-pakistan-food-mutton-biryani-traditional-mixed-rice-dish-originated-mughal-empire-india-340755633.jpg"
+  },
+  {
+    "name": "Prawns Fried Rice",
+    "image": "https://tiffycooks.com/wp-content/uploads/2024/03/Shrimp-Fried-Rice-Plated.jpg"
+  },
+  {
+    "name": "Mix Mughlai Fried Rice",
+    "image": "https://b.zmtcdn.com/data/pictures/6/21458916/c8d5ca53f5627e3517d0f0bcae633cf1_o2_featured_v2.jpg"
+  },
+  {
+    "name": "Egg Masala",
+    "image": "https://img.magnific.com/premium-psd/delicious-egg-curry-indian-cuisine-spicy-dish_84443-44717.jpg?semt=ais_hybrid&w=740&q=80"
+  },
+  {
+    "name": "Murgh Masala",
+    "image": "https://www.chefmeatrecipes.com/wp-content/uploads/2026/01/Masala-Chicken-1.jpg"
+  },
+  {
+    "name": "Kadai Chicken",
+    "image": "https://www.shutterstock.com/image-photo/indian-chicken-curry-kadai-copper-260nw-1192237111.jpg"
+  },
+  {
+    "name": "Punjabi Murgh Butter Masala",
+    "image": "https://foodess.com/wp-content/uploads/2024/02/Butter-Paneer-819x1024.jpg"
+  },
+  {
+    "name": "Chicken Tikka Masala",
+    "image": "https://artofpalate.com/wp-content/uploads/2014/03/IMG_76311.jpg"
+  },
+  {
+    "name": "Afghani Chicken Kebab Masala",
+    "image": "https://content.jdmagicbox.com/comp/ernakulam/b5/0484px484.x484.220410202418.g5b5/catalogue/toothsome-kebab-m-g-road-ernakulam-kabab-centres-e0nfm8531t.jpg"
+  },
+  {
+    "name": "Konaseema Kodi Curry",
+    "image": "https://b.zmtcdn.com/data/pictures/chains/6/22169646/17570022255ea9a6e1-3f71-4098-8266-dad34463dc28.jpg"
+  },
+  {
+    "name": "Mutton Masala Curry",
+    "image": "https://flavoursofmykitchen.com/wp-content/uploads/2024/08/mutton-recipe-500x500.png"
+  },
+  {
+    "name": "Gongura Chicken Curry",
+    "image": "https://www.masalakorb.com/wp-content/uploads/2016/09/step-1.jpg"
+  },
+  {
+    "name": "Gongura Mutton Curry",
+    "image": "https://static.toiimg.com/thumb/123179147.jpg?photoid=123179147&imgsize=1402282&width=375&height=210&resizemode=75"
+  },
+  {
+    "name": "Gongura Prawns Curry",
+    "image": "https://www.indianrecipeinfo.com/wp-content/uploads/2024/01/south-Indian-style-prawns-masala-curry.jpg"
+  },
+  {
+    "name": "Kaju Paneer Curry",
+    "image": "https://content.jdmagicbox.com/v2/comp/kakinada/l9/9999px884.x884.240313193645.h5l9/catalogue/sri-sai-kshatriya-foods-nagamallithota-junction-kakinada-fast-food-z3vlbivch7-250.jpg"
+  },
+  {
+    "name": "Kaju Tomato Curry",
+    "image": "https://cdn3.foodviva.com/static-content/food-images/curry-recipes/kaju-curry/step-14.jpg"
+  },
+  {
+    "name": "Kaju Mushroom Curry",
+    "image": "https://myfoodstory.com/wp-content/uploads/2021/04/Matar-Mushroom-Masala-4-500x500.jpg"
+  },
+  {
+    "name": "Kadai Paneer Curry",
+    "image": "https://i0.wp.com/milkandcardamom.com/wp-content/uploads/2018/08/Kadai-Paneer-1.jpg?ssl=1"
+  },
+  {
+    "name": "Paneer Butter Masala",
+    "image": "https://shwetainthekitchen.com/wp-content/uploads/2024/04/shahi-paneer.jpg"
+  },
+  {
+    "name": "Paneer Tikka Masala",
+    "image": "https://c.ndtvimg.com/2022-04/qhqqrn38_paneer_625x300_27_April_22.jpg?im=FaceCrop,algorithm=dnn,width=384,height=384"
+  },
+  {
+    "name": "Mushroom Masala Curry",
+    "image": "https://i0.wp.com/theyellowdaal.com/wp-content/uploads/2020/03/20200314141236_IMG_6062_20200315121523055-683x1024.jpg?resize=683,1024"
+  },
+  {
+    "name": "Mixed Vegetable Curry",
+    "image": "https://maayeka.com/wp-content/uploads/2013/12/veg-makhanwala-curry-1.jpg.webp"
+  },
+  {
+    "name": "Paneer Biryani",
+    "image": "https://www.shutterstock.com/shutterstock/photos/2416124523/display_1500/stock-photo-paneer-biryani-rice-served-in-claypot-dish-isolated-on-wooden-table-top-view-of-indian-spicy-food-2416124523.jpg"
+  },
+  {
+    "name": "Mushroom Biryani",
+    "image": "https://content.jdmagicbox.com/v2/comp/bangalore/f6/080pxx80.xx80.250116192032.w4f6/catalogue/meghana-biryani-sahakara-nagar-bangalore-home-delivery-restaurants-gytamsagm0-250.jpg"
+  },
+  {
+    "name": "SP Veg Biryani",
+    "image": "https://www.vidhyashomecooking.com/wp-content/uploads/2019/04/LucknowiVegBiryani.jpg"
+  },
+  {
+    "name": "Mix Veg Biryani",
+    "image": "https://atchayapathrafoods.com/wp-content/uploads/2026/01/Oats-Briyani-640x960.png"
+  },
+  {
+    "name": "Egg Biryani",
+    "image": "https://media.gettyimages.com/id/1058029096/photo/chicken-biryani.jpg?s=612x612&w=gi&k=20&c=i3Dgdq8qZnOb5Vv3wx8yuUQ17lYdMYDOKdBRF40k8XQ="
+  },
+  {
+    "name": "HYD Chicken Dum Biryani",
+    "image": "https://img.cdn4dd.com/cdn-cgi/image/fit=contain,width=1200,height=672,format=auto/https://doordash-static.s3.amazonaws.com/media/photosV2/b204e727-583d-4030-a6ee-ce8d56ce5f48-retina-large.jpg"
+  },
+  {
+    "name": "Mutton Dum Biryani",
+    "image": "https://b.zmtcdn.com/data/pictures/2/22501742/24bb74da5f6fb3b667ab5d4f1bf905fd_o2_featured_v2.jpg"
+  },
+  {
+    "name": "Chicken Fry Piece Biryani",
+    "image": "https://www.shutterstock.com/image-photo/chicken-fry-biryani-this-dish-260nw-1480121198.jpg"
+  },
+  {
+    "name": "Mutton Fry Piece Biryani",
+    "image": "https://thumbs.dreamstime.com/b/delicious-mutton-biryani-metal-bowl-indian-cuisine-spicy-rice-dish-food-photography-close-up-shot-flavorful-served-379524322.jpg"
+  },
+  {
+    "name": "Prawn Fry Piece Biryani",
+    "image": "https://c8.alamy.com/comp/2GE1R88/prawn-or-shrimp-biryani-fish-biryani-spicy-and-delicious-malabar-biryani-or-hydrabadi-biryani-dum-biriyani-pulao-basmati-rice-herbs-raitha-eid-2GE1R88.jpg"
+  },
+  {
+    "name": "Chicken Mughlai Biryani",
+    "image": "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_720,h_420,c_fill/yeu8blahmwaxsvokdr8a"
+  },
+  {
+    "name": "Mutton Mughlai Biryani",
+    "image": "https://www.yummytummyaarthi.com/wp-content/uploads/2014/04/1-8.jpg"
+  },
+  {
+    "name": "Prawn Mughlai Biryani",
+    "image": "https://www.easycookingwithmolly.com/wp-content/uploads/2024/03/royal-indian-chicken-biryani-recipe.jpg"
+  },
+  {
+    "name": "Mix Mughlai Biryani",
+    "image": "https://media.foodiaq.com/wp-content/uploads/2026/01/Chicken-Biryani-1-600x600.jpg"
+  },
+  {
+    "name": "Chicken Dilkush Biryani",
+    "image": "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_400/RX_THUMBNAIL/IMAGES/VENDOR/2026/3/24/37b69075-2090-4589-9103-1984804d3a51_56096.jpg"
+  },
+  {
+    "name": "Ghee Sambar Rice",
+    "image": "https://i.pinimg.com/474x/9c/cd/2c/9ccd2cd720a1afbde9f149f33e570adb.jpg"
+  },
+  {
+    "name": "Mudhapappu Avakai Annam",
+    "image": "https://b.zmtcdn.com/data/dish_photos/7e4/140dd70e46bf94caa4d6514d2e5af7e4.jpg"
+  },
+  {
+    "name": "Curd Rice",
+    "image": "https://www.shutterstock.com/image-photo/curd-rice-part-south-indian-260nw-2774461969.jpg"
+  },
+  {
+    "name": "White Rice",
+    "image": "https://c.ndtvimg.com/2019-09/5o7eooc_jeera-rice-620_625x300_10_September_19.png"
+  },
+  {
+    "name": "Chicken Sambar Rice",
+    "image": "https://b.zmtcdn.com/data/dish_photos/c82/9e8c2b93f51a98264353b228217a8c82.jpg?fit=around|200:200&crop=200:200;*,*"
+  },
+  {
+    "name": "Veg Thali",
+    "image": "https://static.toiimg.com/photo/94076219.cms"
+  },
+  {
+    "name": "Chicken Thali",
+    "image": "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/06/44/0e/24/my-wonderful-lunch.jpg?w=900&h=500&s=1"
+  },
+  {
+    "name": "Sea Food Thali",
+    "image": "https://thumbs.dreamstime.com/b/indian-fish-platter-thali-popular-seafood-meat-dish-mumbai-konkan-maharashtra-goa-bengal-kerala-presented-steel-369320642.jpg"
+  },
+  {
+    "name": "Packaged Drinking Water",
+    "image": "https://restaurantindia.s3.ap-south-1.amazonaws.com/s3fs-public/inline-images/Kinley.jpg"
+  },
+  {
+    "name": "Soft Drinks",
+    "image": "https://assets.vogue.in/photos/624aaaae4c62e46a01232478/2:3/w_2560,c_limit/Red%20Sparkle%20Cocktail%20by%20Nara%20Thai%20x%20Zaavorr.jpg"
+  },
+  {
+    "name": "Butter Milk",
+    "image": "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_240,h_240/FOOD_CATALOG/IMAGES/CMS/2024/5/1/7ee75dc6-8959-4c41-a341-995161915ab9_c39225c0-db0a-4aed-a746-9110b6f52335.png"
+  },
+  {
+    "name": "Lassi",
+    "image": "https://thumbs.dreamstime.com/b/lassi-rabri-dahivada-indian-special-traditional-restaurant-food-104281487.jpg"
+  }
+]

@@ -1,6 +1,6 @@
 import { Plus, Minus, Leaf, Drumstick } from "lucide-react";
-import { useCart } from "@/lib/parkashala-store";
-import type { MenuItem } from "@/lib/parkashala-menu";
+import { useCart } from "@/lib/paakashala-store";
+import type { MenuItem } from "@/lib/paakashala-menu";
 
 export function VegBadge({ type }: { type: "veg" | "non-veg" }) {
   const color = type === "veg" ? "#3B7A3B" : "#B4482B";

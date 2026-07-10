@@ -30,7 +30,7 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
         <Logo size={140} glow />
         <div className="mt-6 h-px w-24 bg-gold-gradient opacity-70" />
         <h1 className="mt-6 text-3xl font-semibold text-brown-deep">
-          <span className="text-gold-gradient">Parkashala</span>
+          <span className="text-gold-gradient">Paakashala</span>
         </h1>
         <p className="mt-3 max-w-[280px] text-center text-sm text-primary/80">
           A premium dining experience rooted in flavor.

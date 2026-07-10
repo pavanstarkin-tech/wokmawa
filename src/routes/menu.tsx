@@ -2,10 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, Leaf, Drumstick, X } from "lucide-react";
 import { z } from "zod";
-import { AppShell } from "@/components/parkashala/AppShell";
-import { MenuCard } from "@/components/parkashala/MenuCard";
-import { CATEGORIES, MENU, type Category } from "@/lib/parkashala-menu";
-import { KEYS } from "@/lib/parkashala-store";
+import { AppShell } from "@/components/paakashala/AppShell";
+import { MiniCategoryCard } from "@/components/paakashala/MiniCategoryCard";
+import { CATEGORIES, CATEGORY_IMAGE, type Category } from "@/lib/paakashala-menu";
+import { KEYS, useMenu } from "@/lib/paakashala-store";
 
 const searchSchema = z.object({
   category: z.string().optional(),
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/menu")({
 function MenuPage() {
   const { category: initialCat, q: initialQ } = Route.useSearch();
   const [q, setQ] = useState(initialQ ?? "");
-  const [filter, setFilter] = useState<"all" | "veg" | "non-veg">("all");
+  const [filter, setFilter] = useState<"veg" | "non-veg">("veg");
   const [active, setActive] = useState<Category>(() => {
     if (initialCat && (CATEGORIES as readonly string[]).includes(initialCat)) return initialCat as Category;
     if (typeof window !== "undefined") {
@@ -40,7 +40,7 @@ function MenuPage() {
     setActive(c);
     const el = sectionRefs.current[c];
     if (el) {
-      const y = el.getBoundingClientRect().top + window.scrollY - 160;
+      const y = el.getBoundingClientRect().top + window.scrollY - 260;
       window.scrollTo({ top: y, behavior: "smooth" });
     }
   };
@@ -51,17 +51,19 @@ function MenuPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const fullMenu = useMenu();
+
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
-    return MENU.filter((m) => {
+    return fullMenu.filter((m) => {
       if (filter !== "all" && m.type !== filter) return false;
       if (query && !m.name.toLowerCase().includes(query) && !m.category.toLowerCase().includes(query)) return false;
       return true;
     });
-  }, [q, filter]);
+  }, [q, filter, fullMenu]);
 
   const grouped = useMemo(() => {
-    const by = new Map<Category, typeof MENU>();
+    const by = new Map<Category, typeof fullMenu>();
     CATEGORIES.forEach((c) => by.set(c, []));
     filtered.forEach((m) => by.get(m.category as Category)?.push(m));
     return by;
@@ -69,66 +71,62 @@ function MenuPage() {
 
   return (
     <AppShell>
-      <div className="animate-fade-up">
-        <div className="text-[10px] tracking-[0.4em] uppercase text-gold">Our Kitchen</div>
-        <h1 className="mt-1 text-3xl font-semibold text-brown-deep">The Menu</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Freshly curated for your table.</p>
-      </div>
 
       <div className="sticky top-[68px] z-20 -mx-4 mt-4 bg-background/85 backdrop-blur-md px-4 pb-3 pt-2 border-b border-border/60">
-        <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5 shadow-luxe focus-within:border-gold">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search biryani, tandoori, gongura…"
-            className="flex-1 bg-transparent text-sm text-brown-deep outline-none placeholder:text-muted-foreground/70"
-          />
-          {q && (
-            <button onClick={() => setQ("")} aria-label="Clear" className="text-muted-foreground">
-              <X className="h-4 w-4" />
-            </button>
-          )}
-        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex-1 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 shadow-luxe focus-within:border-gold">
+            <Search className="h-3.5 w-3.5 text-muted-foreground" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search biryani…"
+              className="flex-1 bg-transparent text-xs text-brown-deep outline-none placeholder:text-muted-foreground/70"
+            />
+            {q && (
+              <button onClick={() => setQ("")} aria-label="Clear" className="text-muted-foreground">
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
-        <div className="mt-3 flex items-center gap-2">
-          {[
-            { k: "all", label: "All" },
-            { k: "veg", label: "Veg", icon: Leaf },
-            { k: "non-veg", label: "Non-Veg", icon: Drumstick },
-          ].map((f) => {
-            const on = filter === f.k;
-            const Icon = f.icon;
-            return (
-              <button
-                key={f.k}
-                onClick={() => setFilter(f.k as typeof filter)}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-widest transition ${
-                  on
-                    ? "bg-brown-gradient text-cream shadow-luxe"
-                    : "bg-card text-brown-deep border border-border"
+          <div className="flex items-center gap-1.5 shrink-0 bg-card border border-border/80 px-2.5 py-2 rounded-xl shadow-sm">
+            <span className={`text-[9px] font-bold transition-colors ${filter === 'veg' ? 'text-green-700' : 'text-muted-foreground/50'}`}>VEG</span>
+            
+            <button 
+              onClick={() => setFilter(filter === 'veg' ? 'non-veg' : 'veg')}
+              className={`relative flex h-4 w-8 items-center rounded-full transition-colors ${filter === 'veg' ? 'bg-green-500/20' : 'bg-red-500/20'}`}
+            >
+              <div 
+                className={`absolute h-3.5 w-3.5 rounded-full shadow-md transition-transform duration-300 flex items-center justify-center ${
+                  filter === 'veg' 
+                    ? 'translate-x-[2px] bg-green-500' 
+                    : 'translate-x-[16px] bg-red-500'
                 }`}
               >
-                {Icon && <Icon className="h-3 w-3" />}
-                {f.label}
-              </button>
-            );
-          })}
+                 <div className="h-1 w-1 rounded-full bg-white" />
+              </div>
+            </button>
+            
+            <span className={`text-[9px] font-bold transition-colors ${filter === 'non-veg' ? 'text-red-700' : 'text-muted-foreground/50'}`}>NON-VEG</span>
+          </div>
         </div>
 
         <div className="mt-3 -mx-4 overflow-x-auto no-scrollbar">
-          <div className="flex gap-2 px-4">
+          <div className="flex gap-4 px-4 pb-2">
             {CATEGORIES.map((c) => {
               const on = active === c;
               return (
                 <button
                   key={c}
                   onClick={() => goCategory(c)}
-                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-widest transition ${
-                    on ? "bg-gold-gradient text-brown-deep shadow-luxe" : "bg-card text-brown-deep border border-border"
-                  }`}
+                  className={`group relative flex w-[72px] shrink-0 flex-col items-center gap-2 transition active:scale-95 ${on ? 'scale-105' : ''}`}
                 >
-                  {c}
+                  <div className={`h-[72px] w-[72px] overflow-hidden rounded-full shadow-luxe p-0.5 bg-card transition-colors ${on ? 'border-2 border-gold' : 'border border-gold/30'}`}>
+                    <img src={CATEGORY_IMAGE[c]} alt={c} loading="lazy" className="h-full w-full rounded-full object-cover transition duration-500 group-hover:scale-110" />
+                  </div>
+                  <div className={`w-full text-center text-[10px] font-semibold leading-tight line-clamp-2 ${on ? 'text-gold' : 'text-brown-deep'}`}>
+                    {c}
+                  </div>
                 </button>
               );
             })}
@@ -152,9 +150,9 @@ function MenuPage() {
                 <h2 className="text-xs font-bold uppercase tracking-[0.35em] text-brown-deep">{c}</h2>
                 <div className="h-px flex-1 bg-gold-gradient opacity-40" />
               </div>
-              <div className="grid grid-cols-1 gap-3">
+              <div className="grid grid-cols-3 gap-2.5">
                 {items.map((m) => (
-                  <MenuCard key={m.id} item={m} />
+                  <MiniCategoryCard key={m.id} item={m} />
                 ))}
               </div>
             </section>

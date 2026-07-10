@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
-import type { MenuItem } from "./parkashala-menu";
+import type { MenuItem } from "./paakashala-menu";
 
 export const KEYS = {
-  mobile: "parkashala_mobile",
-  cart: "parkashala_cart",
-  orders: "parkashala_orders",
-  lastCategory: "parkashala_last_category",
+  mobile: "paakashala_mobile",
+  cart: "paakashala_cart",
+  orders: "paakashala_orders",
+  lastCategory: "paakashala_last_category",
 } as const;
 
 export type CartItem = {
@@ -62,16 +62,67 @@ function writeString(key: string, value: string) {
   emit();
 }
 
-/* ---------- Mobile ---------- */
-export function useMobile() {
-  const get = () => (typeof window === "undefined" ? "" : window.localStorage.getItem(KEYS.mobile) ?? "");
+/* ---------- Firebase Menu Sync ---------- */
+import { db } from "./firebase";
+import { ref, onValue } from "firebase/database";
+
+export function useMenu() {
+  const getSnap = () => {
+    if (typeof window === "undefined") return "[]";
+    return window.localStorage.getItem("paakashala_menu_cache") ?? "[]";
+  };
+  const raw = useSyncExternalStore(subscribe, getSnap, () => "[]");
+  const [menu, setMenu] = useState<MenuItem[]>([]);
+  
+  useEffect(() => {
+    try {
+      setMenu(JSON.parse(raw));
+    } catch {
+      setMenu([]);
+    }
+  }, [raw]);
+
+  useEffect(() => {
+    const menuRef = ref(db, 'restaurant/menu');
+    const unsub = onValue(menuRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+      
+      const parsedMenu: MenuItem[] = [];
+      for (const type of ['veg', 'nonVeg']) {
+        if (data[type]) {
+          for (const category of Object.keys(data[type])) {
+            const productsStr = data[type][category]?.productsJson;
+            if (productsStr) {
+              try {
+                const products = JSON.parse(productsStr);
+                parsedMenu.push(...products);
+              } catch (e) {
+                console.error("Failed to parse category", category, e);
+              }
+            }
+          }
+        }
+      }
+      writeJSON("paakashala_menu_cache", parsedMenu);
+    });
+    
+    return () => unsub();
+  }, []);
+
+  return menu;
+}
+
+/* ---------- Table Guard ---------- */
+export function useTable() {
+  const get = () => (typeof window === "undefined" ? "" : window.localStorage.getItem("paakashala_table") ?? "");
   const value = useSyncExternalStore(subscribe, get, () => "");
-  const set = useCallback((m: string) => writeString(KEYS.mobile, m), []);
+  const set = useCallback((t: string) => writeString("paakashala_table", t), []);
   const clear = useCallback(() => {
-    window.localStorage.removeItem(KEYS.mobile);
+    window.localStorage.removeItem("paakashala_table");
     emit();
   }, []);
-  return { mobile: value, setMobile: set, clearMobile: clear };
+  return { table: value, setTable: set, clearTable: clear };
 }
 
 /* ---------- Cart ---------- */
@@ -132,25 +183,63 @@ export function useCart() {
   return { items, add, setQty, remove, clear, count, total };
 }
 
-/* ---------- Orders ---------- */
+/* ---------- Firebase Orders Sync ---------- */
 export function useOrders() {
   const getSnap = () => {
     if (typeof window === "undefined") return "[]";
     return window.localStorage.getItem(KEYS.orders) ?? "[]";
   };
   const raw = useSyncExternalStore(subscribe, getSnap, () => "[]");
+  const [localOrderIds, setLocalOrderIds] = useState<string[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+
   useEffect(() => {
     try {
-      setOrders(JSON.parse(raw));
+      const parsed = JSON.parse(raw);
+      // Ensure backwards compatibility with old local storage objects
+      if (parsed.length > 0 && typeof parsed[0] === 'object') {
+        setLocalOrderIds(parsed.map((o: any) => o.id));
+      } else {
+        setLocalOrderIds(parsed);
+      }
     } catch {
-      setOrders([]);
+      setLocalOrderIds([]);
     }
   }, [raw]);
-  const push = (o: Order) => {
-    const current = readJSON<Order[]>(KEYS.orders, []);
-    writeJSON(KEYS.orders, [o, ...current]);
+
+  useEffect(() => {
+    if (localOrderIds.length === 0) {
+      setOrders([]);
+      return;
+    }
+
+    const unsubscribes = localOrderIds.map(id => {
+      const orderRef = ref(db, `restaurant/orders/${id}`);
+      return onValue(orderRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          setOrders(prev => {
+            const next = prev.filter(o => o.id !== id);
+            return [data, ...next].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          });
+        }
+      });
+    });
+
+    return () => unsubscribes.forEach(u => u());
+  }, [localOrderIds]);
+
+  const push = async (o: Order) => {
+    try {
+      await set(ref(db, `restaurant/orders/${o.id}`), o);
+      const current = readJSON<any[]>(KEYS.orders, []);
+      // Save just the ID
+      writeJSON(KEYS.orders, [o.id, ...current.map(c => typeof c === 'string' ? c : c.id)]);
+    } catch (e) {
+      console.error("Failed to push order to Firebase", e);
+    }
   };
+  
   return { orders, push };
 }
 

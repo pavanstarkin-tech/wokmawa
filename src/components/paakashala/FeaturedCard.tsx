@@ -1,6 +1,6 @@
 import { Star, Plus } from "lucide-react";
-import { useCart } from "@/lib/parkashala-store";
-import type { MenuItem } from "@/lib/parkashala-menu";
+import { useCart } from "@/lib/paakashala-store";
+import type { MenuItem } from "@/lib/paakashala-menu";
 import { VegBadge } from "./MenuCard";
 
 export function FeaturedCard({ item }: { item: MenuItem }) {

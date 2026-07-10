@@ -1,0 +1,267 @@
+export type MenuItem = {
+  id: string;
+  name: string;
+  category: string;
+  price: number | null;
+  type: "veg" | "non-veg";
+  image: string;
+  description?: string;
+  available?: boolean;
+};
+
+export const LOGO_URL =
+  "https://i.ibb.co/6JncbJsc/Screenshot-2026-07-10-13-42-55-71-1c337646f29875672b5a61192b9010f9.png";
+
+export const WHATSAPP_NUMBER = "918639122823";
+
+const IMG = {
+  soupVeg: "https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=800&q=70",
+  soupNV: "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=800&q=70",
+  vegStarter: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=800&q=70",
+  paneer: "https://images.unsplash.com/photo-1601050690294-2f7f0f5a9e3e?auto=format&fit=crop&w=800&q=70",
+  mushroom: "https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=800&q=70",
+  chickenStarter: "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?auto=format&fit=crop&w=800&q=70",
+  chickenLollipop: "https://images.unsplash.com/photo-1626500155657-f2b9ad4c76aa?auto=format&fit=crop&w=800&q=70",
+  chilliChicken: "https://images.unsplash.com/photo-1603360946369-dc9bb6258143?auto=format&fit=crop&w=800&q=70",
+  mutton: "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=70",
+  prawns: "https://images.unsplash.com/photo-1625944525533-473f1b3d9684?auto=format&fit=crop&w=800&q=70",
+  fish: "https://images.unsplash.com/photo-1580476262798-bddd9f4b7369?auto=format&fit=crop&w=800&q=70",
+  andhraChicken: "https://images.unsplash.com/photo-1596797038530-2c107229654b?auto=format&fit=crop&w=800&q=70",
+  gongura: "https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?auto=format&fit=crop&w=800&q=70",
+  tandooriChicken: "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&w=800&q=70",
+  tikka: "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=800&q=70",
+  kebab: "https://images.unsplash.com/photo-1633945274309-2c16c96eb2c8?auto=format&fit=crop&w=800&q=70",
+  paneerTikka: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?auto=format&fit=crop&w=800&q=70",
+  naan: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&w=800&q=70",
+  garlicNaan: "https://images.unsplash.com/photo-1600628421055-4d30de868b8f?auto=format&fit=crop&w=800&q=70",
+  friedRiceVeg: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=800&q=70",
+  friedRiceNV: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=800&q=70",
+  gravyChicken: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=800&q=70",
+  gravyMutton: "https://images.unsplash.com/photo-1574484284002-952d92456975?auto=format&fit=crop&w=800&q=70",
+  paneerGravy: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&w=800&q=70",
+  vegCurry: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=800&q=70",
+  biryaniChicken: "https://images.unsplash.com/photo-1633945274405-b6c8069047b0?auto=format&fit=crop&w=800&q=70",
+  biryaniMutton: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=800&q=70",
+  biryaniVeg: "https://images.unsplash.com/photo-1596797038530-2c107229654b?auto=format&fit=crop&w=800&q=70",
+  biryaniPrawn: "https://images.unsplash.com/photo-1633945274309-2c16c96eb2c8?auto=format&fit=crop&w=800&q=70",
+  rice: "https://images.unsplash.com/photo-1596797038530-2c107229654b?auto=format&fit=crop&w=800&q=70",
+  thali: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?auto=format&fit=crop&w=800&q=70",
+  beverage: "https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&w=800&q=70",
+  lassi: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?auto=format&fit=crop&w=800&q=70",
+  water: "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&w=800&q=70",
+};
+
+export const CATEGORIES = [
+  "Soups",
+  "Veg Starters",
+  "Non Veg Starters",
+  "South Indian Starters",
+  "Tandoori Starters",
+  "Tandoori Breads",
+  "Fried Rice",
+  "Main Course Gravies",
+  "Biryani",
+  "Rice",
+  "Thali",
+  "Beverages",
+] as const;
+
+export type Category = (typeof CATEGORIES)[number];
+
+const slug = (s: string) =>
+  s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+const make = (
+  category: Category,
+  name: string,
+  price: number | null,
+  type: "veg" | "non-veg",
+  image: string,
+  description?: string,
+): MenuItem => ({
+  id: slug(`${category}-${name}`),
+  name,
+  category,
+  price,
+  type,
+  image,
+  description,
+});
+
+export const MENU: MenuItem[] = [
+  // Soups
+  make("Soups", "Sweet Corn Soup", 159, "veg", "https://masalachilli.com/wp-content/uploads/2020/08/Sweet-Corn-Soup-13-500x375.jpg", "Silky sweet corn broth"),
+  make("Soups", "Veg Hot & Sour Soup", 159, "veg", "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_366/RX_THUMBNAIL/IMAGES/VENDOR/2026/3/3/c48a531e-ae3c-449a-b10d-37823b3e6ec2_1342432.jpg", "Tangy peppered vegetables"),
+  make("Soups", "Veg Manchow Soup", 159, "veg", "https://i.ytimg.com/vi/JLPfzQ0RafY/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLAdxqNVXRpd-dkdv32mwAQC1S4cxA", "Rustic Indo-Chinese classic"),
+  make("Soups", "Lemon Coriander Soup", 159, "veg", "https://5.imimg.com/data5/SELLER/Default/2020/9/YY/YF/AO/395272/lemon-coriander-soup-500x500.jpg", "Bright, fragrant, warming"),
+  make("Soups", "Mushroom Clear Soup", 159, "veg", "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_240,h_240/FOOD_CATALOG/IMAGES/CMS/2024/8/15/8ee0f12a-1490-45e2-9bd4-ce528721cfb7_a390e604-d71f-4f08-8864-7333cd169202.JPG", "Delicate mushroom essence"),
+  make("Soups", "Chicken Corn Soup", 189, "non-veg", "https://i2.wp.com/www.vegrecipesofindia.com/wp-content/uploads/2021/08/sweet-corn-soup-1.jpg", "Silky chicken and sweet corn"),
+  make("Soups", "Chicken Hot & Sour", 189, "non-veg", "https://media-cdn.tripadvisor.com/media/photo-s/14/af/13/17/65-chennai-s-special.jpg", "Fiery peppered chicken broth"),
+  make("Soups", "Chicken Manchow Soup", 189, "non-veg", "https://thumbs.dreamstime.com/b/chicken-manchow-soup-black-bowl-dark-slate-background-chicken-manchow-soup-indo-chinese-cuisine-dish-chicken-manchow-soup-160366330.jpg", "Crisp noodles & shredded chicken"),
+  make("Soups", "Chicken Lemon Coriander", 189, "non-veg", "https://rakskitchen.net/wp-content/uploads/2025/11/easy-lemon-coriander-soup.jpg", "Aromatic citrus chicken broth"),
+  make("Soups", "Chicken Miryala Charu", 189, "non-veg", "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/29/92/c8/76/chicken-jalfrezi.jpg?w=1200&h=-1&s=1", "Andhra pepper chicken rasam"),
+  make("Soups", "Mutton Charu", 189, "non-veg", "https://www.licious.in/blog/wp-content/uploads/2023/02/shutterstock_2205168763-750x508.jpg", "Slow-simmered mutton rasam"),
+
+  // Veg Starters
+  make("Veg Starters", "Chilli Corn", 279, "veg", "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_240,h_240/FOOD_CATALOG/IMAGES/CMS/2024/3/21/443f3c85-bded-4b15-83bc-04b170aa5eb2_a3caf308-8f28-46b1-a9ba-eb12b0cf45ed.jpg"),
+  make("Veg Starters", "Chilli Paneer", 299, "veg", "https://madhurasrecipe.com/wp-content/uploads/2024/01/Chilli-Paneer-2-683x1024.jpg"),
+  make("Veg Starters", "Chilli Mushroom", 299, "veg", "https://i.pinimg.com/236x/bf/d1/d0/bfd1d07b5449814b3c9a6eb42d498c25.jpg?nii=t"),
+  make("Veg Starters", "Crispy Corn", 249, "veg", "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEg1-uKS4UgUHR9FzuvDuXnD01tae-dsgBXegrzYAnx0RVusjzXTauSlehsifA7oNLA33hLyT8kjcb81P3Ywb-566AHyAABcOyme3dyY8GY3DBpacN3mxnlYD9sGtWm34G5rAXz1wvewriLopnW_Wiy1LVyP39NW3aWBeD_pA-Amk3KhTltGlTH0uuRv/s1600/restaurant style homemade crispy corn kabab tikki recipe main (2).jpeg"),
+  make("Veg Starters", "Crispy Mushroom", 299, "veg", "https://c8.alamy.com/comp/2AF20W1/mushroom-65-starter-or-appetiser-food-recipe-from-india-served-in-a-plate-with-ketchup-over-moody-background-selective-focus-2AF20W1.jpg"),
+  make("Veg Starters", "Paneer 65", 299, "veg", "https://media-cdn.tripadvisor.com/media/photo-s/1c/d8/f1/c7/paneer-65.jpg"),
+  make("Veg Starters", "Mushroom 65", 299, "veg", "https://www.indianhealthyrecipes.com/wp-content/uploads/2016/04/garlic-mushroom-recipe-1-480x270.jpg"),
+  make("Veg Starters", "Stuffed Cheese Mushroom", 349, "veg", "https://feelgoodfoodie.net/wp-content/uploads/2023/04/Vegetarian-Stuffed-Mushrooms-10.jpg"),
+
+  // Non Veg Starters
+  make("Non Veg Starters", "Egg 65", 229, "non-veg", "https://i.ytimg.com/vi/F3E0vPwRZn8/maxresdefault.jpg"),
+  make("Non Veg Starters", "Chilli Egg", 229, "non-veg", "https://i.ytimg.com/vi/Tdgn2XbxTko/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLAbJyYysncqBFgTK0n0Tlgzz2a3tA"),
+  make("Non Veg Starters", "Chicken Lollipop", 369, "non-veg", "https://b.zmtcdn.com/data/pictures/9/18962319/461a682bb5f8322f861fdd60fa4a1ee4_featured_v3.jpg?crop=700:400;*,*&fit=around|700:400&output-format=webp", "Signature crispy drumettes"),
+  make("Non Veg Starters", "Crunchy Chicken", 369, "non-veg", "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_366/RX_THUMBNAIL/IMAGES/VENDOR/2026/7/1/37c4a149-6d0a-429e-a188-c8213b1fa143_829046.JPG"),
+  make("Non Veg Starters", "Chilli Chicken (Dry/Wet)", 369, "non-veg", "https://i.ytimg.com/vi/0dsLLUZUgBY/maxresdefault.jpg"),
+  make("Non Veg Starters", "Chilli Wings", 369, "non-veg", "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiWjvEYmWY4a1wXi6Mjca7xx2sFMXuuvnMS_UFAC-m1LN2NI1z5_RWl-LXz9RsrOIFEQxYrYapSF64NkuAjiNaqV-uIGMaXIM_DSAWZYWf098nvQlF4DryVvwjkXEWJl__OygiUO4hL5yw/s1600/Freshmenu+Fiesta+%283%29.jpg"),
+  make("Non Veg Starters", "Lemon Chicken", 369, "non-veg", "https://content.jdmagicbox.com/comp/port_blair/p7/9999p3192.3192.230331134403.n9p7/catalogue/the-tasty-clam-cafe-restro-port-blair-north-indian-restaurants-8fEvTEYGQ7-250.jpg"),
+  make("Non Veg Starters", "Garlic Chicken", 369, "non-veg", "https://cdn.jwplayer.com/v2/media/6XAdHJol/thumbnails/4aVzoKnp.jpg"),
+  make("Non Veg Starters", "Mango Chicken", 369, "non-veg", "https://i0.wp.com/darbarindian.com/wp-content/uploads/2019/04/Mango-Chicken-2-1__1_-removebg-preview-1.png?fit=555,555&ssl=1"),
+  make("Non Veg Starters", "Chilli Mutton", 425, "non-veg", "https://www.shutterstock.com/image-photo/mutton-curry-lamb-curryspicy-delicious-260nw-1770088658.jpg"),
+  make("Non Veg Starters", "Mutton 65", 425, "non-veg", "https://nandhini.com/wp-content/uploads/2025/11/Chicken-Pepper-Dry-768x432.webp"),
+  make("Non Veg Starters", "Chilli Prawns", 425, "non-veg", "https://www.crownresto.com/wp-content/uploads/2022/08/chilli-prawns-1.jpg"),
+  make("Non Veg Starters", "Loose Prawns", 425, "non-veg", "https://content.jdmagicbox.com/v2/comp/bangalore/l9/080pxx80.xx80.180524115854.w3l9/catalogue/mangalore-kitchen-vijayanagar-bangalore-mangalorean-restaurants-nmbn04w2m0.jpg"),
+  make("Non Veg Starters", "Butter Garlic Prawns", 425, "non-veg", "https://i.pinimg.com/474x/53/b2/02/53b20293a26dfa63eda494c30a89cfa8.jpg"),
+  make("Non Veg Starters", "Chilli Fish", 389, "non-veg", "https://www.indianhealthyrecipes.com/wp-content/uploads/2024/06/baked-fish-grilled-fish.jpg"),
+  make("Non Veg Starters", "Apollo Fish", 389, "non-veg", "https://content.jdmagicbox.com/comp/def_content_category/hyderabad-biryaani-house/hyderabad-biryaani-house-893-nzl3a-250.jpg"),
+  make("Non Veg Starters", "Fish Roast", 349, "non-veg", "https://preview.redd.it/kokum-fish-fry-at-folk-kala-ghoda-v0-4u4x7d0fc2kc1.jpg?width=640&crop=smart&auto=webp&s=8102d89f6b4baf12568eea92538a9a513c3254bd"),
+
+  // South Indian Starters
+  make("South Indian Starters", "Chicken Cheese Baji", 369, "non-veg", "https://www.cubesnjuliennes.com/wp-content/uploads/2020/07/Instant-Pot-Mumbai-Pav-Bhaji-Recipe-500x375.jpg"),
+  make("South Indian Starters", "Kaju Chicken Pakodi", 329, "non-veg", "https://www.teaforturmeric.com/wp-content/uploads/2024/05/Chicken-65-11-500x375.jpg"),
+  make("South Indian Starters", "Miryala Kodi Vepudu", 329, "non-veg", "https://i.ytimg.com/vi/-lECg1Ez71I/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLDgJGVjW0pBhlxi7gPifMWpSuTVkw", "Andhra pepper chicken fry"),
+  make("South Indian Starters", "Pachi Mirchi Kodi Vepudu", 329, "non-veg", "https://d1w7312wesee68.cloudfront.net/SuCKG2LDxXh3JGlVfkC_i5Xp4FRAdob_OwjBXFXMYHM/resize:fit:720:720/plain/s3://toasttab/menu_service/restaurants/97deb4ad-ca97-4adb-a72f-b0767402e2fe/MenuItem/72d64497-02b5-4398-9aae-22647bb7268b.jpg", "Green chilli chicken fry"),
+  make("South Indian Starters", "Andhra Chicken Vepudu", 329, "non-veg", "https://i.ytimg.com/vi/-VhoUEeWJC4/sddefault.jpg"),
+  make("South Indian Starters", "Karivepaku Kodi Vepudu", 329, "non-veg", "https://i.ytimg.com/vi/oHyopJxwUvM/hqdefault.jpg", "Curry-leaf chicken fry"),
+  make("South Indian Starters", "Pandu Mirchi Kodi Vepudu", 329, "non-veg", "https://www.shutterstock.com/image-photo/kodi-vepudu-chicken-basmati-rice-260nw-2716343933.jpg", "Red chilli chicken fry"),
+  make("South Indian Starters", "Velluli Kaaram Kodi Wings", 329, "non-veg", "https://b.zmtcdn.com/data/dish_photos/966/302b695ad503da20807ce4a9cf011966.jpeg"),
+  make("South Indian Starters", "Velluli Kaaram Kodi Chips", 329, "non-veg", "https://i.ytimg.com/vi/FUmMUWGh9OM/maxresdefault.jpg"),
+  make("South Indian Starters", "Gongura Chicken Vepudu", 349, "non-veg", "https://c.ndtvimg.com/2025-05/nnh6488o_chicken_625x300_26_May_25.jpg"),
+  make("South Indian Starters", "Gongura Mutton Vepudu", 449, "non-veg", "https://b.zmtcdn.com/data/pictures/2/19377562/4644ba585f513f23e8a989cf56414bfb_featured_v2.jpg"),
+  make("South Indian Starters", "Gongura Royyala Vepudu", 399, "non-veg", "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto/FOOD_CATALOG/IMAGES/CMS/2026/2/2/bac7dc0a-5f6e-4892-8f2b-66a3f189e171_b54366c3-b66f-41a3-ab67-8554b55be52c.jpg"),
+  make("South Indian Starters", "Pachi Mirchi Royyalu Vepudu", 399, "non-veg", "https://photos.tryotter.com/menu-photos/050d1677-e44c-40bb-9e22-1f9680d9955c.jpeg"),
+  make("South Indian Starters", "Mutton Ghee Roast", 449, "non-veg", "https://mariasmenu.com/wp-content/uploads/Chicken-Ghee-Roast.png"),
+  make("South Indian Starters", "Chitti Royyala Vepudu", 399, "non-veg", "https://content.jdmagicbox.com/v2/comp/hyderabad/v3/040pxx40.xx40.210331182526.j8v3/catalogue/kodi-kura-chitti-gaare-kokapet-hyderabad-biryani-restaurants-tli43mj94z-250.jpg"),
+  make("South Indian Starters", "Goan Rava Fish Fry", 329, "non-veg", "https://content3.jdmagicbox.com/comp/goa/h3/0832px832.x832.161117164915.e6h3/catalogue/anand-sea-food-restaurant-and-bar-anjuna-goa-sea-food-restaurants-jrc6jjb5e2.jpg"),
+  make("South Indian Starters", "Tawa Fish Fry", 389, "non-veg", "https://yummyindiankitchen.com/wp-content/uploads/2017/11/fish-fry-masala.jpg"),
+
+  // Tandoori Starters
+  make("Tandoori Starters", "Chicken Tikka", 299, "non-veg", "https://backend.sulaindianrestaurant.com/wp-content/uploads/2019/09/chicken-tikka-masala-sula-davie-street-683x1024.jpg"),
+  make("Tandoori Starters", "Chicken Malai Tikka", 299, "non-veg", "https://thumbs.dreamstime.com/b/hyderabadi-cuisine-murgh-dum-biryani-lahori-chicken-tikka-chicken-biryani-delicious-savory-rice-dish-loaded-249378477.jpg"),
+  make("Tandoori Starters", "Al-faham Chicken (Half)", 349, "non-veg", "https://as2.ftcdn.net/v2/jpg/05/41/20/25/1000_F_541202580_wx8jT9PpTwik4qY8gtSqNN057bHiUkwP.jpg"),
+  make("Tandoori Starters", "Al-faham Chicken (Full)", 549, "non-veg", "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_300,h_300,c_fit/fznb1sfjtpq1inmnx8ps"),
+  make("Tandoori Starters", "Kalmi Kebab (Half)", 249, "non-veg", "https://content.jdmagicbox.com/comp/pune/c6/020pxx20.xx20.210811032323.x5c6/catalogue/express-by-ab-s-chinchwad-pune-north-indian-delivery-restaurants-0eqhmstmtk.jpg"),
+  make("Tandoori Starters", "Kalmi Kebab (Full)", 399, "non-veg", "https://i0.wp.com/www.shanazrafiq.com/wp-content/uploads/2016/11/2-DSC_0094.jpg?fit=1600,1064&ssl=1"),
+  make("Tandoori Starters", "Chicken Tangdi Kebab (Half)", 249, "non-veg", "https://i.ytimg.com/vi/HRCAhcCp_I8/maxresdefault.jpg"),
+  make("Tandoori Starters", "Chicken Tangdi Kebab (Full)", 399, "non-veg", "https://b.zmtcdn.com/data/pictures/1/90021/23628bb57561e538b48777c429915722.jpg?crop=700:400;*,*&fit=around|700:400&output-format=webp"),
+  make("Tandoori Starters", "Tandoori Chicken (Half)", 299, "non-veg", "https://anaarbazaar.com/wp-content/uploads/2021/11/butterfly-chicken.jpeg"),
+  make("Tandoori Starters", "Tandoori Chicken (Full)", 549, "non-veg", "http://www.springermountainfarms.com/wp-content/uploads/Tandoori-Chicken-Drumsticks-web.png"),
+  make("Tandoori Starters", "Pomfret Tikka", 399, "non-veg", "https://content.jdmagicbox.com/v2/comp/delhi/71/011p113071/catalogue/dilkhush-food-plaza-paschim-vihar-delhi-north-indian-restaurants-1qgy8myloa.jpg"),
+  make("Tandoori Starters", "Peri Peri Prawn Tikka", 399, "non-veg", "https://drizzleanddip.com/wp-content/uploads/2022/09/O6A0938.jpg"),
+  make("Tandoori Starters", "Malai Paneer Tikka", 299, "veg", "https://www.tarladalal.com/thumb/480x270/media/recipe/mainphoto/2025/05/12/paneer_tikka.webp"),
+  make("Tandoori Starters", "Paneer Tikka", 299, "veg", "https://c8.alamy.com/comp/2ANJ784/a-paneer-tikka-sizzler-kebab-plate-at-an-indian-restaurant-2ANJ784.jpg"),
+  make("Tandoori Starters", "Mushroom Tikka", 299, "veg", "https://content.jdmagicbox.com/v2/comp/thane/p8/022pxx22.xx22.170923200023.f9p8/catalogue/naivedhya-veg-treat-mira-road-thane-home-delivery-restaurants-vuuv7.jpg"),
+  make("Tandoori Starters", "Hara Bhara Kebab", 329, "veg", "https://thumbs.dreamstime.com/b/traditional-indian-hara-bhara-kebab-classic-indian-dish-hara-bhara-kebab-served-black-background-156050080.jpg"),
+  make("Tandoori Starters", "Pineapple BBQ", 219, "veg", "https://media-cdn.tripadvisor.com/media/photo-m/1280/1c/62/0a/e8/grills.jpg"),
+
+  // Tandoori Breads
+  make("Tandoori Breads", "Naan", 79, "veg", "https://popmenucloud.com/cdn-cgi/image/width=1200,height=1200,fit=scale-down,format=auto,quality=60/nlmbxhpk/17941a36-9e49-42e8-9703-1d994dab6881.jpg"),
+  make("Tandoori Breads", "Butter Naan", 89, "veg", "https://i2.wp.com/www.vegrecipesofindia.com/wp-content/uploads/2022/12/garlic-naan-1.jpg"),
+  make("Tandoori Breads", "Garlic Naan", 99, "veg", "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_240,h_240/FOOD_CATALOG/IMAGES/CMS/2025/1/31/2a8ca5ba-ba32-4c8d-b98c-44de5b69d63b_9def13ba-72b0-4a4e-8b09-f6d8e828c27e.jpg"),
+  make("Tandoori Breads", "Pulka", 39, "veg", "https://d1w7312wesee68.cloudfront.net/vSkHVPOpL5Y8QbTNDKkNOTZ-hiDv3VUxhvjVE9dfdU8/resize:fit:720:720/plain/s3://toasttab/restaurants/restaurant-126763000000000000/menu/images/item-71261771-7b30-41ca-b9ae-ffdecd740b90.jpg"),
+
+  // Fried Rice
+  make("Fried Rice", "Veg Fried Rice", 259, "veg", "https://holycowvegan.net/wp-content/uploads/2015/08/indian-style-veg-fried-rice.jpg"),
+  make("Fried Rice", "Kaju Fried Rice", 299, "veg", "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/06/kashmiri-pulao.jpg"),
+  make("Fried Rice", "Mushroom Fried Rice", 299, "veg", "https://content.jdmagicbox.com/comp/def_content_category/hyderabad-biryaani-house/hyderabad-biryaani-house-893-nzl3a-250.jpg"),
+  make("Fried Rice", "Paneer Fried Rice", 299, "veg", "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_240,h_240/FOOD_CATALOG/IMAGES/CMS/2026/2/18/4dda7c17-6dac-46c9-a73d-46a28c8d37f1_a92ea11e-333f-4e55-adaf-ad8739563a4e.JPG"),
+  make("Fried Rice", "Mixed Vegetable Fried Rice", 349, "veg", "https://www.tomatoblues.com/wp-content/uploads/2019/02/restaurant-style-vegetable-fried-rice-3-320x320-1-320x270.jpg"),
+  make("Fried Rice", "Veg Schezwan Fried Rice", 299, "veg", "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_240,h_240/FOOD_CATALOG/IMAGES/CMS/2024/6/28/99f2c1e5-59fe-4510-83a0-019fe5d26fb3_7e9c2dd4-7ac5-4e81-b393-7b25b116ef88.jpg"),
+  make("Fried Rice", "SP Veg Fried Rice", 349, "veg", "https://dinedelicious.in/wp-content/uploads/2019/09/Masala-Bhaat-5-500x450.jpg"),
+  make("Fried Rice", "Egg Fried Rice", 249, "non-veg", "https://i.ytimg.com/vi/-Czqa85zZ-A/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLCdAZzWiX4_2q1jgE9hS-mPNq5X6Q"),
+  make("Fried Rice", "Chicken Fried Rice", 319, "non-veg", "https://b.zmtcdn.com/data/dish_photos/de7/6eaa295849657c63f6b87cdc38ea2de7.png"),
+  make("Fried Rice", "SP Chicken Fried Rice", 399, "non-veg", "https://b.zmtcdn.com/data/dish_photos/08a/f1aa0c897f6f0452b557282c0ac0d08a.jpg"),
+  make("Fried Rice", "Chicken Fry Piece Fried Rice", 399, "non-veg", "https://as1.ftcdn.net/jpg/03/02/74/52/1000_F_302745235_maAnfTrL9ypDoUUHcnWTLPjOEJlXygcb.jpg"),
+  make("Fried Rice", "Mutton Fried Rice", 449, "non-veg", "https://thumbs.dreamstime.com/b/popular-pakistan-food-mutton-biryani-traditional-mixed-rice-dish-originated-mughal-empire-india-340755633.jpg"),
+  make("Fried Rice", "Prawns Fried Rice", 439, "non-veg", "https://tiffycooks.com/wp-content/uploads/2024/03/Shrimp-Fried-Rice-Plated.jpg"),
+  make("Fried Rice", "Mix Mughlai Fried Rice", 499, "non-veg", "https://b.zmtcdn.com/data/pictures/6/21458916/c8d5ca53f5627e3517d0f0bcae633cf1_o2_featured_v2.jpg"),
+
+  // Main Course Gravies
+  make("Main Course Gravies", "Egg Masala", 269, "non-veg", "https://img.magnific.com/premium-psd/delicious-egg-curry-indian-cuisine-spicy-dish_84443-44717.jpg?semt=ais_hybrid&w=740&q=80"),
+  make("Main Course Gravies", "Murgh Masala", 369, "non-veg", "https://www.chefmeatrecipes.com/wp-content/uploads/2026/01/Masala-Chicken-1.jpg"),
+  make("Main Course Gravies", "Kadai Chicken", 389, "non-veg", "https://www.shutterstock.com/image-photo/indian-chicken-curry-kadai-copper-260nw-1192237111.jpg"),
+  make("Main Course Gravies", "Punjabi Murgh Butter Masala", 389, "non-veg", "https://foodess.com/wp-content/uploads/2024/02/Butter-Paneer-819x1024.jpg"),
+  make("Main Course Gravies", "Chicken Tikka Masala", 389, "non-veg", "https://artofpalate.com/wp-content/uploads/2014/03/IMG_76311.jpg"),
+  make("Main Course Gravies", "Afghani Chicken Kebab Masala", 389, "non-veg", "https://content.jdmagicbox.com/comp/ernakulam/b5/0484px484.x484.220410202418.g5b5/catalogue/toothsome-kebab-m-g-road-ernakulam-kabab-centres-e0nfm8531t.jpg"),
+  make("Main Course Gravies", "Konaseema Kodi Curry", 389, "non-veg", "https://b.zmtcdn.com/data/pictures/chains/6/22169646/17570022255ea9a6e1-3f71-4098-8266-dad34463dc28.jpg"),
+  make("Main Course Gravies", "Mutton Masala Curry", 469, "non-veg", "https://flavoursofmykitchen.com/wp-content/uploads/2024/08/mutton-recipe-500x500.png"),
+  make("Main Course Gravies", "Gongura Chicken Curry", 399, "non-veg", "https://www.masalakorb.com/wp-content/uploads/2016/09/step-1.jpg"),
+  make("Main Course Gravies", "Gongura Mutton Curry", 489, "non-veg", "https://static.toiimg.com/thumb/123179147.jpg?photoid=123179147&imgsize=1402282&width=375&height=210&resizemode=75"),
+  make("Main Course Gravies", "Gongura Prawns Curry", 429, "non-veg", "https://www.indianrecipeinfo.com/wp-content/uploads/2024/01/south-Indian-style-prawns-masala-curry.jpg"),
+  make("Main Course Gravies", "Kaju Paneer Curry", 329, "veg", "https://content.jdmagicbox.com/v2/comp/kakinada/l9/9999px884.x884.240313193645.h5l9/catalogue/sri-sai-kshatriya-foods-nagamallithota-junction-kakinada-fast-food-z3vlbivch7-250.jpg"),
+  make("Main Course Gravies", "Kaju Tomato Curry", 349, "veg", "https://cdn3.foodviva.com/static-content/food-images/curry-recipes/kaju-curry/step-14.jpg"),
+  make("Main Course Gravies", "Kaju Mushroom Curry", 329, "veg", "https://myfoodstory.com/wp-content/uploads/2021/04/Matar-Mushroom-Masala-4-500x500.jpg"),
+  make("Main Course Gravies", "Kadai Paneer Curry", 319, "veg", "https://i0.wp.com/milkandcardamom.com/wp-content/uploads/2018/08/Kadai-Paneer-1.jpg?ssl=1"),
+  make("Main Course Gravies", "Paneer Butter Masala", 329, "veg", "https://shwetainthekitchen.com/wp-content/uploads/2024/04/shahi-paneer.jpg"),
+  make("Main Course Gravies", "Paneer Tikka Masala", 369, "veg", "https://c.ndtvimg.com/2022-04/qhqqrn38_paneer_625x300_27_April_22.jpg?im=FaceCrop,algorithm=dnn,width=384,height=384"),
+  make("Main Course Gravies", "Mushroom Masala Curry", 299, "veg", "https://i0.wp.com/theyellowdaal.com/wp-content/uploads/2020/03/20200314141236_IMG_6062_20200315121523055-683x1024.jpg?resize=683,1024"),
+  make("Main Course Gravies", "Mixed Vegetable Curry", 369, "veg", "https://maayeka.com/wp-content/uploads/2013/12/veg-makhanwala-curry-1.jpg.webp"),
+
+  // Biryani
+  make("Biryani", "Paneer Biryani", 349, "veg", "https://www.shutterstock.com/shutterstock/photos/2416124523/display_1500/stock-photo-paneer-biryani-rice-served-in-claypot-dish-isolated-on-wooden-table-top-view-of-indian-spicy-food-2416124523.jpg"),
+  make("Biryani", "Mushroom Biryani", 349, "veg", "https://content.jdmagicbox.com/v2/comp/bangalore/f6/080pxx80.xx80.250116192032.w4f6/catalogue/meghana-biryani-sahakara-nagar-bangalore-home-delivery-restaurants-gytamsagm0-250.jpg"),
+  make("Biryani", "SP Veg Biryani", 349, "veg", "https://www.vidhyashomecooking.com/wp-content/uploads/2019/04/LucknowiVegBiryani.jpg"),
+  make("Biryani", "Mix Veg Biryani", 349, "veg", "https://atchayapathrafoods.com/wp-content/uploads/2026/01/Oats-Briyani-640x960.png"),
+  make("Biryani", "Egg Biryani", 299, "non-veg", "https://media.gettyimages.com/id/1058029096/photo/chicken-biryani.jpg?s=612x612&w=gi&k=20&c=i3Dgdq8qZnOb5Vv3wx8yuUQ17lYdMYDOKdBRF40k8XQ="),
+  make("Biryani", "HYD Chicken Dum Biryani", 399, "non-veg", "https://img.cdn4dd.com/cdn-cgi/image/fit=contain,width=1200,height=672,format=auto/https://doordash-static.s3.amazonaws.com/media/photosV2/b204e727-583d-4030-a6ee-ce8d56ce5f48-retina-large.jpg", "House signature Hyderabadi dum"),
+  make("Biryani", "Mutton Dum Biryani", 499, "non-veg", "https://b.zmtcdn.com/data/pictures/2/22501742/24bb74da5f6fb3b667ab5d4f1bf905fd_o2_featured_v2.jpg", "Slow-cooked in sealed handi"),
+  make("Biryani", "Chicken Fry Piece Biryani", 349, "non-veg", "https://www.shutterstock.com/image-photo/chicken-fry-biryani-this-dish-260nw-1480121198.jpg"),
+  make("Biryani", "Mutton Fry Piece Biryani", 499, "non-veg", "https://thumbs.dreamstime.com/b/delicious-mutton-biryani-metal-bowl-indian-cuisine-spicy-rice-dish-food-photography-close-up-shot-flavorful-served-379524322.jpg"),
+  make("Biryani", "Prawn Fry Piece Biryani", 449, "non-veg", "https://c8.alamy.com/comp/2GE1R88/prawn-or-shrimp-biryani-fish-biryani-spicy-and-delicious-malabar-biryani-or-hydrabadi-biryani-dum-biriyani-pulao-basmati-rice-herbs-raitha-eid-2GE1R88.jpg"),
+  make("Biryani", "Chicken Mughlai Biryani", 349, "non-veg", "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_720,h_420,c_fill/yeu8blahmwaxsvokdr8a"),
+  make("Biryani", "Mutton Mughlai Biryani", 499, "non-veg", "https://www.yummytummyaarthi.com/wp-content/uploads/2014/04/1-8.jpg"),
+  make("Biryani", "Prawn Mughlai Biryani", 499, "non-veg", "https://www.easycookingwithmolly.com/wp-content/uploads/2024/03/royal-indian-chicken-biryani-recipe.jpg"),
+  make("Biryani", "Mix Mughlai Biryani", 499, "non-veg", "https://media.foodiaq.com/wp-content/uploads/2026/01/Chicken-Biryani-1-600x600.jpg"),
+  make("Biryani", "Chicken Dilkush Biryani", 449, "non-veg", "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_400/RX_THUMBNAIL/IMAGES/VENDOR/2026/3/24/37b69075-2090-4589-9103-1984804d3a51_56096.jpg"),
+
+  // Rice
+  make("Rice", "Ghee Sambar Rice", null, "veg", "https://i.pinimg.com/474x/9c/cd/2c/9ccd2cd720a1afbde9f149f33e570adb.jpg"),
+  make("Rice", "Mudhapappu Avakai Annam", null, "veg", "https://b.zmtcdn.com/data/dish_photos/7e4/140dd70e46bf94caa4d6514d2e5af7e4.jpg"),
+  make("Rice", "Curd Rice", null, "veg", "https://www.shutterstock.com/image-photo/curd-rice-part-south-indian-260nw-2774461969.jpg"),
+  make("Rice", "White Rice", null, "veg", "https://c.ndtvimg.com/2019-09/5o7eooc_jeera-rice-620_625x300_10_September_19.png"),
+  make("Rice", "Chicken Sambar Rice", null, "non-veg", "https://b.zmtcdn.com/data/dish_photos/c82/9e8c2b93f51a98264353b228217a8c82.jpg?fit=around|200:200&crop=200:200;*,*"),
+
+  // Thali
+  make("Thali", "Veg Thali", null, "veg", "https://static.toiimg.com/photo/94076219.cms"),
+  make("Thali", "Chicken Thali", null, "non-veg", "https://dynamic-media-cdn.tripadvisor.com/media/photo-o/06/44/0e/24/my-wonderful-lunch.jpg?w=900&h=500&s=1"),
+  make("Thali", "Sea Food Thali", null, "non-veg", "https://thumbs.dreamstime.com/b/indian-fish-platter-thali-popular-seafood-meat-dish-mumbai-konkan-maharashtra-goa-bengal-kerala-presented-steel-369320642.jpg"),
+
+  // Beverages
+  make("Beverages", "Packaged Drinking Water", null, "veg", "https://restaurantindia.s3.ap-south-1.amazonaws.com/s3fs-public/inline-images/Kinley.jpg"),
+  make("Beverages", "Soft Drinks", null, "veg", "https://assets.vogue.in/photos/624aaaae4c62e46a01232478/2:3/w_2560,c_limit/Red%20Sparkle%20Cocktail%20by%20Nara%20Thai%20x%20Zaavorr.jpg"),
+  make("Beverages", "Butter Milk", null, "veg", "https://media-assets.swiggy.com/swiggy/image/upload/fl_lossy,f_auto,q_auto,w_240,h_240/FOOD_CATALOG/IMAGES/CMS/2024/5/1/7ee75dc6-8959-4c41-a341-995161915ab9_c39225c0-db0a-4aed-a746-9110b6f52335.png"),
+  make("Beverages", "Lassi", null, "veg", "https://thumbs.dreamstime.com/b/lassi-rabri-dahivada-indian-special-traditional-restaurant-food-104281487.jpg"),
+];
+
+export const CATEGORY_IMAGE: Record<Category, string> = CATEGORIES.reduce(
+  (acc, cat) => {
+    const firstItem = MENU.find((m) => m.category === cat);
+    acc[cat] = firstItem?.image || "";
+    return acc;
+  },
+  {} as Record<Category, string>
+);
+
+export const FEATURED_IDS = [
+  "biryani-hyd-chicken-dum-biryani",
+  "non-veg-starters-chicken-lollipop",
+  "tandoori-starters-tandoori-chicken-full",
+  "biryani-mutton-dum-biryani",
+  "south-indian-starters-gongura-chicken-vepudu",
+  "main-course-gravies-paneer-butter-masala",
+];

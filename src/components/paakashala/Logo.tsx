@@ -1,4 +1,4 @@
-import { LOGO_URL } from "@/lib/parkashala-menu";
+import { LOGO_URL } from "@/lib/paakashala-menu";
 
 export function Logo({ size = 56, glow = false }: { size?: number; glow?: boolean }) {
   return (
@@ -16,7 +16,7 @@ export function Logo({ size = 56, glow = false }: { size?: number; glow?: boolea
     >
       <img
         src={LOGO_URL}
-        alt="Parkashala"
+        alt="Paakashala"
         className="rounded-full object-contain"
         style={{ width: size * 0.86, height: size * 0.86 }}
         loading="eager"

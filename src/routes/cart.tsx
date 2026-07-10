@@ -1,18 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ShoppingBag, Minus, Plus, Trash2 } from "lucide-react";
-import { AppShell } from "@/components/parkashala/AppShell";
-import { EmptyState } from "@/components/parkashala/EmptyState";
-import { VegBadge } from "@/components/parkashala/MenuCard";
-import { useCart, useMobile, useOrders } from "@/lib/parkashala-store";
-import { WHATSAPP_NUMBER } from "@/lib/parkashala-menu";
+import { AppShell } from "@/components/paakashala/AppShell";
+import { EmptyState } from "@/components/paakashala/EmptyState";
+import { VegBadge } from "@/components/paakashala/MenuCard";
+import { useCart, useMobile, useOrders } from "@/lib/paakashala-store";
+import { WHATSAPP_NUMBER } from "@/lib/paakashala-menu";
 
 export const Route = createFileRoute("/cart")({
   component: CartPage,
 });
 
-function buildWhatsAppMessage(mobile: string, items: ReturnType<typeof useCart>["items"], total: number) {
+function buildWhatsAppMessage(orderId: string, mobile: string, items: ReturnType<typeof useCart>["items"], total: number) {
   const lines: string[] = [];
-  lines.push("*Parkashala Order*");
+  lines.push("*Paakashala Order*");
+  lines.push(`Order ID: #${orderId}`);
   lines.push(`Customer Mobile: +91 ${mobile}`);
   lines.push("");
   lines.push("*Items:*");
@@ -37,10 +38,11 @@ function CartPage() {
 
   const checkout = () => {
     if (!items.length || !mobile) return;
-    const msg = buildWhatsAppMessage(mobile, items, total);
+    const orderId = Math.floor(1000 + Math.random() * 9000).toString();
+    const msg = buildWhatsAppMessage(orderId, mobile, items, total);
     const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
     const order = {
-      id: `order_${Date.now()}`,
+      id: orderId,
       mobile,
       createdAt: new Date().toISOString(),
       items,
