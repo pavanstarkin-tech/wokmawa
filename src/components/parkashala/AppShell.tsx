@@ -8,9 +8,9 @@ import { useCart, useMobile, useHydrated, KEYS } from "@/lib/parkashala-store";
 
 const TABS = [
   { to: "/", label: "Home", icon: Home, exact: true },
-  { to: "/menu", label: "Menu", icon: UtensilsCrossed },
-  { to: "/cart", label: "Cart", icon: ShoppingBag },
-  { to: "/orders", label: "Orders", icon: Receipt },
+  { to: "/menu", label: "Menu", icon: UtensilsCrossed, exact: false },
+  { to: "/cart", label: "Cart", icon: ShoppingBag, exact: false },
+  { to: "/orders", label: "Orders", icon: Receipt, exact: false },
 ] as const;
 
 function Header() {
