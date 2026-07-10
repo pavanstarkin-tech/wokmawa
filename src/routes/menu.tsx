@@ -34,7 +34,7 @@ function MenuPage() {
     if (typeof window !== "undefined") window.localStorage.setItem(KEYS.lastCategory, active);
   }, [active]);
 
-  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   const goCategory = (c: Category) => {
     setActive(c);
