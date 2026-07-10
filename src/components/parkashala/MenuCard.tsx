@@ -1,0 +1,100 @@
+import { Plus, Minus, Leaf, Drumstick } from "lucide-react";
+import { useCart } from "@/lib/parkashala-store";
+import type { MenuItem } from "@/lib/parkashala-menu";
+
+export function VegBadge({ type }: { type: "veg" | "non-veg" }) {
+  const color = type === "veg" ? "#3B7A3B" : "#B4482B";
+  return (
+    <span
+      className="inline-grid h-4 w-4 place-items-center rounded-sm border"
+      style={{ borderColor: color }}
+      aria-label={type}
+    >
+      <span className="h-2 w-2 rounded-full" style={{ background: color }} />
+    </span>
+  );
+}
+
+export function QuantitySelector({
+  qty,
+  onInc,
+  onDec,
+}: {
+  qty: number;
+  onInc: () => void;
+  onDec: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-gold/50 bg-cream px-1 py-1 shadow-luxe">
+      <button
+        onClick={onDec}
+        aria-label="Decrease"
+        className="grid h-7 w-7 place-items-center rounded-md text-brown-deep transition active:scale-90"
+      >
+        <Minus className="h-3.5 w-3.5" />
+      </button>
+      <span className="min-w-4 text-center text-sm font-semibold text-brown-deep">{qty}</span>
+      <button
+        onClick={onInc}
+        aria-label="Increase"
+        className="grid h-7 w-7 place-items-center rounded-md bg-gold-gradient text-brown-deep transition active:scale-90"
+      >
+        <Plus className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+export function MenuCard({ item }: { item: MenuItem }) {
+  const { items, add, setQty } = useCart();
+  const inCart = items.find((c) => c.id === item.id);
+
+  const priceLabel = item.price == null ? "Price on request" : `₹${item.price}`;
+
+  return (
+    <article className="group flex gap-3 rounded-2xl bg-card p-3 border border-border/60 shadow-luxe transition hover:-translate-y-0.5">
+      <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl">
+        <img
+          src={item.image}
+          alt={item.name}
+          loading="lazy"
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+        />
+        <div className="absolute left-1.5 top-1.5">
+          <VegBadge type={item.type} />
+        </div>
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="min-w-0 truncate text-sm font-semibold text-brown-deep">{item.name}</h3>
+        </div>
+        <div className="mt-0.5 text-[10px] uppercase tracking-widest text-gold">{item.category}</div>
+        {item.description && (
+          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.description}</p>
+        )}
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <div className={`text-sm font-bold ${item.price == null ? "text-muted-foreground italic" : "text-brown-deep"}`}>
+            {priceLabel}
+          </div>
+          {item.price == null ? (
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Ask at restaurant</span>
+          ) : inCart ? (
+            <QuantitySelector
+              qty={inCart.quantity}
+              onDec={() => setQty(item.id, inCart.quantity - 1)}
+              onInc={() => setQty(item.id, inCart.quantity + 1)}
+            />
+          ) : (
+            <button
+              onClick={() => add(item)}
+              className="inline-flex items-center gap-1 rounded-lg border border-gold bg-cream px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-brown-deep transition hover:bg-gold-gradient active:scale-95 shadow-luxe"
+            >
+              {item.type === "veg" ? <Leaf className="h-3.5 w-3.5" /> : <Drumstick className="h-3.5 w-3.5" />}
+              Add
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
