@@ -20,7 +20,7 @@ function Header({ title, table }: { title?: string; table?: string }) {
 
   if (title) {
     return (
-      <header className="relative z-40 flex h-16 items-center justify-between border-b border-border/60 bg-background/90 px-4 backdrop-blur-md rounded-b-[35px] shadow-sm max-w-xl mx-auto">
+      <header className="relative z-40 flex h-16 items-center justify-between border-b border-border/60 bg-background/90 px-4 md:px-8 lg:px-12 backdrop-blur-md rounded-b-[35px] shadow-sm max-w-7xl mx-auto w-full">
         <div className="flex items-center">
           <button onClick={() => window.history.back()} className="mr-3 p-1">
             <ChevronLeft className="h-6 w-6 text-brown-deep" />
@@ -31,7 +31,7 @@ function Header({ title, table }: { title?: string; table?: string }) {
     );
   }
   return (
-    <header className="relative z-40 flex h-[68px] items-center justify-between border-b border-border/60 bg-background/85 px-4 backdrop-blur-md rounded-b-[35px] shadow-sm max-w-xl mx-auto">
+    <header className="relative z-40 flex h-[68px] items-center justify-between border-b border-border/60 bg-background/85 px-4 md:px-8 lg:px-12 backdrop-blur-md rounded-b-[35px] shadow-sm max-w-7xl mx-auto w-full">
       
       {/* Left Table Indicator */}
       <div className="flex flex-col items-start relative z-10 w-20">
@@ -73,7 +73,7 @@ function BottomNav() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 bg-background border-t border-border/60 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.2)] pb-[max(env(safe-area-inset-bottom),0px)] rounded-t-[35px]">
-      <div className="mx-auto max-w-xl px-10 h-[64px] flex items-center justify-between">
+      <div className="mx-auto max-w-md px-10 h-[64px] flex items-center justify-between">
         
         {/* Home */}
         <Link to="/" className="h-full flex flex-col items-center justify-end pb-[10px] gap-[6px] w-16 transition-colors">
@@ -166,7 +166,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background selection:bg-gold/20">
       <Header title={title} table={table} />
       
-      <main className="pb-24 px-[15px] pt-4">
+      <main className="pb-24 px-[15px] md:px-8 lg:px-12 pt-4 max-w-7xl mx-auto w-full">
         {children}
       </main>
 

@@ -79,9 +79,7 @@ function CartPage() {
 
       const response = await fetch("/api/create-order.php", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: amountInPaise,
           receipt: receiptId,
@@ -108,6 +106,7 @@ function CartPage() {
             id: receiptId,
             mobile: customer.phone,
             customerName: customer.name,
+            uid: customer.uid || "",
             tableId: table,
             createdAt: new Date().toISOString(),
             items,

@@ -202,7 +202,7 @@ export function useTable() {
 }
 
 /* ---------- Customer Session ---------- */
-export type CustomerSession = { phone: string; name: string };
+export type CustomerSession = { phone: string; name: string; uid: string };
 export function useCustomer() {
   const getSnap = () => {
     if (typeof window === "undefined") return "null";

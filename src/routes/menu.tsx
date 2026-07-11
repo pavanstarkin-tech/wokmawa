@@ -73,9 +73,9 @@ function MenuPage() {
   return (
     <AppShell>
 
-      <div className="relative z-10 -mx-4 mt-4 px-4 pb-3 pt-2 mb-2">
-        <div className="flex items-center gap-2">
-          <div className="w-[75%] flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 shadow-luxe focus-within:border-gold">
+      <div className="relative z-10 -mx-4 md:-mx-8 lg:-mx-12 mt-4 px-4 md:px-8 lg:px-12 pb-3 pt-2 mb-2">
+        <div className="flex items-center gap-3 max-w-2xl mx-auto w-full">
+          <div className="flex-1 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 shadow-luxe focus-within:border-gold">
             <Search className="h-3.5 w-3.5 text-muted-foreground" />
             <input
               value={q}
@@ -90,7 +90,7 @@ function MenuPage() {
             )}
           </div>
 
-          <div className="w-[25%] flex items-center justify-center gap-1.5 bg-card border border-border/80 px-2 py-2 rounded-xl shadow-sm">
+          <div className="shrink-0 flex items-center justify-center gap-1.5 bg-card border border-border/80 px-2 py-2 rounded-xl shadow-sm">
             <span className={`text-[9px] font-bold transition-colors ${filter === 'veg' ? 'text-green-700' : 'text-muted-foreground/50'}`}>VEG</span>
             
             <button 
@@ -121,9 +121,9 @@ function MenuPage() {
         </div>
       </div>
 
-      <div className="sticky top-0 z-20 -mx-4 bg-background/85 backdrop-blur-md border-b border-border/60">
+      <div className="sticky top-0 z-20 -mx-4 md:-mx-8 lg:-mx-12 bg-background/85 backdrop-blur-md border-b border-border/60">
         <div className="overflow-x-auto no-scrollbar py-3">
-          <div className="flex gap-4 px-4">
+          <div className="flex gap-4 px-4 md:px-8 lg:px-12">
             {CATEGORIES.map((c) => {
               const on = active === c;
               return (
@@ -161,7 +161,7 @@ function MenuPage() {
                 <h2 className="text-xs font-bold uppercase tracking-[0.35em] text-brown-deep">{c}</h2>
                 <div className="h-px flex-1 bg-gold-gradient opacity-40" />
               </div>
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
                 {items.map((m) => (
                   <MiniCategoryCard key={m.id} item={m} />
                 ))}

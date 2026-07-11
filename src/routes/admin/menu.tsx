@@ -82,24 +82,24 @@ function AdminMenu() {
     if (!file) return;
 
     setUploadingImage(true);
-    const formData = new FormData();
-    formData.append("image", file);
-    formData.append("key", "271837f4240842ef12577a95dbae3e88"); // ImgBB API Key
-
     try {
-      const res = await fetch("https://api.imgbb.com/1/upload", {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await fetch("https://api.imgbb.com/1/upload?key=e3c5095dc4ee2bf7c87c1be980b1e428", {
         method: "POST",
         body: formData,
       });
-      const json = await res.json();
-      if (json.success && json.data?.url) {
-        setForm(f => ({ ...f, image: json.data.url }));
+      
+      const data = await res.json();
+      if (data.success) {
+        setForm(f => ({ ...f, image: data.data.url }));
       } else {
-        alert("Image upload failed. Please try again.");
+        throw new Error(data.error?.message || "Upload failed");
       }
     } catch (err) {
-      console.error("Upload error", err);
-      alert("Image upload failed. Please try again.");
+      console.error(err);
+      alert("Failed to upload image");
     } finally {
       setUploadingImage(false);
     }
@@ -237,8 +237,8 @@ function AdminMenu() {
               <span className="text-sm font-semibold text-muted-foreground">{cat.products.length} items</span>
             </div>
 
-            {/* 8 per row grid */}
-            <div className="grid p-4 gap-3" style={{ gridTemplateColumns: "repeat(8, minmax(0, 1fr))" }}>
+            {/* Responsive grid */}
+            <div className="grid p-4 gap-3 grid-cols-2 min-[400px]:grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
               {cat.products.map(product => (
                 <div
                   key={product.id}

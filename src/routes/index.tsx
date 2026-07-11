@@ -116,7 +116,7 @@ function VideoPlayer({ src }: { src: string }) {
     <div className="relative w-full h-full" onClick={togglePlay}>
       <video
         ref={videoRef}
-        src={objectUrl || ""}
+        src={objectUrl ?? undefined}
         loop
         muted={isMuted}
         playsInline
@@ -180,8 +180,8 @@ function Index() {
       {updates.length > 0 && (
         <section className="mt-8 animate-fade-up">
           <Section kicker="From the Kitchen" title="Latest Updates" />
-          <div className="-mx-[15px] overflow-x-auto no-scrollbar snap-x snap-mandatory">
-            <div className="flex gap-2.5 px-[15px] pb-4 w-max">
+          <div className="-mx-[15px] md:-mx-8 lg:-mx-12 overflow-x-auto no-scrollbar snap-x snap-mandatory">
+            <div className="flex gap-2.5 px-[15px] md:px-8 lg:px-12 pb-4 w-max">
               {updates.map((update) => (
                 <div key={update.id} className="w-[135px] shrink-0 bg-card rounded-3xl overflow-hidden shadow-luxe border border-border/60 snap-center">
                   <div className="h-[240px] w-full bg-black relative">
@@ -207,14 +207,14 @@ function Index() {
         <Section kicker="Curated for you" title="Browse the Menu" action={{ to: "/menu", label: "View all" }} />
       </section>
 
-      <div className="relative z-10 -mx-4 px-4 pt-2 pb-3 mb-2">
-        <div className="flex items-center gap-3">
+      <div className="relative z-10 -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 pt-2 pb-3 mb-2">
+        <div className="flex items-center gap-3 max-w-2xl mx-auto w-full">
             <form onSubmit={(e) => {
               e.preventDefault();
               if (searchQuery.trim()) {
                 navigate({ to: "/menu", search: { q: searchQuery.trim() } });
               }
-            }} className="relative w-[75%]">
+            }} className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <input 
                 type="text" 
@@ -225,7 +225,7 @@ function Index() {
               />
             </form>
 
-            <div className="w-[25%] flex items-center justify-center gap-1.5 bg-card border border-border/80 px-2 py-2 rounded-xl shadow-sm">
+            <div className="shrink-0 flex items-center justify-center gap-1.5 bg-card border border-border/80 px-2 py-2 rounded-xl shadow-sm">
               <span className={`text-[9px] font-bold transition-colors ${typeFilter === 'veg' ? 'text-green-700' : 'text-muted-foreground/50'}`}>VEG</span>
               
               <button 
@@ -256,9 +256,9 @@ function Index() {
           </div>
         </div>
 
-        <div className="sticky top-0 z-20 -mx-4 bg-background/85 backdrop-blur-md border-b border-border/60 mb-6">
+        <div className="sticky top-0 z-20 -mx-4 md:-mx-8 lg:-mx-12 bg-background/85 backdrop-blur-md border-b border-border/60 mb-6">
           <div className="overflow-x-auto no-scrollbar py-3">
-            <div className="flex gap-4 px-4">
+            <div className="flex gap-4 px-4 md:px-8 lg:px-12">
               {CATEGORIES.map((c) => (
                 <button
                   key={c}
@@ -291,7 +291,7 @@ function Index() {
 
         {/* Dynamic Category Products */}
         {activeCategory && (
-          <div id="dynamic-category-section" className="mt-4 animate-fade-up bg-luxe-gradient -mx-4 px-4 py-4 border-y border-gold/20 shadow-inner">
+          <div id="dynamic-category-section" className="mt-4 animate-fade-up bg-luxe-gradient -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 py-4 border-y border-gold/20 shadow-inner">
             <div className="mb-3 flex items-end justify-between">
               <h3 className="text-sm font-semibold text-brown-deep">
                 {activeCategory}
@@ -300,7 +300,7 @@ function Index() {
                 View All
               </Link>
             </div>
-            <div className="grid grid-cols-3 gap-2.5 mt-2">
+            <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mt-2">
                 {filteredMenu.filter((m) => m.category === activeCategory).map((f) => (
                   <div key={f.id}>
                     <MiniCategoryCard item={f} />
@@ -312,7 +312,7 @@ function Index() {
 
       <section className="mt-8 animate-fade-up">
         <Section kicker="Today's Highlights" title="Freshly Curated" action={{ to: "/menu", label: "See menu" }} />
-        <div className="grid grid-cols-3 gap-2 mt-2">
+        <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mt-2">
           {featured.map((f) => <FeaturedCard key={f.id} item={f} />)}
         </div>
       </section>
@@ -346,21 +346,21 @@ function Index() {
 
       <section className="mt-8 animate-fade-up">
         <Section kicker="Chef's Picks" title="House Favourites" />
-        <div className="grid grid-cols-3 gap-2 mt-2">
+        <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mt-2">
           {chefPicks.map((f) => <FeaturedCard key={f.id} item={f} />)}
         </div>
       </section>
 
       <section className="mt-8 animate-fade-up">
         <Section kicker="Bestselling" title="Biryani Specials" action={{ to: "/menu", label: "All biryanis" }} />
-        <div className="grid grid-cols-3 gap-2 mt-2">
+        <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mt-2">
           {bestBiryani.map((f) => <FeaturedCard key={f.id} item={f} />)}
         </div>
       </section>
 
       <section className="mt-8 mb-4 animate-fade-up">
         <Section kicker="Authentic Andhra" title="South Indian Starters" action={{ to: "/menu", label: "See more" }} />
-        <div className="grid grid-cols-3 gap-2 mt-2">
+        <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mt-2">
           {andhra.map((f) => <FeaturedCard key={f.id} item={f} />)}
         </div>
       </section>

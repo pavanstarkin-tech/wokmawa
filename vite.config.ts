@@ -14,5 +14,21 @@ export default defineConfig({
   },
   nitro: {
     preset: "node-server"
-  }
+  },
+  vite: {
+    server: {
+      proxy: {
+        // In dev, proxy /api/create-order.php → Razorpay and inject auth header
+        // In prod, Hostinger runs the real PHP file which adds auth itself
+        "/api/create-order.php": {
+          target: "https://api.razorpay.com",
+          changeOrigin: true,
+          rewrite: () => "/v1/orders",
+          headers: {
+            "Authorization": `Basic ${Buffer.from("rzp_live_StBUehIpeULYuL:M76UWnmNsVE7hU5QrkriZuor").toString("base64")}`,
+          },
+        },
+      },
+    },
+  },
 });

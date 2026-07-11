@@ -2,19 +2,44 @@ import { useState } from "react";
 import { ArrowRight, Utensils } from "lucide-react";
 import { LOGO_URL } from "@/lib/paakashala-menu";
 import { useCustomer } from "@/lib/paakashala-store";
+import { auth, db } from "@/lib/firebase";
+import { signInAnonymously } from "firebase/auth";
+import { ref, set } from "firebase/database";
 
 export function CustomerWelcome({ tableId }: { tableId: string }) {
   const { setCustomer } = useCustomer();
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (phone.trim().length < 10) return;
-    setCustomer({
-      phone: phone.trim(),
-      name: name.trim() || "Guest",
-    });
+    
+    setLoading(true);
+    try {
+      const userCredential = await signInAnonymously(auth);
+      const uid = userCredential.user.uid;
+      
+      const customerData = {
+        phone: phone.trim(),
+        name: name.trim() || "Guest",
+        createdAt: Date.now(),
+      };
+      
+      await set(ref(db, `restaurant/customers/${uid}`), customerData);
+      
+      setCustomer({
+        phone: customerData.phone,
+        name: customerData.name,
+        uid: uid,
+      });
+    } catch (error) {
+      console.error("Authentication failed:", error);
+      alert("Failed to initialize session. Please check your connection.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,11 +91,11 @@ export function CustomerWelcome({ tableId }: { tableId: string }) {
 
           <button
             type="submit"
-            disabled={phone.length < 10}
+            disabled={phone.length < 10 || loading}
             className="group mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-brown-gradient px-4 py-4 text-sm font-bold text-cream shadow-luxe transition-all active:scale-[0.98] disabled:opacity-50"
           >
-            Start Ordering
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            {loading ? "Initializing..." : "Start Ordering"}
+            {!loading && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
           </button>
         </form>
 

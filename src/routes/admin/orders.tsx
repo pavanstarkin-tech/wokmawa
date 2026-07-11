@@ -62,7 +62,7 @@ function AdminOrders() {
       </div>
       
       {/* Kanban Board Layout */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-hidden pb-4">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 overflow-y-auto lg:overflow-hidden pb-4">
         
         {/* PENDING COLUMN */}
         <KanbanColumn 
@@ -126,7 +126,7 @@ function AdminOrders() {
 
 function KanbanColumn({ title, icon: Icon, count, color, children }: any) {
   return (
-    <div className="flex flex-col h-full bg-card rounded-3xl border border-border/60 shadow-sm overflow-hidden">
+    <div className="flex flex-col min-h-[450px] lg:min-h-0 lg:h-full bg-card rounded-3xl border border-border/60 shadow-sm overflow-hidden">
       <div className={`px-5 py-4 border-b flex items-center justify-between ${color}`}>
         <div className="flex items-center gap-2 font-bold">
           <Icon className="h-5 w-5" />
