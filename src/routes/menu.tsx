@@ -20,7 +20,7 @@ export const Route = createFileRoute("/menu")({
 function MenuPage() {
   const { category: initialCat, q: initialQ } = Route.useSearch();
   const [q, setQ] = useState(initialQ ?? "");
-  const [filter, setFilter] = useState<"veg" | "non-veg">("veg");
+  const [filter, setFilter] = useState<"all" | "veg" | "non-veg">("all");
   const [active, setActive] = useState<Category>(() => {
     if (initialCat && (CATEGORIES as readonly string[]).includes(initialCat)) return initialCat as Category;
     if (typeof window !== "undefined") {
@@ -36,11 +36,12 @@ function MenuPage() {
 
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
-  const goCategory = (c: Category) => {
-    setActive(c);
+  const goCategory = (c: string) => {
+    setActive(c as Category);
     const el = sectionRefs.current[c];
     if (el) {
-      const y = el.getBoundingClientRect().top + window.scrollY - 260;
+      const offset = 100; // Account for sticky category bar height
+      const y = el.getBoundingClientRect().top + window.scrollY - offset;
       window.scrollTo({ top: y, behavior: "smooth" });
     }
   };
@@ -72,9 +73,9 @@ function MenuPage() {
   return (
     <AppShell>
 
-      <div className="sticky top-[68px] z-20 -mx-4 mt-4 bg-background/85 backdrop-blur-md px-4 pb-3 pt-2 border-b border-border/60">
+      <div className="relative z-10 -mx-4 mt-4 px-4 pb-3 pt-2 mb-2">
         <div className="flex items-center gap-2">
-          <div className="flex-1 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 shadow-luxe focus-within:border-gold">
+          <div className="w-[75%] flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 shadow-luxe focus-within:border-gold">
             <Search className="h-3.5 w-3.5 text-muted-foreground" />
             <input
               value={q}
@@ -89,18 +90,26 @@ function MenuPage() {
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0 bg-card border border-border/80 px-2.5 py-2 rounded-xl shadow-sm">
+          <div className="w-[25%] flex items-center justify-center gap-1.5 bg-card border border-border/80 px-2 py-2 rounded-xl shadow-sm">
             <span className={`text-[9px] font-bold transition-colors ${filter === 'veg' ? 'text-green-700' : 'text-muted-foreground/50'}`}>VEG</span>
             
             <button 
-              onClick={() => setFilter(filter === 'veg' ? 'non-veg' : 'veg')}
-              className={`relative flex h-4 w-8 items-center rounded-full transition-colors ${filter === 'veg' ? 'bg-green-500/20' : 'bg-red-500/20'}`}
+              onClick={() => {
+                if (filter === 'all') setFilter('veg');
+                else if (filter === 'veg') setFilter('non-veg');
+                else setFilter('all');
+              }}
+              className={`relative flex h-4 w-10 items-center rounded-full transition-colors ${
+                filter === 'all' ? 'bg-muted-foreground/20' : filter === 'veg' ? 'bg-green-500/20' : 'bg-red-500/20'
+              }`}
             >
               <div 
                 className={`absolute h-3.5 w-3.5 rounded-full shadow-md transition-transform duration-300 flex items-center justify-center ${
-                  filter === 'veg' 
+                  filter === 'all' 
+                    ? 'translate-x-[13px] bg-muted-foreground' 
+                    : filter === 'veg' 
                     ? 'translate-x-[2px] bg-green-500' 
-                    : 'translate-x-[16px] bg-red-500'
+                    : 'translate-x-[24px] bg-red-500'
                 }`}
               >
                  <div className="h-1 w-1 rounded-full bg-white" />
@@ -110,9 +119,11 @@ function MenuPage() {
             <span className={`text-[9px] font-bold transition-colors ${filter === 'non-veg' ? 'text-red-700' : 'text-muted-foreground/50'}`}>NON-VEG</span>
           </div>
         </div>
+      </div>
 
-        <div className="mt-3 -mx-4 overflow-x-auto no-scrollbar">
-          <div className="flex gap-4 px-4 pb-2">
+      <div className="sticky top-0 z-20 -mx-4 bg-background/85 backdrop-blur-md border-b border-border/60">
+        <div className="overflow-x-auto no-scrollbar py-3">
+          <div className="flex gap-4 px-4">
             {CATEGORIES.map((c) => {
               const on = active === c;
               return (

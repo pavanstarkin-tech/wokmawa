@@ -1,31 +1,64 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Home, ShoppingBag, Receipt, Sparkles, ChevronLeft, Search } from "lucide-react";
+import { Home, ShoppingBag, Receipt, Sparkles, ChevronLeft, Search, LogOut, ArrowUp } from "lucide-react";
 import { SplashScreen } from "./SplashScreen";
 import { TableScannerPrompt } from "./TableScannerPrompt";
-import { useCart, useTable, useHydrated, KEYS } from "@/lib/paakashala-store";
+import { CustomerWelcome } from "./CustomerWelcome";
+import { useCart, useTable, useCustomer, useHydrated, KEYS } from "@/lib/paakashala-store";
 
 function Header({ title, table }: { title?: string; table?: string }) {
+  const { setTable } = useTable();
+  const { clear } = useCart();
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to log out and clear your table?")) {
+      setTable("");
+      clear();
+      window.location.href = "/";
+    }
+  };
+
   if (title) {
     return (
-      <header className="sticky top-0 z-40 flex h-16 items-center border-b border-border/60 bg-background/90 px-4 backdrop-blur-md">
-        <button onClick={() => window.history.back()} className="mr-3 p-1">
-          <ChevronLeft className="h-6 w-6 text-brown-deep" />
-        </button>
-        <h1 className="text-lg font-bold text-brown-deep">{title}</h1>
+      <header className="relative z-40 flex h-16 items-center justify-between border-b border-border/60 bg-background/90 px-4 backdrop-blur-md rounded-b-[35px] shadow-sm max-w-xl mx-auto">
+        <div className="flex items-center">
+          <button onClick={() => window.history.back()} className="mr-3 p-1">
+            <ChevronLeft className="h-6 w-6 text-brown-deep" />
+          </button>
+          <h1 className="text-lg font-bold text-brown-deep">{title}</h1>
+        </div>
       </header>
     );
   }
   return (
-    <header className="sticky top-0 z-40 flex h-[68px] items-center justify-between border-b border-border/60 bg-background/85 px-4 backdrop-blur-md">
-      <div className="flex flex-col">
-        <h1 className="text-xl font-bold tracking-tight text-brown-deep">
-          Paakashala <Sparkles className="inline-block h-4 w-4 text-gold" />
-        </h1>
-        <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
-          Table {table}
+    <header className="relative z-40 flex h-[68px] items-center justify-between border-b border-border/60 bg-background/85 px-4 backdrop-blur-md rounded-b-[35px] shadow-sm max-w-xl mx-auto">
+      
+      {/* Left Table Indicator */}
+      <div className="flex flex-col items-start relative z-10 w-20">
+        <p className="text-[10px] font-black tracking-wider text-gold uppercase bg-gold/10 px-2 py-1 rounded-md border border-gold/20">
+          TBL {table}
         </p>
       </div>
+
+      {/* Centered Image */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+        <img 
+          src="https://i.ibb.co/Gv2MmGxS/erasebg-transformed-18.png" 
+          alt="Paakashala Center Logo" 
+          className="h-14 w-auto object-contain mix-blend-multiply" 
+        />
+      </div>
+
+      {/* Right Logout Button */}
+      <div className="flex flex-col items-end relative z-10 w-20">
+        <button 
+          onClick={handleLogout}
+          className="p-2 text-brown-deep/70 hover:text-brown-deep transition-colors bg-gold/5 rounded-full"
+        >
+          <LogOut className="h-5 w-5" />
+        </button>
+      </div>
+      
     </header>
   );
 }
@@ -39,7 +72,7 @@ function BottomNav() {
   const isOrders = pathname.startsWith("/orders");
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 bg-background border-t border-border/60 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.2)] pb-[max(env(safe-area-inset-bottom),0px)]">
+    <nav className="fixed inset-x-0 bottom-0 z-50 bg-background border-t border-border/60 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.2)] pb-[max(env(safe-area-inset-bottom),0px)] rounded-t-[35px]">
       <div className="mx-auto max-w-xl px-10 h-[64px] flex items-center justify-between">
         
         {/* Home */}
@@ -77,15 +110,11 @@ function BottomNav() {
 export function AppShell({ children }: { children: ReactNode }) {
   const hydrated = useHydrated();
   const { table } = useTable();
+  const { customer } = useCustomer();
   const [splashDone, setSplashDone] = useState(false);
-  const [phoneDone, setPhoneDone] = useState(false); // Can be removed later, kept for minimal diff
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // Once table exists in storage, mark phone step as done.
-  useEffect(() => {
-    if (table) setPhoneDone(true);
-  }, [table]);
-
-  // Also short-circuit splash if user already onboarded before.
+  // Short-circuit splash if user already onboarded before.
   useEffect(() => {
     if (!hydrated) return;
     const seen = window.sessionStorage.getItem("paakashala_splash_seen");
@@ -98,20 +127,60 @@ export function AppShell({ children }: { children: ReactNode }) {
     }
   }, [splashDone]);
 
-  if (!hydrated) {
-    return <div className="min-h-screen bg-luxe-gradient" />;
+  // Monitor scroll for Scroll to Top button visibility
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 400) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  if (!hydrated) return null;
+
+  if (!splashDone) {
+    return <SplashScreen onComplete={() => setSplashDone(true)} />;
   }
 
-  if (!splashDone) return <SplashScreen onDone={() => setSplashDone(true)} />;
-  if (!table) return <TableScannerPrompt />;
+  if (!table) {
+    return <TableScannerPrompt />;
+  }
 
-  // Suppress KEYS unused warning
-  void KEYS;
+  // Derive title from current route if not index
+  const pathname = window.location.pathname;
+  let title = undefined;
+  if (pathname.startsWith("/cart")) title = "Your Cart";
+  if (pathname.startsWith("/orders")) title = "Your Orders";
+  if (pathname.startsWith("/menu")) title = "Full Menu";
+  if (pathname.startsWith("/image-picker")) title = "Image Picker";
 
   return (
-    <div className="flex min-h-[100dvh] flex-col bg-background selection:bg-gold/20 pb-16">
-      <Header table={table} />
-      <main className="flex-1 pb-4">{children}</main>
+    <div className="min-h-screen bg-background selection:bg-gold/20">
+      <Header title={title} table={table} />
+      
+      <main className="pb-24 px-[15px] pt-4">
+        {children}
+      </main>
+
+      {/* Floating Scroll to Top button */}
+      {showScrollTop && (
+        <button
+          onClick={handleScrollToTop}
+          className="fixed right-4 bottom-[84px] z-50 flex h-10 w-10 items-center justify-center rounded-full bg-brown-deep text-gold shadow-luxe border border-gold/30 hover:opacity-90 active:scale-90 transition animate-fade-in"
+          aria-label="Scroll to top"
+        >
+          <ArrowUp className="h-5 w-5" />
+        </button>
+      )}
+
       <BottomNav />
     </div>
   );

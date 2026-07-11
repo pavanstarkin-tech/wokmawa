@@ -1,20 +1,23 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ShoppingBag, Minus, Plus, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { AppShell } from "@/components/paakashala/AppShell";
 import { EmptyState } from "@/components/paakashala/EmptyState";
 import { VegBadge } from "@/components/paakashala/MenuCard";
-import { useCart, useMobile, useOrders } from "@/lib/paakashala-store";
+import { CustomerWelcome } from "@/components/paakashala/CustomerWelcome";
+import { useCart, useCustomer, useTable, useOrders, useSettings } from "@/lib/paakashala-store";
 import { WHATSAPP_NUMBER } from "@/lib/paakashala-menu";
 
 export const Route = createFileRoute("/cart")({
   component: CartPage,
 });
 
-function buildWhatsAppMessage(orderId: string, mobile: string, items: ReturnType<typeof useCart>["items"], total: number) {
+function buildWhatsAppMessage(orderId: string, mobile: string, name: string, table: string, items: ReturnType<typeof useCart>["items"], total: number) {
   const lines: string[] = [];
   lines.push("*Paakashala Order*");
   lines.push(`Order ID: #${orderId}`);
-  lines.push(`Customer Mobile: +91 ${mobile}`);
+  lines.push(`Table: ${table}`);
+  lines.push(`Customer: ${name} (+91 ${mobile})`);
   lines.push("");
   lines.push("*Items:*");
   items.forEach((it, i) => {
@@ -28,35 +31,125 @@ function buildWhatsAppMessage(orderId: string, mobile: string, items: ReturnType
   return lines.join("\n");
 }
 
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if ((window as any).Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 function CartPage() {
   const { items, setQty, remove, clear, total, count } = useCart();
-  const { mobile } = useMobile();
+  const { customer } = useCustomer();
+  const { table } = useTable();
   const { push } = useOrders();
+  const settings = useSettings();
   const navigate = useNavigate();
 
+  const [showCustomerPrompt, setShowCustomerPrompt] = useState(false);
   const hasPriceOnRequest = items.some((i) => i.price == null);
 
-  const checkout = () => {
-    if (!items.length || !mobile) return;
-    const orderId = Math.floor(1000 + Math.random() * 9000).toString();
-    const msg = buildWhatsAppMessage(orderId, mobile, items, total);
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
-    const order = {
-      id: orderId,
-      mobile,
-      createdAt: new Date().toISOString(),
-      items,
-      total,
-      status: "Order placed via WhatsApp",
-    };
-    push(order);
-    clear();
-    window.open(url, "_blank");
-    navigate({ to: "/orders" });
+  // If customer completes the prompt, automatically process checkout
+  useEffect(() => {
+    if (showCustomerPrompt && customer) {
+      setShowCustomerPrompt(false);
+      processCheckout();
+    }
+  }, [customer, showCustomerPrompt]);
+
+  const processCheckout = async () => {
+    if (!items.length || !customer || !table) return;
+
+    const isScriptLoaded = await loadRazorpayScript();
+    if (!isScriptLoaded) {
+      alert("Failed to load payment gateway. Please check your internet connection.");
+      return;
+    }
+
+    try {
+      const amountInPaise = Math.round(total * 100);
+      const receiptId = Math.floor(1000 + Math.random() * 9000).toString();
+
+      const response = await fetch("/api/create-order.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: amountInPaise,
+          receipt: receiptId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create order on server");
+      }
+
+      const rzpOrder = await response.json();
+      const rzpOrderId = rzpOrder.id;
+
+      const options = {
+        key: "rzp_live_StBUehIpeULYuL",
+        amount: amountInPaise,
+        currency: "INR",
+        name: "Paakashala",
+        description: `Order at Table ${table}`,
+        order_id: rzpOrderId,
+        handler: function (paymentResponse: any) {
+          // This callback only fires if payment succeeds!
+          const order = {
+            id: receiptId,
+            mobile: customer.phone,
+            customerName: customer.name,
+            tableId: table,
+            createdAt: new Date().toISOString(),
+            items,
+            total,
+            paymentId: paymentResponse.razorpay_payment_id,
+            status: "pending",
+          };
+          
+          push(order);
+          clear();
+          navigate({ to: "/orders" });
+        },
+        prefill: {
+          name: customer.name,
+          contact: customer.phone,
+          email: "shesettipavankumarswamy@gmail.com",
+        },
+        theme: {
+          color: "#C89B3C", // Gold theme
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
+
+    } catch (err) {
+      console.error(err);
+      alert("Error initiating payment. Please try again.");
+    }
+  };
+
+  const handleCheckoutClick = () => {
+    if (!customer) {
+      setShowCustomerPrompt(true);
+    } else {
+      processCheckout();
+    }
   };
 
   return (
     <AppShell>
+      {showCustomerPrompt && <CustomerWelcome tableId={table} />}
       <div className="animate-fade-up">
         <div className="text-[10px] tracking-[0.4em] uppercase text-gold">Your Table</div>
         <h1 className="mt-1 text-3xl font-semibold text-brown-deep">Cart</h1>
@@ -120,10 +213,12 @@ function CartPage() {
               <span className="text-muted-foreground">Items</span>
               <span className="font-semibold text-brown-deep">{count}</span>
             </div>
-            <div className="mt-2 flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Contact</span>
-              <span className="font-semibold text-brown-deep">+91 {mobile}</span>
-            </div>
+            {customer && (
+              <div className="mt-2 flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Contact</span>
+                <span className="font-semibold text-brown-deep">+91 {customer.phone}</span>
+              </div>
+            )}
             <div className="my-3 h-px bg-gold-gradient opacity-40" />
             <div className="flex items-end justify-between">
               <div>
@@ -138,13 +233,13 @@ function CartPage() {
             </div>
 
             <button
-              onClick={checkout}
+              onClick={handleCheckoutClick}
               className="mt-5 w-full rounded-xl bg-brown-gradient py-3.5 text-sm font-semibold uppercase tracking-widest text-cream shadow-luxe active:scale-[0.98] transition"
             >
-              Proceed to Checkout · WhatsApp
+              Proceed to Checkout
             </button>
             <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              Opens WhatsApp with your order summary.
+              You will be prompted to confirm your table & details.
             </p>
           </div>
         </>

@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
+    "build": "vite build && node scripts/build-hostinger.js && node scripts/generate-index.js",
+    "build:dev": "vite build --mode development && node scripts/build-hostinger.js && node scripts/generate-index.js",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write ."
@@ -53,6 +53,7 @@
     "embla-carousel-react": "^8.6.0",
     "firebase": "^12.16.0",
     "input-otp": "^1.4.2",
+    "jsqr": "^1.4.0",
     "lucide-react": "^0.575.0",
     "qrcode": "^1.5.4",
     "react": "^19.2.0",

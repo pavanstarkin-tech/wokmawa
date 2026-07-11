@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ref, onValue, update } from "firebase/database";
+import { ref, onValue, update, remove } from "firebase/database";
 import { db } from "@/lib/firebase";
-import { Search, Plus, X } from "lucide-react";
+import { Search, Plus, X, Edit2, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/admin/menu")({
   component: AdminMenu,
@@ -32,17 +32,21 @@ const EMPTY_FORM = {
   type: "veg",
   categoryName: "",
   newCategory: "",
-  veg: true,
   spicy: false,
   popular: false,
 };
+
+type ModalMode = "add" | "edit";
 
 function AdminMenu() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState<ModalMode>("add");
+  const [editTarget, setEditTarget] = useState<{ type: string; categoryName: string; product: Product } | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     const menuRef = ref(db, "restaurant/menu");
@@ -69,36 +73,115 @@ function AdminMenu() {
   const toggleAvailability = async (type: string, categoryName: string, productId: string, currentStatus: boolean) => {
     const cat = categories.find(c => c.type === type && c.categoryName === categoryName);
     if (!cat) return;
-    const updatedProducts = cat.products.map(p => p.id === productId ? { ...p, available: !currentStatus } : p);
-    await update(ref(db, `restaurant/menu/${type}/${categoryName}`), { productsJson: JSON.stringify(updatedProducts) });
+    const updated = cat.products.map(p => p.id === productId ? { ...p, available: !currentStatus } : p);
+    await update(ref(db, `restaurant/menu/${type}/${categoryName}`), { productsJson: JSON.stringify(updated) });
   };
 
-  const saveNewItem = async () => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("key", "271837f4240842ef12577a95dbae3e88"); // ImgBB API Key
+
+    try {
+      const res = await fetch("https://api.imgbb.com/1/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (json.success && json.data?.url) {
+        setForm(f => ({ ...f, image: json.data.url }));
+      } else {
+        alert("Image upload failed. Please try again.");
+      }
+    } catch (err) {
+      console.error("Upload error", err);
+      alert("Image upload failed. Please try again.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const openAddModal = () => {
+    setForm({ ...EMPTY_FORM });
+    setModalMode("add");
+    setEditTarget(null);
+    setShowModal(true);
+  };
+
+  const openEditModal = (type: string, categoryName: string, product: Product) => {
+    setForm({
+      name: product.name,
+      price: String(product.price),
+      image: product.image || "",
+      type,
+      categoryName,
+      newCategory: "",
+      spicy: product.spicy || false,
+      popular: product.popular || false,
+    });
+    setModalMode("edit");
+    setEditTarget({ type, categoryName, product });
+    setShowModal(true);
+  };
+
+  const deleteItem = async (type: string, categoryName: string, productId: string) => {
+    if (!confirm("Delete this item? This cannot be undone.")) return;
+    const cat = categories.find(c => c.type === type && c.categoryName === categoryName);
+    if (!cat) return;
+    const updated = cat.products.filter(p => p.id !== productId);
+    await update(ref(db, `restaurant/menu/${type}/${categoryName}`), { productsJson: JSON.stringify(updated) });
+  };
+
+  const saveItem = async () => {
     const targetCategory = form.newCategory.trim() || form.categoryName;
     if (!form.name.trim() || !form.price || !targetCategory) return;
     setSaving(true);
 
-    const cat = categories.find(c => c.type === form.type && c.categoryName === targetCategory);
-    const existingProducts = cat ? [...cat.products] : [];
-
-    const newProduct: Product = {
-      id: `item_${Date.now()}`,
-      name: form.name.trim(),
-      price: Number(form.price),
-      available: true,
-      veg: form.type === "veg",
-      spicy: form.spicy,
-      popular: form.popular,
-      ...(form.image.trim() ? { image: form.image.trim() } : {}),
-    };
-
-    existingProducts.push(newProduct);
-    await update(ref(db, `restaurant/menu/${form.type}/${targetCategory}`), {
-      productsJson: JSON.stringify(existingProducts),
-    });
+    if (modalMode === "add") {
+      const cat = categories.find(c => c.type === form.type && c.categoryName === targetCategory);
+      const existingProducts = cat ? [...cat.products] : [];
+      const newProduct: Product = {
+        id: `item_${Date.now()}`,
+        name: form.name.trim(),
+        price: Number(form.price),
+        available: true,
+        veg: form.type === "veg",
+        spicy: form.spicy,
+        popular: form.popular,
+        ...(form.image.trim() ? { image: form.image.trim() } : {}),
+      };
+      existingProducts.push(newProduct);
+      await update(ref(db, `restaurant/menu/${form.type}/${targetCategory}`), {
+        productsJson: JSON.stringify(existingProducts),
+      });
+    } else if (modalMode === "edit" && editTarget) {
+      const cat = categories.find(c => c.type === editTarget.type && c.categoryName === editTarget.categoryName);
+      if (!cat) { setSaving(false); return; }
+      const updated = cat.products.map(p =>
+        p.id === editTarget.product.id
+          ? {
+              ...p,
+              name: form.name.trim(),
+              price: Number(form.price),
+              spicy: form.spicy,
+              popular: form.popular,
+              veg: form.type === "veg",
+              ...(form.image.trim() ? { image: form.image.trim() } : { image: undefined }),
+            }
+          : p
+      );
+      await update(ref(db, `restaurant/menu/${editTarget.type}/${editTarget.categoryName}`), {
+        productsJson: JSON.stringify(updated),
+      });
+    }
 
     setForm({ ...EMPTY_FORM });
     setShowModal(false);
+    setEditTarget(null);
     setSaving(false);
   };
 
@@ -107,13 +190,13 @@ function AdminMenu() {
     products: cat.products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
   })).filter(cat => cat.products.length > 0);
 
-  // Unique category names per type for the dropdown
   const vegCategories = categories.filter(c => c.type === "veg").map(c => c.categoryName);
   const nonVegCategories = categories.filter(c => c.type === "nonVeg").map(c => c.categoryName);
   const availableCategories = form.type === "veg" ? vegCategories : nonVegCategories;
 
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-500">
+      {/* Header */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
         <div>
           <h1 className="text-3xl font-bold text-brown-deep tracking-tight">Menu Manager</h1>
@@ -131,7 +214,7 @@ function AdminMenu() {
             />
           </div>
           <button
-            onClick={() => setShowModal(true)}
+            onClick={openAddModal}
             className="flex items-center gap-2 bg-brown-gradient text-cream px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:opacity-90 active:scale-95 transition-all"
           >
             <Plus className="h-4 w-4" />
@@ -140,6 +223,7 @@ function AdminMenu() {
         </div>
       </div>
 
+      {/* Categories */}
       <div className="flex-1 overflow-y-auto space-y-8 pb-12">
         {filteredCategories.map((cat, idx) => (
           <div key={idx} className="bg-card rounded-3xl border border-border/60 shadow-sm overflow-hidden">
@@ -147,33 +231,63 @@ function AdminMenu() {
               <h2 className="text-lg font-bold text-brown-deep flex items-center gap-2">
                 {cat.categoryName}
                 <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${cat.type === "veg" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                  {cat.type}
+                  {cat.type === "veg" ? "Veg" : "Non-Veg"}
                 </span>
               </h2>
               <span className="text-sm font-semibold text-muted-foreground">{cat.products.length} items</span>
             </div>
-            <div className="grid p-4 gap-3" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))" }}>
+
+            {/* 8 per row grid */}
+            <div className="grid p-4 gap-3" style={{ gridTemplateColumns: "repeat(8, minmax(0, 1fr))" }}>
               {cat.products.map(product => (
-                <div key={product.id} className="flex flex-col items-center border border-border/50 rounded-2xl p-3 bg-background hover:shadow-md transition-all gap-2 text-center">
-                  <div className="h-14 w-14 rounded-xl bg-muted/50 border border-border overflow-hidden flex items-center justify-center shrink-0">
+                <div
+                  key={product.id}
+                  className={`group relative flex flex-col items-center border rounded-2xl p-2 transition-all gap-1.5 text-center cursor-default ${
+                    product.available !== false
+                      ? "border-border/50 bg-background hover:shadow-md"
+                      : "border-border/20 bg-muted/20 opacity-50"
+                  }`}
+                >
+                  {/* Edit / Delete overlay */}
+                  <div className="absolute top-1 right-1 hidden group-hover:flex gap-1 z-10">
+                    <button
+                      onClick={() => openEditModal(cat.type, cat.categoryName, product)}
+                      className="p-1 bg-card border border-border rounded-lg shadow-sm hover:bg-gold/10 transition-colors"
+                      title="Edit"
+                    >
+                      <Edit2 className="h-3 w-3 text-brown-deep" />
+                    </button>
+                    <button
+                      onClick={() => deleteItem(cat.type, cat.categoryName, product.id)}
+                      className="p-1 bg-card border border-border rounded-lg shadow-sm hover:bg-red-50 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </button>
+                  </div>
+
+                  {/* Image */}
+                  <div className="w-full aspect-square rounded-xl bg-muted/50 border border-border overflow-hidden flex items-center justify-center">
                     {product.image ? (
                       <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
                     ) : (
                       <div className={`h-3 w-3 rounded-sm border ${product.veg ? "border-green-600 bg-green-50" : "border-red-600 bg-red-50"}`} />
                     )}
                   </div>
-                  <div className="flex-1 w-full">
-                    <h3 className="font-bold text-brown-deep text-xs leading-tight line-clamp-2">{product.name}</h3>
-                    <div className="text-gold font-bold text-xs mt-1">₹{product.price}</div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer mt-1">
+
+                  {/* Name & Price */}
+                  <h3 className="font-bold text-brown-deep text-[10px] leading-tight line-clamp-2 w-full">{product.name}</h3>
+                  <div className="text-gold font-bold text-[10px]">₹{product.price}</div>
+
+                  {/* Toggle */}
+                  <label className="relative inline-flex items-center cursor-pointer">
                     <input
                       type="checkbox"
                       className="sr-only peer"
                       checked={product.available !== false}
                       onChange={() => toggleAvailability(cat.type, cat.categoryName, product.id, product.available !== false)}
                     />
-                    <div className="w-9 h-5 bg-red-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+                    <div className="w-8 h-4 bg-red-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-green-500"></div>
                   </label>
                 </div>
               ))}
@@ -188,54 +302,71 @@ function AdminMenu() {
         )}
       </div>
 
-      {/* Add Item Modal */}
+      {/* Add / Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-card rounded-3xl border border-border/60 shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between px-6 py-5 border-b border-border/50">
-              <h2 className="text-xl font-bold text-brown-deep">Add New Item</h2>
+          <div className="bg-card rounded-3xl border border-border/60 shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-border/50 sticky top-0 bg-card z-10">
+              <h2 className="text-xl font-bold text-brown-deep">
+                {modalMode === "add" ? "Add New Item" : "Edit Item"}
+              </h2>
               <button onClick={() => setShowModal(false)} className="p-2 rounded-xl hover:bg-muted/50 transition-colors">
                 <X className="h-5 w-5 text-muted-foreground" />
               </button>
             </div>
 
             <div className="p-6 space-y-4">
-              {/* Type */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setForm(f => ({ ...f, type: "veg", veg: true, categoryName: "" }))}
-                  className={`flex-1 py-2.5 rounded-xl font-bold text-sm border transition-all ${form.type === "veg" ? "bg-green-500 text-white border-green-500" : "border-border/60 text-muted-foreground"}`}
-                >
-                  🟢 Veg
-                </button>
-                <button
-                  onClick={() => setForm(f => ({ ...f, type: "nonVeg", veg: false, categoryName: "" }))}
-                  className={`flex-1 py-2.5 rounded-xl font-bold text-sm border transition-all ${form.type === "nonVeg" ? "bg-red-500 text-white border-red-500" : "border-border/60 text-muted-foreground"}`}
-                >
-                  🔴 Non Veg
-                </button>
-              </div>
+              {/* Type toggle — only for Add */}
+              {modalMode === "add" && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setForm(f => ({ ...f, type: "veg", categoryName: "" }))}
+                    className={`flex-1 py-2.5 rounded-xl font-bold text-sm border transition-all ${form.type === "veg" ? "bg-green-500 text-white border-green-500" : "border-border/60 text-muted-foreground"}`}
+                  >
+                    🟢 Veg
+                  </button>
+                  <button
+                    onClick={() => setForm(f => ({ ...f, type: "nonVeg", categoryName: "" }))}
+                    className={`flex-1 py-2.5 rounded-xl font-bold text-sm border transition-all ${form.type === "nonVeg" ? "bg-red-500 text-white border-red-500" : "border-border/60 text-muted-foreground"}`}
+                  >
+                    🔴 Non Veg
+                  </button>
+                </div>
+              )}
 
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-semibold text-brown-deep mb-1.5">Category</label>
-                <select
-                  value={form.categoryName}
-                  onChange={(e) => setForm(f => ({ ...f, categoryName: e.target.value, newCategory: "" }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
-                >
-                  <option value="">— Select existing —</option>
-                  {availableCategories.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <p className="text-xs text-muted-foreground mt-2 mb-1">Or create a new category:</p>
-                <input
-                  type="text"
-                  placeholder="New category name..."
-                  value={form.newCategory}
-                  onChange={(e) => setForm(f => ({ ...f, newCategory: e.target.value, categoryName: "" }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
-                />
-              </div>
+              {/* Category — only for Add */}
+              {modalMode === "add" && (
+                <div>
+                  <label className="block text-sm font-semibold text-brown-deep mb-1.5">Category</label>
+                  <select
+                    value={form.categoryName}
+                    onChange={(e) => setForm(f => ({ ...f, categoryName: e.target.value, newCategory: "" }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+                  >
+                    <option value="">— Select existing —</option>
+                    {availableCategories.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <p className="text-xs text-muted-foreground mt-2 mb-1">Or create a new category:</p>
+                  <input
+                    type="text"
+                    placeholder="New category name..."
+                    value={form.newCategory}
+                    onChange={(e) => setForm(f => ({ ...f, newCategory: e.target.value, categoryName: "" }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+                  />
+                </div>
+              )}
+
+              {/* Edit mode — show category info readonly */}
+              {modalMode === "edit" && editTarget && (
+                <div className="rounded-xl bg-muted/30 px-4 py-3 text-sm">
+                  <span className="text-muted-foreground">Category: </span>
+                  <span className="font-bold text-brown-deep">{editTarget.categoryName}</span>
+                  <span className={`ml-2 text-[10px] font-bold uppercase px-2 py-0.5 rounded ${editTarget.type === "veg" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                    {editTarget.type === "veg" ? "Veg" : "Non-Veg"}
+                  </span>
+                </div>
+              )}
 
               {/* Name */}
               <div>
@@ -261,16 +392,36 @@ function AdminMenu() {
                 />
               </div>
 
-              {/* Image URL */}
+              {/* Image URL / Upload */}
               <div>
-                <label className="block text-sm font-semibold text-brown-deep mb-1.5">Image URL (optional)</label>
-                <input
-                  type="text"
-                  placeholder="https://..."
-                  value={form.image}
-                  onChange={(e) => setForm(f => ({ ...f, image: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
-                />
+                <label className="block text-sm font-semibold text-brown-deep mb-1.5">Image</label>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Image URL or upload below..."
+                      value={form.image}
+                      onChange={(e) => setForm(f => ({ ...f, image: e.target.value }))}
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+                    />
+                  </div>
+                  
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                    />
+                    <div className={`w-full px-4 py-2.5 rounded-xl border border-dashed border-border/80 bg-muted/20 text-sm flex items-center justify-center text-muted-foreground transition-all hover:bg-muted/40 ${uploadingImage ? 'opacity-50' : ''}`}>
+                      {uploadingImage ? "Uploading to ImgBB..." : "Tap here to upload from device"}
+                    </div>
+                  </div>
+                </div>
+                {form.image && (
+                  <img src={form.image} alt="Preview" className="mt-3 h-20 w-20 object-cover rounded-xl border border-border" onError={(e) => (e.currentTarget.style.display = "none")} />
+                )}
               </div>
 
               {/* Tags */}
@@ -294,11 +445,11 @@ function AdminMenu() {
                 Cancel
               </button>
               <button
-                onClick={saveNewItem}
-                disabled={saving || !form.name.trim() || !form.price || (!form.categoryName && !form.newCategory.trim())}
+                onClick={saveItem}
+                disabled={saving || !form.name.trim() || !form.price || (modalMode === "add" && !form.categoryName && !form.newCategory.trim())}
                 className="flex-1 py-3 rounded-xl bg-brown-gradient text-cream font-bold text-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {saving ? "Saving..." : "Add Item"}
+                {saving ? "Saving..." : modalMode === "add" ? "Add Item" : "Save Changes"}
               </button>
             </div>
           </div>

@@ -8,8 +8,11 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
   tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
+    // Disable SSR to output a pure static SPA with an index.html file for Hostinger.
+    ssr: false,
     server: { entry: "server" },
   },
+  nitro: {
+    preset: "node-server"
+  }
 });

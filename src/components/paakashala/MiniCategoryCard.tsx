@@ -7,37 +7,49 @@ export function MiniCategoryCard({ item }: { item: MenuItem }) {
   const inCart = items.find((c) => c.id === item.id);
 
   return (
-    <div className="w-full aspect-[3/4.3] shrink-0 overflow-hidden rounded-xl bg-card border border-border/60 shadow-sm relative flex flex-col">
-      <div className="flex-1 w-full overflow-hidden relative shrink-0">
-        <img src={item.image} alt={item.name} loading="lazy" className="h-full w-full object-cover" />
-        <div className="absolute top-1.5 left-1.5 bg-cream/90 rounded-sm p-0.5 shadow-sm">
+    <div className="w-full overflow-hidden rounded-2xl bg-card border border-border/60 shadow-luxe flex flex-col group hover:shadow-xl transition-shadow duration-300">
+      {/* Image */}
+      <div className="relative w-full aspect-[4/3] overflow-hidden">
+        <img
+          src={item.image}
+          alt={item.name}
+          loading="lazy"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+        {/* Veg indicator */}
+        <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm rounded-md px-1.5 py-0.5 flex items-center gap-1 shadow-sm">
           <div className={`h-2 w-2 rounded-full ${item.type === "veg" ? "bg-green-500" : "bg-red-500"}`} />
         </div>
       </div>
-      <div className="h-[54px] shrink-0 w-full px-2 py-1.5 flex flex-col justify-between">
-        <h4 className="line-clamp-2 text-[10px] font-bold text-brown-deep leading-[1.1]">{item.name}</h4>
-        <div className="flex items-center justify-between">
-          <div className={`text-[11px] font-bold ${item.price == null ? "text-muted-foreground" : "text-brown-deep"}`}>
+
+      {/* Info + Add Button */}
+      <div className="px-3 py-2 flex flex-col justify-between flex-1 min-h-[72px]">
+        <h4 className="line-clamp-2 text-[10px] font-bold text-brown-deep leading-tight mt-0.5">{item.name}</h4>
+
+        <div className="flex flex-wrap items-center justify-between gap-1 mt-1">
+          <span className={`text-[11px] font-extrabold ${item.price == null ? "text-muted-foreground/70 italic" : "text-brown-deep"}`}>
             {item.price == null ? "—" : `₹${item.price}`}
-          </div>
+          </span>
+
           {item.price != null && (
             inCart ? (
-              <div className="flex items-center gap-1 rounded-full border border-gold/50 bg-cream px-0.5 py-0.5 shadow-sm">
+              <div className="flex items-center gap-0.5 rounded-full border border-gold/50 bg-cream px-0.5 py-0.5 shadow-sm shrink-0 w-full justify-between mt-1">
                 <button onClick={() => setQty(item.id, inCart.quantity - 1)} className="grid h-4 w-4 place-items-center rounded-full text-brown-deep active:scale-90 transition">
-                  <Minus className="h-2.5 w-2.5" />
+                  <Minus className="h-2 w-2" />
                 </button>
                 <span className="text-[10px] font-bold text-brown-deep leading-none min-w-[12px] text-center">{inCart.quantity}</span>
                 <button onClick={() => setQty(item.id, inCart.quantity + 1)} className="grid h-4 w-4 place-items-center rounded-full bg-gold-gradient text-brown-deep active:scale-90 transition">
-                  <Plus className="h-2.5 w-2.5" />
+                  <Plus className="h-2 w-2" />
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => add(item)}
-                className="grid h-5 w-5 place-items-center rounded-full bg-gold-gradient text-brown-deep shadow-sm active:scale-90 transition"
-                aria-label={`Add`}
+                className="grid h-7 w-7 place-items-center rounded-full bg-gold-gradient text-brown-deep shadow-sm active:scale-90 transition shrink-0"
+                aria-label={`Add ${item.name}`}
               >
-                <Plus className="h-3 w-3" />
+                <Plus className="h-3.5 w-3.5" />
               </button>
             )
           )}

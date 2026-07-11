@@ -1,4 +1,6 @@
 import { useEffect, useState, useCallback, useSyncExternalStore } from "react";
+import { ref, onValue, set, push } from "firebase/database";
+import { db } from "./firebase";
 import type { MenuItem } from "./paakashala-menu";
 
 export const KEYS = {
@@ -63,9 +65,6 @@ function writeString(key: string, value: string) {
 }
 
 /* ---------- Firebase Menu Sync ---------- */
-import { db } from "./firebase";
-import { ref, onValue } from "firebase/database";
-
 export function useMenu() {
   const getSnap = () => {
     if (typeof window === "undefined") return "[]";
@@ -113,6 +112,83 @@ export function useMenu() {
   return menu;
 }
 
+/* ---------- Updates (Videos) Sync ---------- */
+export type UpdateEntry = {
+  id: string;
+  videoUrl: string;
+  createdAt: number;
+};
+
+export function useUpdates() {
+  const getSnap = () => {
+    if (typeof window === "undefined") return "[]";
+    return window.localStorage.getItem("paakashala_updates_cache") ?? "[]";
+  };
+  const raw = useSyncExternalStore(subscribe, getSnap, () => "[]");
+  const [updates, setUpdates] = useState<UpdateEntry[]>([]);
+  
+  useEffect(() => {
+    try { setUpdates(JSON.parse(raw)); } 
+    catch { setUpdates([]); }
+  }, [raw]);
+
+  useEffect(() => {
+    const updatesRef = ref(db, 'restaurant/updates');
+    const unsub = onValue(updatesRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) {
+        writeJSON("paakashala_updates_cache", []);
+        return;
+      }
+      
+      const parsedUpdates: UpdateEntry[] = Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+      // Sort newest first
+      parsedUpdates.sort((a, b) => b.createdAt - a.createdAt);
+      writeJSON("paakashala_updates_cache", parsedUpdates);
+    });
+    
+    return () => unsub();
+  }, []);
+
+  return updates;
+}
+
+export type RestaurantSettings = {
+  upiId?: string;
+  qrImage?: string;
+};
+
+export function useSettings() {
+  const getSnap = () => {
+    if (typeof window === "undefined") return "{}";
+    return window.localStorage.getItem("paakashala_settings") ?? "{}";
+  };
+  const raw = useSyncExternalStore(subscribe, getSnap, () => "{}");
+  const [settings, setSettings] = useState<RestaurantSettings>({});
+
+  useEffect(() => {
+    try {
+      setSettings(JSON.parse(raw));
+    } catch {
+      setSettings({});
+    }
+  }, [raw]);
+
+  useEffect(() => {
+    const settingsRef = ref(db, "restaurant/settings");
+    const unsub = onValue(settingsRef, (snap) => {
+      const data = snap.val() || {};
+      writeJSON("paakashala_settings", data);
+    });
+    return () => unsub();
+  }, []);
+
+  return settings;
+}
+
 /* ---------- Table Guard ---------- */
 export function useTable() {
   const get = () => (typeof window === "undefined" ? "" : window.localStorage.getItem("paakashala_table") ?? "");
@@ -123,6 +199,30 @@ export function useTable() {
     emit();
   }, []);
   return { table: value, setTable: set, clearTable: clear };
+}
+
+/* ---------- Customer Session ---------- */
+export type CustomerSession = { phone: string; name: string };
+export function useCustomer() {
+  const getSnap = () => {
+    if (typeof window === "undefined") return "null";
+    return window.localStorage.getItem("paakashala_customer") ?? "null";
+  };
+  const raw = useSyncExternalStore(subscribe, getSnap, () => "null");
+  const [customer, setCustomer] = useState<CustomerSession | null>(null);
+  
+  useEffect(() => {
+    try { setCustomer(JSON.parse(raw)); } 
+    catch { setCustomer(null); }
+  }, [raw]);
+
+  const set = useCallback((c: CustomerSession) => writeJSON("paakashala_customer", c), []);
+  const clear = useCallback(() => {
+    window.localStorage.removeItem("paakashala_customer");
+    emit();
+  }, []);
+  
+  return { customer, setCustomer: set, clearCustomer: clear };
 }
 
 /* ---------- Cart ---------- */

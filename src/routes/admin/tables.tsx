@@ -43,26 +43,77 @@ function AdminTables() {
     tables.forEach(async (table) => {
       if (!qrDataUrls[table.id]) {
         const url = `${BASE_URL}/t/${table.id}`;
-        const dataUrl = await QRCode.toDataURL(url, {
-          width: 400,
-          margin: 2,
-          color: { dark: "#3B1F0A", light: "#FDF8F0" },
-        });
-        setQrDataUrls((prev) => ({ ...prev, [table.id]: dataUrl }));
+        
+        try {
+          // Create a canvas to draw QR and Logo in HIGH RESOLUTION (1200x1200) for print quality
+          const canvas = document.createElement('canvas');
+          const size = 1200;
+          canvas.width = size;
+          canvas.height = size;
+          
+          await QRCode.toCanvas(canvas, url, {
+            width: size,
+            margin: 2,
+            errorCorrectionLevel: 'H', // High error correction needed for logo overlay
+            color: { dark: "#3B1F0A", light: "#FDF8F0" },
+          });
+
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            const logo = new Image();
+            logo.crossOrigin = "anonymous";
+            logo.src = "https://i.ibb.co/6JncbJsc/Screenshot-2026-07-10-13-42-55-71-1c337646f29875672b5a61192b9010f9.png";
+            
+            await new Promise((resolve) => {
+              logo.onload = resolve;
+              logo.onerror = resolve; 
+            });
+
+            // Draw logo in center (approx 25% of QR size)
+            const logoSize = size * 0.25; 
+            const logoX = (size - logoSize) / 2;
+            const logoY = (size - logoSize) / 2;
+
+            // Draw background behind logo to ensure readability
+            ctx.fillStyle = "#FDF8F0";
+            // Rounded rect background for logo
+            ctx.beginPath();
+            ctx.roundRect(logoX - 15, logoY - 15, logoSize + 30, logoSize + 30, 24);
+            ctx.fill();
+            
+            ctx.drawImage(logo, logoX, logoY, logoSize, logoSize);
+          }
+
+          const dataUrl = canvas.toDataURL("image/png");
+          setQrDataUrls((prev) => ({ ...prev, [table.id]: dataUrl }));
+        } catch (err) {
+          console.error("QR Generation failed", err);
+        }
       }
     });
   }, [tables]);
 
   const addTable = async () => {
-    const name = newTableName.trim();
-    if (!name) return;
-    const tableId = name.replace(/\s+/g, "-").toUpperCase();
+    const input = newTableName.trim();
+    if (!input) return;
+    
     setAdding(true);
-    await set(ref(db, `restaurant/tables/${tableId}`), {
-      name,
-      active: true,
-      createdAt: Date.now(),
+    
+    // Split by comma for bulk addition
+    const names = input.split(",").map(n => n.trim()).filter(n => n.length > 0);
+    
+    const promises = names.map((name, idx) => {
+      const tableId = name.replace(/\s+/g, "-").toUpperCase();
+      return set(ref(db, `restaurant/tables/${tableId}`), {
+        name,
+        active: true,
+        // slightly offset timestamps to maintain input order
+        createdAt: Date.now() + idx, 
+      });
     });
+    
+    await Promise.all(promises);
+    
     setNewTableName("");
     setAdding(false);
   };
@@ -116,19 +167,96 @@ function AdminTables() {
     win.document.close();
   };
 
+  const printAllQR = () => {
+    const win = window.open("", "_blank");
+    if (!win) return;
+    
+    // Generate HTML for all cards
+    const cardsHtml = tables.map(table => {
+      const dataUrl = qrDataUrls[table.id];
+      if (!dataUrl) return ""; // Skip if not generated yet
+      return `
+        <div class="card">
+          <h2>Venu's Paakashala</h2>
+          <h1>Table ${table.name}</h1>
+          <img src="${dataUrl}" />
+          <p>Scan to view menu & order</p>
+        </div>
+      `;
+    }).join('');
+
+    win.document.write(`
+      <html>
+        <head>
+          <title>Print All QRs</title>
+          <style>
+            @page { margin: 0; size: A4 portrait; }
+            body { 
+              margin: 0; 
+              font-family: Georgia, serif; 
+              background: white; 
+              -webkit-print-color-adjust: exact; 
+              print-color-adjust: exact;
+            }
+            .grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              /* Remove gaps to maximize size */
+              gap: 0;
+              width: 100%;
+            }
+            .card { 
+              border: 1px dashed #ccc; 
+              padding: 0.5in; /* Inner spacing */
+              text-align: center; 
+              background: #FDF8F0; 
+              page-break-inside: avoid;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 5.8in; /* Fit exactly 2 rows per A4 page (A4 is 11.69in tall) */
+              box-sizing: border-box;
+            }
+            h2 { margin: 0 0 10px; font-size: 18px; color: #888; letter-spacing: 3px; text-transform: uppercase; }
+            h1 { margin: 0 0 30px; font-size: 48px; font-weight: 900; color: #3B1F0A; line-height: 1; }
+            img { width: 100%; max-width: 3.5in; height: auto; aspect-ratio: 1/1; }
+            p { margin: 30px 0 0; font-size: 18px; color: #888; font-weight: bold; }
+          </style>
+        </head>
+        <body onload="setTimeout(() => window.print(), 500)">
+          <div class="grid">
+            ${cardsHtml}
+          </div>
+        </body>
+      </html>
+    `);
+    win.document.close();
+  };
+
   return (
     <div className="flex flex-col h-full animate-in fade-in duration-500">
       {/* Header */}
-      <div className="mb-6 shrink-0">
-        <h1 className="text-3xl font-bold text-brown-deep tracking-tight">Tables & QR Codes</h1>
-        <p className="text-muted-foreground mt-1">Create tables, generate and print QR codes for each table.</p>
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+        <div>
+          <h1 className="text-3xl font-bold text-brown-deep tracking-tight">Tables & QR Codes</h1>
+          <p className="text-muted-foreground mt-1">Create tables, generate and print QR codes for each table.</p>
+        </div>
+        <button
+          onClick={printAllQR}
+          disabled={tables.length === 0}
+          className="flex items-center gap-2 bg-brown-gradient text-cream px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Printer className="h-4 w-4" />
+          Print All QRs (Bulk)
+        </button>
       </div>
 
       {/* Add Table */}
       <div className="flex items-center gap-3 mb-8 shrink-0">
         <input
           type="text"
-          placeholder="Table name (e.g. 1A, Terrace-1, VIP)"
+          placeholder="Table name (e.g. 1A, 1B, 1C)"
           value={newTableName}
           onChange={(e) => setNewTableName(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && addTable()}
@@ -140,7 +268,7 @@ function AdminTables() {
           className="flex items-center gap-2 bg-brown-gradient text-cream px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="h-4 w-4" />
-          Add Table
+          Add Tables
         </button>
       </div>
 

@@ -23,7 +23,7 @@ function AdminLogin() {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate({ to: "/admin/dashboard" });
+      navigate({ to: "/admin/orders" });
     } catch (err: any) {
       setError("Invalid admin credentials");
     } finally {

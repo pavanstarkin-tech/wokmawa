@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { Logo } from "./Logo";
 
-export function SplashScreen({ onDone }: { onDone: () => void }) {
+export function SplashScreen({ onComplete }: { onComplete: () => void }) {
   const [leaving, setLeaving] = useState(false);
   useEffect(() => {
     const t1 = setTimeout(() => setLeaving(true), 1800);
-    const t2 = setTimeout(onDone, 2400);
+    const t2 = setTimeout(onComplete, 2400);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
     };
-  }, [onDone]);
+  }, [onComplete]);
 
   return (
     <div

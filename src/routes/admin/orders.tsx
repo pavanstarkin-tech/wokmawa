@@ -37,7 +37,7 @@ function AdminOrders() {
         }
       });
       // Sort oldest first (highest priority)
-      fetchedOrders.sort((a, b) => a.createdAt - b.createdAt);
+      fetchedOrders.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
       setOrders(fetchedOrders);
     });
     return () => unsub();
@@ -151,6 +151,11 @@ function OrderCard({ order, onNext, nextLabel, onCancel }: any) {
       <div className="flex items-start justify-between mb-3 border-b border-border/50 pb-3">
         <div>
           <h3 className="text-xl font-bold text-brown-deep">Table {order.tableId}</h3>
+          {(order.customerName || order.mobile) && (
+            <div className="text-sm font-semibold text-brown-deep/80 mt-0.5">
+              {order.customerName || "Guest"} • <span className="font-mono text-xs">+91 {order.mobile}</span>
+            </div>
+          )}
           <div className="flex items-center text-xs text-muted-foreground mt-1">
             <Clock className="h-3 w-3 mr-1" />
             {timeAgo}

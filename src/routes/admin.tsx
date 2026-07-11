@@ -64,6 +64,12 @@ function AdminLayout() {
             <Link to="/admin/tables" className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors [&.active]:bg-brown-gradient [&.active]:text-cream hover:bg-gold/5 text-brown-deep/80">
               Tables & QR
             </Link>
+            <Link to="/admin/updates" className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors [&.active]:bg-brown-gradient [&.active]:text-cream hover:bg-gold/5 text-brown-deep/80">
+              Latest Updates
+            </Link>
+            <Link to="/admin/settings" className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-colors [&.active]:bg-brown-gradient [&.active]:text-cream hover:bg-gold/5 text-brown-deep/80">
+              Settings
+            </Link>
           </nav>
         </aside>
       )}

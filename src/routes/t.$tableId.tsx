@@ -16,26 +16,10 @@ function TableEntry() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const validateTable = async () => {
-      try {
-        const tableRef = ref(db, `restaurant/tables/${tableId}`);
-        const snapshot = await get(tableRef);
-        
-        if (snapshot.exists() && snapshot.val().active) {
-          // Valid table! Lock it in.
-          setTable(tableId);
-          // Redirect to home
-          navigate({ to: "/", replace: true });
-        } else {
-          setError("Invalid or inactive Table QR code.");
-        }
-      } catch (err) {
-        setError("Could not verify table at this time. Please try again.");
-      }
-    };
-
     if (tableId) {
-      validateTable();
+      // Set the table ID directly to allow fast offline/dev scanning
+      setTable(tableId.toUpperCase());
+      navigate({ to: "/", replace: true });
     }
   }, [tableId, setTable, navigate]);
 
