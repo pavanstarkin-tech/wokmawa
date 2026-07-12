@@ -238,18 +238,18 @@ function Index() {
               <button
                 key={col.id}
                 onClick={() => navigate({ to: "/menu", search: { q: col.query } })}
-                className="flex flex-col items-center p-2 rounded-2xl bg-card border border-border/60 hover:border-gold/50 shadow-sm w-[92px] shrink-0 text-center transition-all active:scale-95 cursor-pointer group"
+                className="relative overflow-hidden rounded-2xl w-[96px] h-[96px] shrink-0 shadow-luxe transition-all active:scale-95 hover:shadow-xl cursor-pointer group border border-border/40"
               >
-                <div className="h-16 w-16 rounded-xl overflow-hidden mb-2 relative shadow-sm border border-border/40">
-                  <img
-                    src={col.image}
-                    alt={col.title}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
-                    loading="lazy"
-                  />
-                  <div className="absolute inset-0 bg-black/5" />
-                </div>
-                <span className="text-[10px] font-bold text-brown-deep leading-tight">{col.title}</span>
+                <img
+                  src={col.image}
+                  alt={col.title}
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/25" />
+                <span className="absolute inset-x-2 bottom-2.5 text-[9px] font-black text-white leading-tight drop-shadow-[0_1.5px_1.5px_rgba(0,0,0,0.9)] text-center tracking-wide uppercase">
+                  {col.title}
+                </span>
               </button>
             ))}
           </div>
