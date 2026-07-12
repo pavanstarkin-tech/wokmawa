@@ -49,8 +49,10 @@ export function MenuCard({ item }: { item: MenuItem }) {
   const { items, add, setQty } = useCart();
   const inCart = items.find((c) => c.id === item.id);
 
-  const hasDiscount = item.mrp && item.price && item.mrp > item.price;
-  const discountPct = hasDiscount ? Math.round(((item.mrp! - item.price!) / item.mrp!) * 100) : 0;
+  const price = item.price ?? 0;
+  const mrp = item.mrp || (price > 0 ? Math.round(price * 1.20) : 0);
+  const hasDiscount = mrp > price;
+  const discountPct = hasDiscount ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
   return (
     <article className="group flex gap-3 rounded-2xl bg-card p-3 border border-border/60 shadow-luxe transition hover:-translate-y-0.5 relative">
@@ -84,7 +86,7 @@ export function MenuCard({ item }: { item: MenuItem }) {
           <div className="flex items-center gap-1.5 flex-wrap">
             {hasDiscount && (
               <span className="text-[10px] line-through text-muted-foreground">
-                ₹{item.mrp}
+                ₹{mrp}
               </span>
             )}
             <div className={`text-sm font-bold ${item.price == null ? "text-muted-foreground italic" : "text-brown-deep"}`}>
