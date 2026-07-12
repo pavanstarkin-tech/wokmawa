@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Plus, Minus, Leaf, Drumstick } from "lucide-react";
 import { useCart } from "@/lib/paakashala-store";
 import type { MenuItem } from "@/lib/paakashala-menu";
@@ -40,6 +41,16 @@ export function QuantitySelector({ qty, onDec, onInc }: any) {
 export function MenuCard({ item }: { item: MenuItem }) {
   const { items, add, setQty } = useCart();
   const inCart = items.find((c) => c.id === item.id);
+
+  const [isAddedFeedback, setIsAddedFeedback] = useState(false);
+
+  const handleAdd = () => {
+    add(item);
+    setIsAddedFeedback(true);
+    setTimeout(() => {
+      setIsAddedFeedback(false);
+    }, 400);
+  };
 
   const price = item.price ?? 0;
 
@@ -100,6 +111,13 @@ export function MenuCard({ item }: { item: MenuItem }) {
           </div>
           {item.price == null ? (
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Ask at restaurant</span>
+          ) : isAddedFeedback ? (
+            <button
+              className="inline-flex items-center gap-1.5 rounded-xl bg-green-600 text-white px-4 py-2.5 text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
+              disabled
+            >
+              Added!
+            </button>
           ) : inCart ? (
             <QuantitySelector
               qty={inCart.quantity}
@@ -108,7 +126,7 @@ export function MenuCard({ item }: { item: MenuItem }) {
             />
           ) : (
             <button
-              onClick={() => add(item)}
+              onClick={handleAdd}
               className="inline-flex items-center gap-1.5 rounded-xl border border-gold bg-cream px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-brown-deep transition hover:bg-gold-gradient active:scale-95 shadow-luxe"
             >
               {item.type === "veg" ? <Leaf className="h-3.5 w-3.5" /> : <Drumstick className="h-3.5 w-3.5" />}
