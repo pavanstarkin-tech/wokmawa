@@ -583,7 +583,7 @@ function AdminOffers() {
 
       {/* Main Tab content */}
       <div className="flex-1 overflow-y-auto pb-12">
-       )}
+
 
         {/* TAB 2: POPUP CAMPAIGNS */}
         {activeTab === "popups" && (
