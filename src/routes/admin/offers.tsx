@@ -32,8 +32,13 @@ import {
   updatePopupCampaign,
   deletePopupCampaign,
   usePromotionLogs,
+  useSmartCollections,
+  createSmartCollection,
+  updateSmartCollection,
+  deleteSmartCollection,
   type Offer,
-  type PopupCampaign
+  type PopupCampaign,
+  type SmartCollection
 } from "@/lib/promotions";
 import { CATEGORIES } from "@/lib/paakashala-menu";
 import {
@@ -56,7 +61,7 @@ export const Route = createFileRoute("/admin/offers")({
   component: AdminOffers,
 });
 
-type TabType = "offers" | "popups" | "analytics";
+type TabType = "offers" | "popups" | "collections" | "analytics";
 
 const OFFER_TYPES = [
   { value: "percentage", label: "Percentage Discount" },
@@ -121,6 +126,14 @@ const DEFAULT_POPUP_FORM = {
   status: "active" as PopupCampaign["status"]
 };
 
+const DEFAULT_COL_FORM = {
+  title: "",
+  query: "",
+  image: "",
+  priority: 10,
+  status: "active" as SmartCollection["status"]
+};
+
 function AdminOffers() {
   const [activeTab, setActiveTab] = useState<TabType>("offers");
   const { offers, loading: loadingOffers } = useOffers();
@@ -141,6 +154,69 @@ function AdminOffers() {
   const [popupForm, setPopupForm] = useState({ ...DEFAULT_POPUP_FORM });
 
   const [saving, setSaving] = useState(false);
+
+  /* ---------- Smart Collection CRUD Handlers ---------- */
+  const { collections, loading: loadingCollections } = useSmartCollections();
+  const [showColModal, setShowColModal] = useState(false);
+  const [colModalMode, setColModalMode] = useState<"add" | "edit">("add");
+  const [selectedColId, setSelectedColId] = useState<string | null>(null);
+  const [colForm, setColForm] = useState({ ...DEFAULT_COL_FORM });
+
+  const openAddCol = () => {
+    setColForm({ ...DEFAULT_COL_FORM });
+    setColModalMode("add");
+    setSelectedColId(null);
+    setShowColModal(true);
+  };
+
+  const openEditCol = (col: SmartCollection) => {
+    setColForm({
+      title: col.title,
+      query: col.query,
+      image: col.image,
+      priority: col.priority,
+      status: col.status
+    });
+    setSelectedColId(col.id);
+    setColModalMode("edit");
+    setShowColModal(true);
+  };
+
+  const handleSaveCol = async () => {
+    if (!colForm.title.trim() || !colForm.query.trim() || !colForm.image.trim()) return;
+    setSaving(true);
+    try {
+      const dataToSave = {
+        title: colForm.title.trim(),
+        query: colForm.query.trim(),
+        image: colForm.image.trim(),
+        priority: Number(colForm.priority) || 0,
+        status: colForm.status
+      };
+
+      if (colModalMode === "add") {
+        await createSmartCollection(dataToSave);
+      } else if (colModalMode === "edit" && selectedColId) {
+        await updateSmartCollection(selectedColId, dataToSave);
+      }
+      setShowColModal(false);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to save collection");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteCol = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this collection?")) return;
+    await deleteSmartCollection(id);
+  };
+
+  const toggleColStatus = async (id: string, currentStatus: SmartCollection["status"]) => {
+    const nextStatus: SmartCollection["status"] = currentStatus === "active" ? "inactive" : "active";
+    await updateSmartCollection(id, { status: nextStatus });
+  };
 
   // Load menu items for conditions dropdown
   useEffect(() => {
@@ -438,6 +514,14 @@ function AdminOffers() {
             Popup Campaigns
           </button>
           <button
+            onClick={() => setActiveTab("collections")}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeTab === "collections" ? "bg-brown-gradient text-cream" : "text-muted-foreground hover:text-brown-deep"
+            }`}
+          >
+            Smart Collections
+          </button>
+          <button
             onClick={() => setActiveTab("analytics")}
             className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
               activeTab === "analytics" ? "bg-brown-gradient text-cream" : "text-muted-foreground hover:text-brown-deep"
@@ -671,6 +755,88 @@ function AdminOffers() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 4: SMART COLLECTIONS */}
+        {activeTab === "collections" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center bg-card rounded-2xl p-4 border border-border/60 shadow-sm">
+              <div className="flex items-center gap-2">
+                <Layers className="h-5 w-5 text-gold" />
+                <span className="text-sm font-bold text-brown-deep">Active Smart Collections: {collections.length}</span>
+              </div>
+              <button
+                onClick={openAddCol}
+                className="flex items-center gap-2 bg-brown-gradient text-cream px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:opacity-90 active:scale-95 transition-all"
+              >
+                <Plus className="h-4 w-4" /> Add Collection
+              </button>
+            </div>
+
+            {loadingCollections ? (
+              <div className="flex justify-center py-20">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-gold border-t-transparent" />
+              </div>
+            ) : collections.length === 0 ? (
+              <div className="h-60 flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed border-border/60 rounded-3xl">
+                <Info className="h-10 w-10 text-muted-foreground/50 mb-2" />
+                <p className="font-semibold text-lg text-brown-deep">No smart collections found</p>
+                <p className="text-xs">Create categories collections shown dynamically on the user dashboard.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {collections.map((col) => (
+                  <div key={col.id} className="bg-card rounded-3xl border border-border/60 shadow-sm overflow-hidden flex flex-col justify-between animate-in fade-in duration-255">
+                    {/* Full Card Aspect Ratio */}
+                    <div className="relative aspect-square w-full bg-muted overflow-hidden">
+                      <img src={col.image} alt={col.title} className="absolute inset-0 h-full w-full object-cover" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/45 to-black/20" />
+                      
+                      {/* Priority and Status Badges */}
+                      <div className="absolute top-3 left-3 flex gap-2">
+                        <span className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-wider text-white ${
+                          col.status === "active" ? "bg-green-600" : "bg-red-500"
+                        }`}>
+                          {col.status}
+                        </span>
+                        <span className="bg-black/50 text-white text-[8px] font-black uppercase tracking-wider px-2 py-1 rounded backdrop-blur-sm">
+                          Priority: {col.priority}
+                        </span>
+                      </div>
+
+                      <div className="absolute bottom-4 left-4 right-4 text-center">
+                        <h3 className="text-white font-extrabold text-sm uppercase tracking-wide drop-shadow-[0_1.5px_1.5px_rgba(0,0,0,0.9)] leading-tight">{col.title}</h3>
+                        <p className="text-white/70 text-[10px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)] mt-1 font-medium">Query: "{col.query}"</p>
+                      </div>
+                    </div>
+
+                    <div className="p-4 border-t border-border/40 flex gap-2 bg-card">
+                      <button
+                        onClick={() => toggleColStatus(col.id, col.status)}
+                        className="flex-1 py-2 border border-border/80 hover:bg-gold/5 rounded-xl font-bold text-xs text-brown-deep transition-all cursor-pointer"
+                      >
+                        {col.status === "active" ? "Hide" : "Show"}
+                      </button>
+                      <button
+                        onClick={() => openEditCol(col)}
+                        className="p-2 border border-border/80 hover:bg-gold/5 rounded-xl text-brown-deep transition-all cursor-pointer"
+                        title="Edit"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCol(col.id)}
+                        className="p-2 border border-border/80 hover:bg-red-50 rounded-xl text-red-500 transition-all cursor-pointer"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -1427,6 +1593,99 @@ function AdminOffers() {
                 className="flex-1 py-3 rounded-xl bg-brown-gradient text-cream font-bold text-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
               >
                 {saving ? "Saving..." : popupModalMode === "add" ? "Create Popup" : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 3: ADD / EDIT SMART COLLECTION */}
+      {showColModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-card rounded-3xl border border-gold/25 shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+              <h2 className="text-lg font-bold text-brown-deep">
+                {colModalMode === "add" ? "Add Smart Collection" : "Edit Smart Collection"}
+              </h2>
+              <button onClick={() => setShowColModal(false)} className="p-1 rounded-full hover:bg-muted text-muted-foreground cursor-pointer">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Collection Title *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Buy 1 Get 1"
+                  value={colForm.title}
+                  onChange={(e) => setColForm({ ...colForm, title: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Search/Filter Query *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. bogo, combos, or category name"
+                  value={colForm.query}
+                  onChange={(e) => setColForm({ ...colForm, query: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Image URL *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. /collections/1.png"
+                  value={colForm.image}
+                  onChange={(e) => setColForm({ ...colForm, image: e.target.value })}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Priority</label>
+                  <input
+                    type="number"
+                    value={colForm.priority}
+                    onChange={(e) => setColForm({ ...colForm, priority: Number(e.target.value) })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Status</label>
+                  <select
+                    value={colForm.status}
+                    onChange={(e) => setColForm({ ...colForm, status: e.target.value as any })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-muted/20">
+              <button
+                onClick={() => setShowColModal(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveCol}
+                disabled={saving || !colForm.title || !colForm.query || !colForm.image}
+                className="bg-brown-gradient text-cream px-4 py-2 rounded-xl font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+              >
+                {saving ? "Saving..." : "Save Collection"}
               </button>
             </div>
           </div>
