@@ -3,6 +3,7 @@ export type MenuItem = {
   name: string;
   category: string;
   price: number | null;
+  mrp?: number | null;
   type: "veg" | "non-veg";
   image: string;
   description?: string;
