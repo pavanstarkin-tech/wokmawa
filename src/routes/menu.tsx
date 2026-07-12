@@ -116,7 +116,9 @@ function MenuPage() {
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
-    return fullMenu.filter((m) => {
+    
+    // Step 1: Filter
+    const matched = fullMenu.filter((m) => {
       if (!m || !m.name) return false;
       if (filter !== "all" && m.type !== filter) return false;
 
@@ -130,34 +132,37 @@ function MenuPage() {
           : raw && typeof raw === "object"
             ? (Object.values(raw as object) as string[]).filter(Boolean)
             : [];
-        if (savedIds.length > 0) {
-          // Admin curated — show ONLY those exact items
-          if (!savedIds.includes(m.id)) return false;
-        } else {
-          // No curation saved — fall back to auto-filter logic
-          let matchesCollection = false;
-          const cat = (m.category ?? "").toLowerCase();
-          const price = Number(m.price ?? 9999);
-          if (smartCollection === "bogo") {
-            matchesCollection = true;
-          } else if (smartCollection === "under199") {
-            matchesCollection = price < 199;
-          } else if (smartCollection === "under299") {
-            matchesCollection = price < 299;
-          } else if (smartCollection === "combo") {
-            matchesCollection = cat.includes("thali") || cat.includes("fried rice") || cat.includes("rice") ||
-              m.name.toLowerCase().includes("combo") || m.name.toLowerCase().includes("pack") ||
-              m.name.toLowerCase().includes("meal") || m.name.toLowerCase().includes("full") || m.name.toLowerCase().includes("half");
-          } else if (smartCollection === "starters199") {
-            matchesCollection = (cat === "veg starters" || cat === "non veg starters" || cat === "south indian starters" || cat === "tandoori starters") && price < 199;
-          } else if (smartCollection === "biryani299") {
-            matchesCollection = cat.includes("biryani") && price < 299;
-          } else if (smartCollection === "offers") {
-            const mrp = Number(m.mrp ?? 0);
-            matchesCollection = (mrp > 0 && mrp > price) || price < 200;
-          }
-          if (!matchesCollection) return false;
+
+        let matchesCollection = false;
+        const cat = (m.category ?? "").toLowerCase();
+        const price = Number(m.price ?? 9999);
+
+        // Curated override match
+        if (savedIds.includes(m.id)) {
+          matchesCollection = true;
         }
+
+        // Auto filter match
+        if (smartCollection === "bogo") {
+          matchesCollection = matchesCollection || true;
+        } else if (smartCollection === "under199") {
+          matchesCollection = matchesCollection || price < 199;
+        } else if (smartCollection === "under299") {
+          matchesCollection = matchesCollection || price < 299;
+        } else if (smartCollection === "combo") {
+          matchesCollection = matchesCollection || cat.includes("thali") || cat.includes("fried rice") || cat.includes("rice") ||
+            m.name.toLowerCase().includes("combo") || m.name.toLowerCase().includes("pack") ||
+            m.name.toLowerCase().includes("meal") || m.name.toLowerCase().includes("full") || m.name.toLowerCase().includes("half");
+        } else if (smartCollection === "starters199") {
+          matchesCollection = matchesCollection || ((cat === "veg starters" || cat === "non veg starters" || cat === "south indian starters" || cat === "tandoori starters") && price < 199);
+        } else if (smartCollection === "biryani299") {
+          matchesCollection = matchesCollection || (cat.includes("biryani") && price < 299);
+        } else if (smartCollection === "offers") {
+          const mrp = Number(m.mrp ?? 0);
+          matchesCollection = matchesCollection || (mrp > 0 && mrp > price) || price < 200;
+        }
+
+        if (!matchesCollection) return false;
       }
 
       // 2. Filter by text search query
@@ -166,6 +171,27 @@ function MenuPage() {
         (m.name ?? "").toLowerCase().includes(query) ||
         (m.category ?? "").toLowerCase().includes(query)
       );
+    });
+
+    // Step 2: Map to override prices for price-based collections
+    return matched.map((item) => {
+      if (smartCollection) {
+        let limit: number | undefined = undefined;
+        if (smartCollection === "under199" || smartCollection === "starters199") {
+          limit = 199;
+        } else if (smartCollection === "under299" || smartCollection === "biryani299") {
+          limit = 299;
+        }
+
+        if (limit !== undefined && item.price !== null && item.price !== undefined && item.price > limit) {
+          return {
+            ...item,
+            price: limit,
+            mrp: item.price
+          };
+        }
+      }
+      return item;
     });
   }, [q, smartCollection, filter, fullMenu, savedCollections]);
 
