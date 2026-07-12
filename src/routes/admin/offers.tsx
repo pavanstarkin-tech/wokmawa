@@ -211,7 +211,7 @@ function SearchableProductSelect({ value, onChange, placeholder, products }: Sea
 }
 
 function AdminOffers() {
-  const [activeTab, setActiveTab] = useState<TabType>("offers");
+  const [activeTab, setActiveTab] = useState<"offers" | "popups" | "analytics" | "collections">("offers");
   const { offers, loading: loadingOffers } = useOffers();
   const { campaigns, loading: loadingCampaigns } = usePopupCampaigns();
   const { logs } = usePromotionLogs();
