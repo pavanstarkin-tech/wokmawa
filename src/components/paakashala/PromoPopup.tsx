@@ -40,7 +40,7 @@ export function PromoPopup({ campaign, onClose, onCtaClick }: PromoPopupProps) {
       if (campaign.ctaLink) {
         localStorage.setItem("paakashala_applied_coupon", campaign.ctaLink.trim().toUpperCase());
       }
-      navigate({ to: "/cart" });
+      navigate({ to: "/menu", search: { q: "offers" } });
     } else if (campaign.ctaType === "offer_collection") {
       navigate({ to: "/menu", search: { q: "offers" } });
     } else if (campaign.ctaType === "external" && campaign.ctaLink) {
