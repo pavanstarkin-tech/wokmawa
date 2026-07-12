@@ -7,6 +7,9 @@ import { HeroCarousel } from "@/components/paakashala/HeroCarousel";
 import { FeaturedCard } from "@/components/paakashala/FeaturedCard";
 import { MiniCategoryCard } from "@/components/paakashala/MiniCategoryCard";
 import { CATEGORIES, CATEGORY_IMAGE, MENU, FEATURED_IDS, type Category } from "@/lib/paakashala-menu";
+import { usePopupCampaigns, recordPopupView, recordPopupClick, type PopupCampaign } from "@/lib/promotions";
+import { PromoPopup } from "@/components/paakashala/PromoPopup";
+import { Gift, Percent, Flame, Award, Compass } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -163,6 +166,37 @@ function Index() {
   const fullMenu = useMenu();
   const updates = useUpdates();
 
+  // Popup campaigns setup
+  const { campaigns } = usePopupCampaigns();
+  const [activePopup, setActivePopup] = useState<PopupCampaign | null>(null);
+
+  useEffect(() => {
+    if (campaigns.length === 0) return;
+
+    const now = new Date();
+    const activeCampaigns = campaigns.filter(c => {
+      if (c.status !== "active") return false;
+      const start = new Date(c.startDate).getTime();
+      const end = new Date(c.endDate);
+      end.setHours(23, 59, 59, 999);
+      const nowTime = now.getTime();
+      return nowTime >= start && nowTime <= end.getTime();
+    });
+
+    if (activeCampaigns.length === 0) return;
+
+    const highestCampaign = activeCampaigns[0];
+    const dismissedToday = localStorage.getItem(`paakashala_hide_popup_${highestCampaign.id}`);
+    const todayStr = new Date().toDateString();
+    const shownThisSession = sessionStorage.getItem(`paakashala_popup_shown_${highestCampaign.id}`);
+
+    if (dismissedToday !== todayStr && !shownThisSession) {
+      setActivePopup(highestCampaign);
+      sessionStorage.setItem(`paakashala_popup_shown_${highestCampaign.id}`, "true");
+      recordPopupView(highestCampaign.id);
+    }
+  }, [campaigns]);
+
   const filteredMenu = typeFilter === "all" ? fullMenu : fullMenu.filter(m => m.type === typeFilter);
 
   const featured = FEATURED_IDS.map((id) => filteredMenu.find((m) => m.id === id)).filter(Boolean) as typeof fullMenu;
@@ -170,10 +204,52 @@ function Index() {
   const bestBiryani = filteredMenu.filter((m) => m.category === "Biryani").slice(0, 6);
   const andhra = filteredMenu.filter((m) => m.category === "South Indian Starters").slice(0, 6);
 
+  const smartCollections = [
+    { id: "bogo", title: "Buy 1 Get 1", query: "bogo", icon: <Gift className="h-4 w-4" /> },
+    { id: "under199", title: "Under ₹199", query: "under199", icon: <Percent className="h-4 w-4" /> },
+    { id: "under299", title: "Under ₹299", query: "under299", icon: <Percent className="h-4 w-4" /> },
+    { id: "combos", title: "Combo Deals", query: "combo", icon: <Flame className="h-4 w-4" /> },
+    { id: "starters199", title: "Starters < ₹199", query: "starters199", icon: <Award className="h-4 w-4" /> },
+    { id: "biryani299", title: "Biryanis < ₹299", query: "biryani299", icon: <Compass className="h-4 w-4" /> },
+  ];
+
   return (
     <AppShell>
+      {activePopup && (
+        <PromoPopup 
+          campaign={activePopup} 
+          onClose={() => setActivePopup(null)}
+          onCtaClick={() => recordPopupClick(activePopup.id)}
+        />
+      )}
       <section className="animate-fade-up">
         <HeroCarousel />
+      </section>
+
+      {/* Smart Collections Section */}
+      <section className="mt-6 animate-fade-up">
+        <div className="mb-3">
+          <div className="text-[10px] tracking-[0.35em] uppercase text-gold">Instant Savings</div>
+          <h2 className="mt-0.5 text-lg font-bold text-brown-deep">Smart Collections</h2>
+        </div>
+        <div className="-mx-[15px] md:-mx-8 lg:-mx-12 overflow-x-auto no-scrollbar">
+          <div className="flex gap-2.5 px-[15px] md:px-8 lg:px-12 pb-3 w-max">
+            {smartCollections.map((col) => (
+              <button
+                key={col.id}
+                onClick={() => navigate({ to: "/menu", search: { q: col.query } })}
+                className="flex flex-col items-center justify-between p-3 rounded-2xl bg-card border border-border/60 hover:border-gold/50 shadow-sm w-[92px] shrink-0 text-center transition-all active:scale-95 cursor-pointer"
+              >
+                <div className="h-8 w-8 rounded-full flex items-center justify-center bg-gold/10 text-gold mb-2">
+                  {col.icon}
+                </div>
+                <span className="text-[9px] font-black text-brown-deep leading-tight uppercase tracking-wider">
+                  {col.title}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Latest Updates Section */}
