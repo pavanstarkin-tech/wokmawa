@@ -58,7 +58,7 @@ export const Route = createFileRoute("/admin/offers")({
   component: AdminOffers,
 });
 
-type TabType = "offers" | "popups" | "analytics" | "collections";
+type TabType = "popups" | "collections" | "analytics";
 
 const OFFER_TYPES = [
   { value: "percentage", label: "Percentage Discount" },
@@ -213,7 +213,7 @@ function SearchableProductSelect({ value, onChange, placeholder, products }: Sea
 }
 
 function AdminOffers() {
-  const [activeTab, setActiveTab] = useState<TabType>("offers");
+  const [activeTab, setActiveTab] = useState<TabType>("popups");
   const { offers, loading: loadingOffers } = useOffers();
   const { campaigns, loading: loadingCampaigns } = usePopupCampaigns();
   const { logs } = usePromotionLogs();
@@ -555,28 +555,12 @@ function AdminOffers() {
         {/* Tab Selector */}
         <div className="flex bg-card border border-border/80 p-1.5 rounded-2xl shadow-sm self-start">
           <button
-            onClick={() => setActiveTab("offers")}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
-              activeTab === "offers" ? "bg-brown-gradient text-cream" : "text-muted-foreground hover:text-brown-deep"
-            }`}
-          >
-            Promotional Offers
-          </button>
-          <button
             onClick={() => setActiveTab("popups")}
             className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
               activeTab === "popups" ? "bg-brown-gradient text-cream" : "text-muted-foreground hover:text-brown-deep"
             }`}
           >
             Popup Campaigns
-          </button>
-          <button
-            onClick={() => setActiveTab("analytics")}
-            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
-              activeTab === "analytics" ? "bg-brown-gradient text-cream" : "text-muted-foreground hover:text-brown-deep"
-            }`}
-          >
-            Analytics Dashboard
           </button>
           <button
             onClick={() => setActiveTab("collections")}
@@ -586,123 +570,20 @@ function AdminOffers() {
           >
             Smart Collections
           </button>
+          <button
+            onClick={() => setActiveTab("analytics")}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeTab === "analytics" ? "bg-brown-gradient text-cream" : "text-muted-foreground hover:text-brown-deep"
+            }`}
+          >
+            Analytics Dashboard
+          </button>
         </div>
       </div>
 
       {/* Main Tab content */}
       <div className="flex-1 overflow-y-auto pb-12">
-        
-        {/* TAB 1: OFFERS MANAGER */}
-        {activeTab === "offers" && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center bg-card rounded-2xl p-4 border border-border/60 shadow-sm">
-              <div className="flex items-center gap-2">
-                <Tag className="h-5 w-5 text-gold" />
-                <span className="text-sm font-bold text-brown-deep">Active Promotion Rules: {offers.length}</span>
-              </div>
-              <button
-                onClick={openAddOffer}
-                className="flex items-center gap-2 bg-brown-gradient text-cream px-4 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:opacity-90 active:scale-95 transition-all"
-              >
-                <Plus className="h-4 w-4" /> Add Offer Rule
-              </button>
-            </div>
-
-            {loadingOffers ? (
-              <div className="flex justify-center py-20">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-gold border-t-transparent" />
-              </div>
-            ) : offers.length === 0 ? (
-              <div className="h-60 flex flex-col items-center justify-center text-muted-foreground border-2 border-dashed border-border/60 rounded-3xl">
-                <Info className="h-10 w-10 text-muted-foreground/50 mb-2" />
-                <p className="font-semibold text-lg text-brown-deep">No offers found</p>
-                <p className="text-xs">Create your first automated discount rules or coupon codes.</p>
-              </div>
-            ) : (
-              <div className="bg-card rounded-3xl border border-border/60 shadow-sm overflow-hidden overflow-x-auto">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="bg-muted/40 text-brown-deep border-b border-border/50 font-bold uppercase text-[10px] tracking-wider">
-                      <th className="px-6 py-4">Offer Details</th>
-                      <th className="px-6 py-4">Type</th>
-                      <th className="px-6 py-4">Schedule</th>
-                      <th className="px-6 py-4">Priority</th>
-                      <th className="px-6 py-4">Targeting</th>
-                      <th className="px-6 py-4 text-center">Uses</th>
-                      <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/40">
-                    {offers.map((offer) => (
-                      <tr key={offer.id} className="hover:bg-muted/10 transition-colors">
-                        <td className="px-6 py-4 min-w-[200px]">
-                          <p className="font-bold text-brown-deep text-sm">{offer.name}</p>
-                          <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{offer.description}</p>
-                          {offer.couponCode && (
-                            <span className="inline-block bg-gold/15 text-gold text-[9px] font-black uppercase px-2 py-0.5 mt-1 rounded border border-gold/30">
-                              Code: {offer.couponCode}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="capitalize font-semibold text-brown-deep/80">{offer.type.replace(/_/g, " ")}</span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap min-w-[150px]">
-                          <div className="flex flex-col gap-0.5 text-muted-foreground text-[10px]">
-                            <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> {offer.startDate} to {offer.endDate}</span>
-                            {offer.startTime && <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {offer.startTime} - {offer.endTime}</span>}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 font-bold text-brown-deep/80 text-center whitespace-nowrap">{offer.priority}</td>
-                        <td className="px-6 py-4 whitespace-nowrap font-medium capitalize text-muted-foreground">{offer.targetType.replace(/_/g, " ")}</td>
-                        <td className="px-6 py-4 font-bold text-brown-deep/80 text-center whitespace-nowrap">{offer.usageCount}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() => toggleOfferStatus(offer.id, offer.status)}
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase transition-all flex items-center gap-1.5 cursor-pointer border ${
-                              offer.status === "active"
-                                ? "bg-green-50 text-green-700 border-green-200"
-                                : "bg-red-50 text-red-600 border-red-200"
-                            }`}
-                          >
-                            {offer.status === "active" ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
-                            {offer.status}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 text-right whitespace-nowrap">
-                          <div className="flex justify-end gap-1.5">
-                            <button
-                              onClick={() => openEditOffer(offer)}
-                              className="p-2 bg-card hover:bg-gold/10 border border-border/80 rounded-xl shadow-sm text-brown-deep transition-colors"
-                              title="Edit"
-                            >
-                              <Edit2 className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDuplicateOffer(offer)}
-                              className="p-2 bg-card hover:bg-gold/10 border border-border/80 rounded-xl shadow-sm text-brown-deep transition-colors"
-                              title="Duplicate"
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteOffer(offer.id)}
-                              className="p-2 bg-card hover:bg-red-50 border border-border/80 rounded-xl shadow-sm text-red-500 transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        )}
+       )}
 
         {/* TAB 2: POPUP CAMPAIGNS */}
         {activeTab === "popups" && (
@@ -1730,64 +1611,39 @@ function AdminOffers() {
 
              {/* Fields */}
              <div className="p-6 space-y-4">
-              {/* Linked Offer Dropdown */}
+              {/* Linked Smart Collection Dropdown */}
               <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase mb-1 font-semibold">Linked Promotional Offer (Optional)</label>
+                <label className="block text-xs font-bold text-muted-foreground uppercase mb-1 font-semibold">Link to Smart Collection (Optional)</label>
                 <select
-                  value={popupForm.offerId}
+                  value={popupForm.ctaType === "offer_collection" ? popupForm.ctaLink : ""}
                   onChange={e => {
-                    const offerId = e.target.value;
-                    const linkedOffer = offers.find(o => o.id === offerId);
-                    
-                    if (linkedOffer) {
-                      // Automatically autofill values from the Offer!
-                      let inferredCtaType: PopupCampaign["ctaType"] = "coupon";
-                      let inferredCtaLink = "";
-                      
-                      if (linkedOffer.type === "coupon" && linkedOffer.couponCode) {
-                        inferredCtaType = "coupon";
-                        inferredCtaLink = linkedOffer.couponCode;
-                      } else if (linkedOffer.targetType === "categories" && linkedOffer.targetCategories?.[0]) {
-                        inferredCtaType = "category";
-                        inferredCtaLink = linkedOffer.targetCategories[0];
-                      } else if (linkedOffer.targetType === "products" && linkedOffer.targetProducts?.[0]) {
-                        const pName = menuProducts.find(p => p.id === linkedOffer.targetProducts?.[0])?.name || linkedOffer.targetProducts[0];
-                        inferredCtaType = "product";
-                        inferredCtaLink = pName;
-                      } else if (linkedOffer.type === "bogo" && linkedOffer.conditions?.buyProductId) {
-                        const pName = menuProducts.find(p => p.id === linkedOffer.conditions?.buyProductId)?.name || linkedOffer.conditions.buyProductId;
-                        inferredCtaType = "product";
-                        inferredCtaLink = pName;
-                      } else {
-                        inferredCtaType = "offer_collection";
-                        inferredCtaLink = "offers";
-                      }
-                      
+                    const colId = e.target.value;
+                    if (colId) {
                       setPopupForm(f => ({
                         ...f,
-                        offerId,
-                        title: linkedOffer.name,
-                        description: linkedOffer.description,
-                        ctaType: inferredCtaType,
-                        ctaLink: inferredCtaLink,
-                        startDate: linkedOffer.startDate || f.startDate,
-                        endDate: linkedOffer.endDate || f.endDate,
-                        priority: linkedOffer.priority || f.priority,
+                        ctaType: "offer_collection",
+                        ctaLink: colId,
                       }));
                     } else {
-                      setPopupForm(f => ({ ...f, offerId: "" }));
+                      setPopupForm(f => ({
+                        ...f,
+                        ctaType: "coupon",
+                        ctaLink: "",
+                      }));
                     }
                   }}
                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
                 >
-                  <option value="">— Not Linked to an Offer —</option>
-                  {offers.map(o => (
-                    <option key={o.id} value={o.id}>
-                      {o.name} ({o.type})
-                    </option>
-                  ))}
+                  <option value="">— Not Linked to a Collection —</option>
+                  <option value="offers">💸 Special Offers (Discounts & Budget)</option>
+                  <option value="bogo">🔥 Buy 1 Get 1 Free (BOGO)</option>
+                  <option value="combo">🍱 Combo Deals</option>
+                  <option value="under199">💸 Under ₹199</option>
+                  <option value="under299">🍲 Under ₹299</option>
+                  <option value="starters199">🌶️ Starters Under ₹199</option>
+                  <option value="biryani299">🍗 Biryanis Under ₹299</option>
                 </select>
-                <p className="text-[10px] text-muted-foreground mt-1">Linking an offer will automatically pre-fill dates, priorities, title, description, and CTA behaviors.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Linking to a smart collection will make the popup CTA open that collection on the menu page.</p>
               </div>
 
               <div>
@@ -1888,6 +1744,26 @@ function AdminOffers() {
                     onChange={e => setPopupForm(f => ({ ...f, ctaLink: e.target.value }))}
                     className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
                   />
+                </div>
+              )}
+
+              {popupForm.ctaType === "offer_collection" && (
+                <div>
+                  <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Select Smart Collection Target *</label>
+                  <select
+                    value={popupForm.ctaLink}
+                    onChange={e => setPopupForm(f => ({ ...f, ctaLink: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
+                  >
+                    <option value="">— Select Collection —</option>
+                    <option value="offers">💸 Special Offers (Discounts & Budget)</option>
+                    <option value="bogo">🔥 Buy 1 Get 1 Free (BOGO)</option>
+                    <option value="combo">🍱 Combo Deals</option>
+                    <option value="under199">💸 Under ₹199</option>
+                    <option value="under299">🍲 Under ₹299</option>
+                    <option value="starters199">🌶️ Starters Under ₹199</option>
+                    <option value="biryani299">🍗 Biryanis Under ₹299</option>
+                  </select>
                 </div>
               )}
 
