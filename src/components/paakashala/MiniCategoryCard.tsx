@@ -14,7 +14,7 @@ export function MiniCategoryCard({ item }: { item: MenuItem }) {
     setIsAddedFeedback(true);
     setTimeout(() => {
       setIsAddedFeedback(false);
-    }, 400);
+    }, 1000);
   };
 
   const price = item.price ?? 0;
@@ -92,25 +92,25 @@ export function MiniCategoryCard({ item }: { item: MenuItem }) {
           {item.price != null && (
             isAddedFeedback ? (
               <button
-                className="w-full py-2.5 rounded-xl bg-green-600 text-white font-bold text-[10px] uppercase tracking-widest shadow-sm transition-all"
+                className="w-full py-2.5 rounded-md bg-green-600 text-white font-bold text-[10px] uppercase tracking-widest shadow-sm transition-all"
                 disabled
               >
                 Added!
               </button>
             ) : inCart ? (
-              <div className="flex items-center gap-0.5 rounded-full border border-gold/50 bg-cream px-1.5 py-1.5 shadow-sm shrink-0 w-full justify-between">
-                <button onClick={() => setQty(item.id, inCart.quantity - 1)} className="grid h-5 w-5 place-items-center rounded-full text-brown-deep active:scale-90 transition">
+              <div className="flex items-center gap-0.5 rounded-lg border border-gold/50 bg-cream px-1.5 py-1.5 shadow-sm shrink-0 w-full justify-between">
+                <button onClick={() => setQty(item.id, inCart.quantity - 1)} className="grid h-5 w-5 place-items-center rounded text-brown-deep active:scale-90 transition">
                   <Minus className="h-3 w-3" />
                 </button>
                 <span className="text-[10px] font-bold text-brown-deep leading-none min-w-[12px] text-center">{inCart.quantity}</span>
-                <button onClick={() => setQty(item.id, inCart.quantity + 1)} className="grid h-5 w-5 place-items-center rounded-full bg-gold-gradient text-brown-deep active:scale-90 transition">
+                <button onClick={() => setQty(item.id, inCart.quantity + 1)} className="grid h-5 w-5 place-items-center rounded bg-gold-gradient text-brown-deep active:scale-90 transition">
                   <Plus className="h-3 w-3" />
                 </button>
               </div>
             ) : (
               <button
                 onClick={handleAdd}
-                className="w-full py-2.5 rounded-xl bg-gold-gradient text-brown-deep font-bold text-[10px] uppercase tracking-widest shadow-sm active:scale-95 transition"
+                className="w-full py-2.5 rounded-md bg-gold-gradient text-brown-deep font-bold text-[10px] uppercase tracking-widest shadow-sm active:scale-95 transition"
                 aria-label={`Add ${item.name}`}
               >
                 Add
@@ -122,4 +122,3 @@ export function MiniCategoryCard({ item }: { item: MenuItem }) {
     </div>
   );
 }
-
