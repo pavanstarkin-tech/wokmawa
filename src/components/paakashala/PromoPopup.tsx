@@ -42,7 +42,7 @@ export function PromoPopup({ campaign, onClose, onCtaClick }: PromoPopupProps) {
       }
       navigate({ to: "/menu", search: { q: "offers" } });
     } else if (campaign.ctaType === "offer_collection") {
-      navigate({ to: "/menu", search: { q: "offers" } });
+      navigate({ to: "/menu", search: { q: campaign.ctaLink || "offers" } });
     } else if (campaign.ctaType === "external" && campaign.ctaLink) {
       window.open(campaign.ctaLink, "_blank", "noopener,noreferrer");
     } else {
