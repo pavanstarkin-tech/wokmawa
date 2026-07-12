@@ -241,17 +241,48 @@ function CartPage() {
                     </button>
                   </div>
                   <div className="mt-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2 rounded-lg border border-gold/50 bg-cream px-1 py-1">
-                      <button onClick={() => setQty(it.id, it.quantity - 1)} className="grid h-7 w-7 place-items-center rounded-md text-brown-deep active:scale-90 transition" aria-label="Decrease">
+                    <div className="flex items-center gap-2 rounded-md border border-gold/50 bg-cream px-1 py-1">
+                      <button onClick={() => setQty(it.id, it.quantity - 1)} className="grid h-7 w-7 place-items-center rounded bg-gold/10 text-brown-deep active:scale-90 transition" aria-label="Decrease">
                         <Minus className="h-3.5 w-3.5" />
                       </button>
                       <span className="min-w-4 text-center text-sm font-semibold text-brown-deep">{it.quantity}</span>
-                      <button onClick={() => setQty(it.id, it.quantity + 1)} className="grid h-7 w-7 place-items-center rounded-md bg-gold-gradient text-brown-deep active:scale-90 transition" aria-label="Increase">
+                      <button onClick={() => setQty(it.id, it.quantity + 1)} className="grid h-7 w-7 place-items-center rounded bg-gold-gradient text-brown-deep active:scale-90 transition" aria-label="Increase">
                         <Plus className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                    <div className={`text-sm font-bold ${it.price == null ? "italic text-muted-foreground" : "text-brown-deep"}`}>
-                      {it.price == null ? "On request" : `₹${(it.price * it.quantity).toFixed(0)}`}
+                    
+                    <div className="flex items-center gap-1.5 justify-end">
+                      {(() => {
+                        const price = it.price ?? 0;
+                        // Deterministic fake discount percentage between 10% and 30% based on item id
+                        const getFakeDiscountPct = (id: string) => {
+                          let hash = 0;
+                          for (let i = 0; i < id.length; i++) {
+                            hash = id.charCodeAt(i) + ((hash << 5) - hash);
+                          }
+                          return 10 + Math.abs(hash % 21); // 10 to 30
+                        };
+
+                        const discountPct = it.mrp && price > 0 && it.mrp > price
+                          ? Math.round(((it.mrp - price) / it.mrp) * 100)
+                          : getFakeDiscountPct(it.id);
+
+                        const mrp = it.mrp || (price > 0 ? Math.round(price / (1 - discountPct / 100)) : 0);
+                        const hasDiscount = mrp > price;
+
+                        return (
+                          <>
+                            {hasDiscount && (
+                              <span className="text-[10px] line-through text-muted-foreground font-normal">
+                                ₹{(mrp * it.quantity).toFixed(0)}
+                              </span>
+                            )}
+                            <div className={`text-sm font-bold ${it.price == null ? "italic text-muted-foreground" : "text-brown-deep"}`}>
+                              {it.price == null ? "On request" : `₹${(it.price * it.quantity).toFixed(0)}`}
+                            </div>
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>
