@@ -219,7 +219,7 @@ function AdminOffers() {
   const { logs } = usePromotionLogs();
   const smartCollections = useSmartCollections();
 
-  const [menuProducts, setMenuProducts] = useState<{ id: string; name: string; category: string; price?: number | null }[]>([]);
+  const [menuProducts, setMenuProducts] = useState<{ id: string; name: string; category: string; price?: number | null; image?: string }[]>([]);
 
   // Modals state
   const [showOfferModal, setShowOfferModal] = useState(false);
@@ -262,7 +262,8 @@ function AdminOffers() {
                   id: p.id, 
                   name: p.name, 
                   category: catName,
-                  price: p.price ? Number(p.price) : null
+                  price: p.price ? Number(p.price) : null,
+                  image: p.image || ""
                 })));
               } catch (e) {}
             }
