@@ -267,3 +267,22 @@ export function usePromotionLogs() {
 
   return { logs, loading };
 }
+
+// ─── Smart Collections ────────────────────────────────────────────────────────
+
+export function useSmartCollections(): Record<string, string[]> {
+  const [data, setData] = useState<Record<string, string[]>>({});
+  useEffect(() => {
+    const r = ref(db, "restaurant/smart_collections");
+    const unsub = onValue(r, (snap) => {
+      if (snap.exists()) setData(snap.val());
+      else setData({});
+    });
+    return () => unsub();
+  }, []);
+  return data;
+}
+
+export async function saveSmartCollection(collectionId: string, itemIds: string[]) {
+  await set(ref(db, `restaurant/smart_collections/${collectionId}`), itemIds);
+}
