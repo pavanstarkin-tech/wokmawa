@@ -93,7 +93,6 @@ export function MenuCard({ item }: { item: MenuItem }) {
           <div className="flex items-start justify-between gap-2">
             <h3 className="min-w-0 truncate text-sm font-semibold text-brown-deep">{item.name}</h3>
           </div>
-          <div className="mt-0.5 text-[10px] uppercase tracking-widest text-gold">{item.category}</div>
           {item.description && (
             <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{item.description}</p>
           )}
