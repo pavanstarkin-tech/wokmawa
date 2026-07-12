@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, X } from "lucide-react";
 import { z } from "zod";
@@ -12,6 +12,51 @@ const searchSchema = z.object({
   q: z.string().optional(),
 });
 
+const SMART_COLLECTIONS: Record<string, { title: string; subtitle: string; emoji: string; bgClass: string }> = {
+  bogo: {
+    title: "Buy 1 Get 1 Free",
+    subtitle: "Double the taste, half the price",
+    emoji: "🔥",
+    bgClass: "from-orange-500 to-amber-600"
+  },
+  under199: {
+    title: "Budget Bites Under ₹199",
+    subtitle: "Budget friendly options just for you",
+    emoji: "💸",
+    bgClass: "from-teal-600 to-emerald-600"
+  },
+  under299: {
+    title: "Premium Feasts Under ₹299",
+    subtitle: "Amazing main courses and combos",
+    emoji: "🍲",
+    bgClass: "from-indigo-600 to-blue-600"
+  },
+  combo: {
+    title: "Value Combos & Thalis",
+    subtitle: "Handpicked plates and full family packs",
+    emoji: "🍱",
+    bgClass: "from-purple-600 to-pink-600"
+  },
+  starters199: {
+    title: "Starters Under ₹199",
+    subtitle: "Delicious appetizers at great prices",
+    emoji: "🌶️",
+    bgClass: "from-rose-600 to-red-600"
+  },
+  biryani299: {
+    title: "Biryanis Under ₹299",
+    subtitle: "Delicious aromatic biryanis under budget",
+    emoji: "🍗",
+    bgClass: "from-yellow-600 to-amber-700"
+  },
+  offers: {
+    title: "Special Offers & Discounts",
+    subtitle: "Best deals and discounts catalog",
+    emoji: "🎉",
+    bgClass: "from-amber-500 to-amber-700"
+  }
+};
+
 export const Route = createFileRoute("/menu")({
   validateSearch: (s) => searchSchema.parse(s),
   component: MenuPage,
@@ -19,8 +64,22 @@ export const Route = createFileRoute("/menu")({
 
 function MenuPage() {
   const { category: initialCat, q: initialQ } = Route.useSearch();
-  const [q, setQ] = useState(initialQ ?? "");
+  const navigate = useNavigate();
+  const [smartCollection, setSmartCollection] = useState<string | null>(null);
+  const [q, setQ] = useState("");
   const [filter, setFilter] = useState<"all" | "veg" | "non-veg">("all");
+
+  // Synchronize state when URL query search parameters change
+  useEffect(() => {
+    const normQ = initialQ?.trim().toLowerCase() ?? "";
+    if (["bogo", "under199", "under299", "combo", "starters199", "biryani299", "offers"].includes(normQ)) {
+      setSmartCollection(normQ);
+      setQ("");
+    } else {
+      setSmartCollection(null);
+      setQ(initialQ ?? "");
+    }
+  }, [initialQ]);
   const [active, setActive] = useState<Category>(() => {
     if (initialCat && (CATEGORIES as readonly string[]).includes(initialCat)) return initialCat as Category;
     if (typeof window !== "undefined") {
@@ -58,37 +117,37 @@ function MenuPage() {
     return fullMenu.filter((m) => {
       if (!m || !m.name) return false; // skip malformed items
       if (filter !== "all" && m.type !== filter) return false;
-      if (!query) return true;
-      
-      // Special Smart Queries
-      if (query === "bogo") {
-        return m.name.toLowerCase().includes("bogo") || m.name.toLowerCase().includes("buy 1 get 1") || m.name.toLowerCase().includes("free");
-      }
-      if (query === "under199") {
-        return m.price !== null && m.price < 199;
-      }
-      if (query === "under299") {
-        return m.price !== null && m.price < 299;
-      }
-      if (query === "combo") {
-        return m.category === "Thali" || m.name.toLowerCase().includes("combo") || m.name.toLowerCase().includes("pack") || m.name.toLowerCase().includes("deal");
-      }
-      if (query === "starters199") {
-        return (m.category ?? "").toLowerCase().includes("starter") && m.price !== null && m.price < 199;
-      }
-      if (query === "biryani299") {
-        return (m.category ?? "").toLowerCase().includes("biryani") && m.price !== null && m.price < 299;
-      }
-      if (query === "offers") {
-        return (m.mrp !== undefined && m.mrp !== null && m.mrp > (m.price ?? 0)) || m.name.toLowerCase().includes("bogo") || m.name.toLowerCase().includes("free");
+
+      // 1. Filter by Smart Collection first if active
+      if (smartCollection) {
+        let matchesCollection = false;
+        if (smartCollection === "bogo") {
+          matchesCollection = m.name.toLowerCase().includes("bogo") || m.name.toLowerCase().includes("buy 1 get 1") || m.name.toLowerCase().includes("free");
+        } else if (smartCollection === "under199") {
+          matchesCollection = m.price !== null && m.price < 199;
+        } else if (smartCollection === "under299") {
+          matchesCollection = m.price !== null && m.price < 299;
+        } else if (smartCollection === "combo") {
+          matchesCollection = m.category === "Thali" || m.name.toLowerCase().includes("combo") || m.name.toLowerCase().includes("pack") || m.name.toLowerCase().includes("deal");
+        } else if (smartCollection === "starters199") {
+          matchesCollection = (m.category ?? "").toLowerCase().includes("starter") && m.price !== null && m.price < 199;
+        } else if (smartCollection === "biryani299") {
+          matchesCollection = (m.category ?? "").toLowerCase().includes("biryani") && m.price !== null && m.price < 299;
+        } else if (smartCollection === "offers") {
+          matchesCollection = (m.mrp !== undefined && m.mrp !== null && m.mrp > (m.price ?? 0)) || m.name.toLowerCase().includes("bogo") || m.name.toLowerCase().includes("free");
+        }
+        
+        if (!matchesCollection) return false;
       }
 
+      // 2. Filter by search text query
+      if (!query) return true;
       return (
         (m.name ?? "").toLowerCase().includes(query) ||
         (m.category ?? "").toLowerCase().includes(query)
       );
     });
-  }, [q, filter, fullMenu]);
+  }, [q, smartCollection, filter, fullMenu]);
 
   // Build grouped map dynamically from actual data (not just static CATEGORIES)
   // Guard against items with no category
@@ -120,7 +179,7 @@ function MenuPage() {
     return [...known, ...extra];
   }, [q, grouped]);
 
-  const isSearching = q.trim().length > 0;
+  const isSearching = q.trim().length > 0 || smartCollection !== null;
 
   return (
     <AppShell>
@@ -208,6 +267,41 @@ function MenuPage() {
         </div>
       )}
 
+      {smartCollection && (
+        <div className={`mt-2 p-5 rounded-2xl bg-gradient-to-r ${
+          smartCollection === "bogo" ? "from-orange-500 to-amber-600" :
+          smartCollection === "under199" ? "from-teal-600 to-emerald-600" :
+          smartCollection === "under299" ? "from-indigo-600 to-blue-600" :
+          smartCollection === "combo" ? "from-purple-600 to-pink-600" :
+          smartCollection === "starters199" ? "from-rose-600 to-red-600" :
+          smartCollection === "biryani299" ? "from-yellow-600 to-amber-700" :
+          "from-amber-500 to-amber-700"
+        } text-white shadow-md relative overflow-hidden flex items-center justify-between`}>
+          <div className="space-y-0.5 z-10">
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/80 block">⚡ Smart Collection</span>
+            <h1 className="text-base font-extrabold tracking-tight">
+              {SMART_COLLECTIONS[smartCollection]?.title || "Special Offers & Discounts"}
+            </h1>
+            <p className="text-[10px] text-white/85 font-medium">
+              {SMART_COLLECTIONS[smartCollection]?.subtitle || "Best deals and discounts catalog"}
+            </p>
+          </div>
+          <button 
+            onClick={() => {
+              setSmartCollection(null);
+              navigate({ to: "/menu", search: (prev) => ({ ...prev, q: undefined }) });
+            }}
+            className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm transition-all z-10 cursor-pointer active:scale-95 flex items-center justify-center shrink-0 ml-4"
+            aria-label="Clear filter"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="absolute right-0 bottom-0 opacity-15 text-7xl font-bold translate-y-3 translate-x-3 pointer-events-none select-none">
+            {SMART_COLLECTIONS[smartCollection]?.emoji || "🎉"}
+          </div>
+        </div>
+      )}
+
       {/* Menu sections */}
       <div className="mt-5 space-y-8">
         {orderedCategories.map((c) => {
@@ -240,7 +334,12 @@ function MenuPage() {
             <div className="text-sm font-semibold text-brown-deep">No dishes match your search.</div>
             <div className="mt-1 text-xs text-muted-foreground">Try clearing filters or a different keyword.</div>
             <button
-              onClick={() => { setQ(""); setFilter("all"); }}
+              onClick={() => {
+                setQ("");
+                setSmartCollection(null);
+                setFilter("all");
+                navigate({ to: "/menu", search: (prev) => ({ ...prev, q: undefined }) });
+              }}
               className="mt-4 text-xs font-bold text-gold underline underline-offset-2"
             >
               Clear search
