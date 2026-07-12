@@ -18,11 +18,11 @@ export function VegBadge({ type }: { type: "veg" | "non-veg" }) {
 
 export function QuantitySelector({ qty, onDec, onInc }: any) {
   return (
-    <div className="flex items-center gap-2.5 rounded-xl border border-gold/50 bg-cream p-1 shadow-sm">
+    <div className="flex items-center gap-2.5 rounded-md border border-gold/50 bg-cream p-1 shadow-sm">
       <button
         onClick={onDec}
         aria-label="Decrease"
-        className="grid h-8 w-8 place-items-center rounded-lg bg-gold/10 text-brown-deep transition active:scale-90"
+        className="grid h-8 w-8 place-items-center rounded bg-gold/10 text-brown-deep transition active:scale-90"
       >
         <Minus className="h-3.5 w-3.5" />
       </button>
@@ -30,7 +30,7 @@ export function QuantitySelector({ qty, onDec, onInc }: any) {
       <button
         onClick={onInc}
         aria-label="Increase"
-        className="grid h-8 w-8 place-items-center rounded-lg bg-gold-gradient text-brown-deep transition active:scale-90"
+        className="grid h-8 w-8 place-items-center rounded bg-gold-gradient text-brown-deep transition active:scale-90"
       >
         <Plus className="h-3.5 w-3.5" />
       </button>
@@ -49,7 +49,7 @@ export function MenuCard({ item }: { item: MenuItem }) {
     setIsAddedFeedback(true);
     setTimeout(() => {
       setIsAddedFeedback(false);
-    }, 400);
+    }, 1000);
   };
 
   const price = item.price ?? 0;
@@ -113,7 +113,7 @@ export function MenuCard({ item }: { item: MenuItem }) {
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Ask at restaurant</span>
           ) : isAddedFeedback ? (
             <button
-              className="inline-flex items-center gap-1.5 rounded-xl bg-green-600 text-white px-4 py-2.5 text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
+              className="inline-flex items-center gap-1.5 rounded-md bg-green-600 text-white px-4 py-2.5 text-xs font-bold uppercase tracking-wider shadow-sm transition-all"
               disabled
             >
               Added!
@@ -127,7 +127,7 @@ export function MenuCard({ item }: { item: MenuItem }) {
           ) : (
             <button
               onClick={handleAdd}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-gold bg-cream px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-brown-deep transition hover:bg-gold-gradient active:scale-95 shadow-luxe"
+              className="inline-flex items-center gap-1.5 rounded-md border border-gold bg-cream px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-brown-deep transition hover:bg-gold-gradient active:scale-95 shadow-luxe"
             >
               {item.type === "veg" ? <Leaf className="h-3.5 w-3.5" /> : <Drumstick className="h-3.5 w-3.5" />}
               Add
