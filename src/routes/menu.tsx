@@ -6,6 +6,7 @@ import { AppShell } from "@/components/paakashala/AppShell";
 import { MiniCategoryCard } from "@/components/paakashala/MiniCategoryCard";
 import { CATEGORIES, CATEGORY_IMAGE, type Category } from "@/lib/paakashala-menu";
 import { KEYS, useMenu } from "@/lib/paakashala-store";
+import { useSmartCollections } from "@/routes/admin/offers";
 
 const searchSchema = z.object({
   category: z.string().optional(),
@@ -111,65 +112,56 @@ function MenuPage() {
   }, []);
 
   const fullMenu = useMenu();
+  const savedCollections = useSmartCollections();
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     return fullMenu.filter((m) => {
-      if (!m || !m.name) return false; // skip malformed items
+      if (!m || !m.name) return false;
       if (filter !== "all" && m.type !== filter) return false;
 
-      // 1. Filter by Smart Collection first if active
+      // 1. Filter by Smart Collection
       if (smartCollection) {
-        let matchesCollection = false;
-        const cat = (m.category ?? "").toLowerCase();
-        const price = Number(m.price ?? 9999);
-
-        if (smartCollection === "bogo") {
-          // BOGO applies to any item — show entire menu so customer can pick pairs
-          matchesCollection = true;
-        } else if (smartCollection === "under199") {
-          matchesCollection = price < 199;
-        } else if (smartCollection === "under299") {
-          matchesCollection = price < 299;
-        } else if (smartCollection === "combo") {
-          // Thali + Fried Rice + items with combo/meal/pack/deal in name
-          matchesCollection =
-            cat.includes("thali") ||
-            cat.includes("fried rice") ||
-            cat.includes("rice") ||
-            m.name.toLowerCase().includes("combo") ||
-            m.name.toLowerCase().includes("pack") ||
-            m.name.toLowerCase().includes("meal") ||
-            m.name.toLowerCase().includes("full") ||
-            m.name.toLowerCase().includes("half");
-        } else if (smartCollection === "starters199") {
-          // Match exact starter category names from CATEGORIES const
-          matchesCollection = (
-            cat === "veg starters" ||
-            cat === "non veg starters" ||
-            cat === "south indian starters" ||
-            cat === "tandoori starters"
-          ) && price < 199;
-        } else if (smartCollection === "biryani299") {
-          matchesCollection = cat.includes("biryani") && price < 299;
-        } else if (smartCollection === "offers") {
-          // Items with discount (mrp > price) OR affordable items under ₹200
-          const mrp = Number(m.mrp ?? 0);
-          const hasDiscount = mrp > 0 && mrp > price;
-          matchesCollection = hasDiscount || price < 200;
+        // Check if admin has manually curated items for this collection
+        const savedIds: string[] | undefined = (savedCollections as Record<string, string[]>)[smartCollection];
+        if (savedIds && savedIds.length > 0) {
+          // Admin curated — show ONLY those exact items
+          if (!savedIds.includes(m.id)) return false;
+        } else {
+          // No curation saved — fall back to auto-filter logic
+          let matchesCollection = false;
+          const cat = (m.category ?? "").toLowerCase();
+          const price = Number(m.price ?? 9999);
+          if (smartCollection === "bogo") {
+            matchesCollection = true;
+          } else if (smartCollection === "under199") {
+            matchesCollection = price < 199;
+          } else if (smartCollection === "under299") {
+            matchesCollection = price < 299;
+          } else if (smartCollection === "combo") {
+            matchesCollection = cat.includes("thali") || cat.includes("fried rice") || cat.includes("rice") ||
+              m.name.toLowerCase().includes("combo") || m.name.toLowerCase().includes("pack") ||
+              m.name.toLowerCase().includes("meal") || m.name.toLowerCase().includes("full") || m.name.toLowerCase().includes("half");
+          } else if (smartCollection === "starters199") {
+            matchesCollection = (cat === "veg starters" || cat === "non veg starters" || cat === "south indian starters" || cat === "tandoori starters") && price < 199;
+          } else if (smartCollection === "biryani299") {
+            matchesCollection = cat.includes("biryani") && price < 299;
+          } else if (smartCollection === "offers") {
+            const mrp = Number(m.mrp ?? 0);
+            matchesCollection = (mrp > 0 && mrp > price) || price < 200;
+          }
+          if (!matchesCollection) return false;
         }
-
-        if (!matchesCollection) return false;
       }
 
-      // 2. Filter by search text query
+      // 2. Filter by text search query
       if (!query) return true;
       return (
         (m.name ?? "").toLowerCase().includes(query) ||
         (m.category ?? "").toLowerCase().includes(query)
       );
     });
-  }, [q, smartCollection, filter, fullMenu]);
+  }, [q, smartCollection, filter, fullMenu, savedCollections]);
 
   // Build grouped map dynamically from actual data (not just static CATEGORIES)
   // Guard against items with no category
