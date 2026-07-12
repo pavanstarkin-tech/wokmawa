@@ -84,14 +84,19 @@ export function FeaturedCard({ item }: { item: MenuItem }) {
 
           {item.price != null && (
             count > 0 ? (
-              <div className="flex items-center gap-0.5 rounded-full border border-gold/50 bg-cream px-1.5 py-1.5 shadow-sm shrink-0 w-full justify-between">
-                <button onClick={() => setQty(item.id, count - 1)} className="grid h-5 w-5 place-items-center rounded-full text-brown-deep active:scale-90 transition">
-                  <Minus className="h-3 w-3" />
-                </button>
-                <span className="text-[10px] font-bold text-brown-deep min-w-[12px] text-center">{count}</span>
-                <button onClick={() => setQty(item.id, count + 1)} className="grid h-5 w-5 place-items-center rounded-full bg-gold-gradient text-brown-deep active:scale-90 transition">
-                  <Plus className="h-3 w-3" />
-                </button>
+              <div className="flex flex-col gap-1 w-full">
+                <div className="text-[9px] font-bold text-green-600 flex items-center justify-center gap-0.5 uppercase tracking-wider animate-pulse">
+                  ✓ Added
+                </div>
+                <div className="flex items-center gap-0.5 rounded-full border border-gold/50 bg-cream px-1.5 py-1.5 shadow-sm shrink-0 w-full justify-between">
+                  <button onClick={() => setQty(item.id, count - 1)} className="grid h-5 w-5 place-items-center rounded-full text-brown-deep active:scale-90 transition">
+                    <Minus className="h-3 w-3" />
+                  </button>
+                  <span className="text-[10px] font-bold text-brown-deep min-w-[12px] text-center">{count}</span>
+                  <button onClick={() => setQty(item.id, count + 1)} className="grid h-5 w-5 place-items-center rounded-full bg-gold-gradient text-brown-deep active:scale-90 transition">
+                    <Plus className="h-3 w-3" />
+                  </button>
+                </div>
               </div>
             ) : (
               <button
