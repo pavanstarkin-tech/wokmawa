@@ -267,3 +267,85 @@ export function usePromotionLogs() {
 
   return { logs, loading };
 }
+
+/* ---------- Firebase Smart Collections API ---------- */
+
+export interface SmartCollection {
+  id: string;
+  title: string;
+  query: string;
+  image: string;
+  priority: number;
+  status: "active" | "inactive";
+  createdAt: number;
+}
+
+const DEFAULT_SMART_COLLECTIONS: Omit<SmartCollection, "createdAt">[] = [
+  { id: "bogo", title: "Buy 1 Get 1", query: "bogo", image: "/collections/1.png", priority: 60, status: "active" },
+  { id: "under199", title: "Under ₹199", query: "under199", image: "/collections/2.png", priority: 50, status: "active" },
+  { id: "under299", title: "Under ₹299", query: "under299", image: "/collections/3.png", priority: 40, status: "active" },
+  { id: "combos", title: "Combo Deals", query: "combo", image: "/collections/4.png", priority: 30, status: "active" },
+  { id: "starters199", title: "Starters < ₹199", query: "starters199", image: "/collections/5.png", priority: 20, status: "active" },
+  { id: "biryani299", title: "Biryanis < ₹299", query: "biryani299", image: "/collections/6.png", priority: 10, status: "active" },
+];
+
+export function useSmartCollections() {
+  const [collections, setCollections] = useState<SmartCollection[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const colRef = ref(db, "restaurant/smart_collections");
+    const unsub = onValue(colRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) {
+        // Seed default collections if empty in DB
+        DEFAULT_SMART_COLLECTIONS.forEach((col) => {
+          const newRef = ref(db, `restaurant/smart_collections/${col.id}`);
+          set(newRef, {
+            ...col,
+            createdAt: Date.now(),
+          });
+        });
+        setCollections([]);
+        setLoading(false);
+        return;
+      }
+
+      const parsed: SmartCollection[] = Object.keys(data).map((key) => ({
+        id: key,
+        ...data[key],
+      }));
+      // Sort by priority descending
+      parsed.sort((a, b) => (b.priority || 0) - (a.priority || 0));
+      setCollections(parsed);
+      setLoading(false);
+    });
+
+    return () => unsub();
+  }, []);
+
+  return { collections, loading };
+}
+
+export async function createSmartCollection(colData: Omit<SmartCollection, "id" | "createdAt">) {
+  const colRef = ref(db, "restaurant/smart_collections");
+  const newRef = push(colRef);
+  const newCol: SmartCollection = {
+    id: newRef.key!,
+    ...colData,
+    createdAt: Date.now(),
+  };
+  await set(newRef, newCol);
+  return newCol;
+}
+
+export async function updateSmartCollection(id: string, colData: Partial<SmartCollection>) {
+  const colRef = ref(db, `restaurant/smart_collections/${id}`);
+  await update(colRef, colData);
+}
+
+export async function deleteSmartCollection(id: string) {
+  const colRef = ref(db, `restaurant/smart_collections/${id}`);
+  await remove(colRef);
+}
+
