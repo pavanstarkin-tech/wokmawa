@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ref, onValue, update } from "firebase/database";
+import { ref, onValue, update, set } from "firebase/database";
 import { db } from "@/lib/firebase";
 import {
   Plus,
@@ -214,7 +214,8 @@ function AdminOffers() {
   const [activeTab, setActiveTab] = useState<TabType>("offers");
   const { offers, loading: loadingOffers } = useOffers();
   const { campaigns, loading: loadingCampaigns } = usePopupCampaigns();
-  const { logs, loading: loadingLogs } = usePromotionLogs();
+  const { logs } = usePromotionLogs();
+  const smartCollections = useSmartCollections();
 
   const [menuProducts, setMenuProducts] = useState<{ id: string; name: string; category: string }[]>([]);
 
@@ -232,6 +233,14 @@ function AdminOffers() {
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [targetProductSearch, setTargetProductSearch] = useState("");
+  const [collectionSearch, setCollectionSearch] = useState<Record<string, string>>({});
+  const [collectionDraft, setCollectionDraft] = useState<Record<string, string[]>>({});
+  const [collectionSaving, setCollectionSaving] = useState<string | null>(null);
+
+  // Sync Firebase smart_collections into local draft state
+  useEffect(() => {
+    setCollectionDraft(smartCollections);
+  }, [smartCollections]);
 
   // Load menu items for conditions dropdown
   useEffect(() => {
@@ -567,6 +576,14 @@ function AdminOffers() {
           >
             Analytics Dashboard
           </button>
+          <button
+            onClick={() => setActiveTab("collections")}
+            className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+              activeTab === "collections" ? "bg-brown-gradient text-cream" : "text-muted-foreground hover:text-brown-deep"
+            }`}
+          >
+            Smart Collections
+          </button>
         </div>
       </div>
 
@@ -893,7 +910,159 @@ function AdminOffers() {
             </div>
           </div>
         )}
-      </div>
+
+        {/* TAB 4: SMART COLLECTIONS MANAGER */}
+        {activeTab === "collections" && (() => {
+          const SMART_COL_META = [
+            { id: "bogo",       emoji: "🔥", title: "Buy 1 Get 1 Free",         desc: "Pick items that qualify for the BOGO deal" },
+            { id: "under199",   emoji: "💸", title: "Under ₹199",               desc: "Budget-friendly dishes shown in this collection" },
+            { id: "under299",   emoji: "🍲", title: "Under ₹299",               desc: "Mid-range value dishes in this collection" },
+            { id: "combo",      emoji: "🍱", title: "Combo Deals",              desc: "Combo meals and thali packs" },
+            { id: "starters199",emoji: "🌶️", title: "Starters Under ₹199",     desc: "Starter/appetizer dishes under ₹199" },
+            { id: "biryani299", emoji: "🍗", title: "Biryanis Under ₹299",      desc: "Biryani dishes under budget" },
+          ];
+          return (
+            <div className="space-y-6">
+              <div className="bg-card p-4 rounded-2xl border border-border/60 shadow-sm flex items-start gap-3">
+                <div className="text-2xl">⚡</div>
+                <div>
+                  <h2 className="font-bold text-brown-deep text-sm">Manually Curate Smart Collections</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">For each Smart Collection tile on your homepage, handpick exactly which dishes appear when a customer taps it.</p>
+                </div>
+              </div>
+
+              {SMART_COL_META.map(col => {
+                const selectedIds: string[] = collectionDraft[col.id] || [];
+                const search = collectionSearch[col.id] || "";
+                const filteredItems = menuProducts.filter(p =>
+                  p.name.toLowerCase().includes(search.toLowerCase()) ||
+                  p.category.toLowerCase().includes(search.toLowerCase())
+                );
+                const selectedItems = menuProducts.filter(p => selectedIds.includes(p.id));
+
+                return (
+                  <div key={col.id} className="bg-card rounded-3xl border border-border/60 shadow-sm overflow-hidden">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-border/40 bg-muted/20">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xl">{col.emoji}</span>
+                        <div>
+                          <h3 className="font-bold text-sm text-brown-deep">{col.title}</h3>
+                          <p className="text-[10px] text-muted-foreground">{col.desc}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-gold bg-gold/10 border border-gold/20 px-2 py-1 rounded-full">
+                          {selectedIds.length} item{selectedIds.length !== 1 ? "s" : ""} selected
+                        </span>
+                        <button
+                          onClick={async () => {
+                            setCollectionSaving(col.id);
+                            try {
+                              await saveSmartCollection(col.id, selectedIds);
+                            } finally {
+                              setCollectionSaving(null);
+                            }
+                          }}
+                          disabled={collectionSaving === col.id}
+                          className="flex items-center gap-1.5 bg-brown-gradient text-cream px-3 py-1.5 rounded-xl font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
+                        >
+                          {collectionSaving === col.id ? "Saving..." : "Save"}
+                        </button>
+                        {selectedIds.length > 0 && (
+                          <button
+                            onClick={() => setCollectionDraft(d => ({ ...d, [col.id]: [] }))}
+                            className="text-[10px] font-bold text-red-500 hover:text-red-700 border border-red-200 hover:border-red-400 px-2 py-1 rounded-xl transition-colors"
+                          >
+                            Clear All
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Left: Item Picker */}
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Add Items</label>
+                        <input
+                          type="text"
+                          placeholder="Search by name or category..."
+                          value={search}
+                          onChange={e => setCollectionSearch(s => ({ ...s, [col.id]: e.target.value }))}
+                          className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:border-gold focus:outline-none"
+                        />
+                        <div className="max-h-52 overflow-y-auto border border-border rounded-xl divide-y divide-border/40">
+                          {filteredItems.length === 0 ? (
+                            <div className="p-4 text-center text-xs text-muted-foreground">No products match</div>
+                          ) : filteredItems.map(p => {
+                            const checked = selectedIds.includes(p.id);
+                            return (
+                              <label
+                                key={p.id}
+                                className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer text-xs transition-colors ${
+                                  checked ? "bg-gold/5" : "hover:bg-muted/40"
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={e => {
+                                    setCollectionDraft(d => {
+                                      const list = [...(d[col.id] || [])];
+                                      if (e.target.checked) { if (!list.includes(p.id)) list.push(p.id); }
+                                      else { const i = list.indexOf(p.id); if (i > -1) list.splice(i, 1); }
+                                      return { ...d, [col.id]: list };
+                                    });
+                                  }}
+                                  className="accent-amber-600 h-3.5 w-3.5 rounded"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <span className={`font-semibold block truncate ${checked ? "text-brown-deep" : "text-muted-foreground"}`}>{p.name}</span>
+                                  <span className="text-[9px] text-muted-foreground/70">{p.category} · ₹{p.price}</span>
+                                </div>
+                                {checked && <span className="text-gold text-[10px] font-black shrink-0">✓</span>}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Right: Selected Items Preview */}
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Selected ({selectedIds.length})</label>
+                        {selectedItems.length === 0 ? (
+                          <div className="h-full min-h-[120px] border-2 border-dashed border-border/40 rounded-xl flex items-center justify-center">
+                            <p className="text-xs text-muted-foreground text-center px-4">No items selected yet.<br/>Check items from the list.</p>
+                          </div>
+                        ) : (
+                          <div className="max-h-52 overflow-y-auto border border-border rounded-xl divide-y divide-border/40">
+                            {selectedItems.map(p => (
+                              <div key={p.id} className="flex items-center gap-2.5 px-3 py-2.5">
+                                <div className="min-w-0 flex-1">
+                                  <span className="text-xs font-semibold text-brown-deep block truncate">{p.name}</span>
+                                  <span className="text-[9px] text-muted-foreground/70">{p.category} · ₹{p.price}</span>
+                                </div>
+                                <button
+                                  onClick={() => setCollectionDraft(d => {
+                                    const list = (d[col.id] || []).filter(id => id !== p.id);
+                                    return { ...d, [col.id]: list };
+                                  })}
+                                  className="p-1 rounded-full hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors shrink-0"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
       {/* MODAL 1: ADD / EDIT OFFER */}
       {showOfferModal && (
