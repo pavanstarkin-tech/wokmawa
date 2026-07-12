@@ -53,14 +53,36 @@ function MenuPage() {
 
   const fullMenu = useMenu();
 
-  // Real-world search: filter by name AND category, case-insensitive
-  // Guard against undefined fields from Firebase with optional chaining
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
     return fullMenu.filter((m) => {
       if (!m || !m.name) return false; // skip malformed items
       if (filter !== "all" && m.type !== filter) return false;
       if (!query) return true;
+      
+      // Special Smart Queries
+      if (query === "bogo") {
+        return m.name.toLowerCase().includes("bogo") || m.name.toLowerCase().includes("buy 1 get 1") || m.name.toLowerCase().includes("free");
+      }
+      if (query === "under199") {
+        return m.price !== null && m.price < 199;
+      }
+      if (query === "under299") {
+        return m.price !== null && m.price < 299;
+      }
+      if (query === "combo") {
+        return m.category === "Thali" || m.name.toLowerCase().includes("combo") || m.name.toLowerCase().includes("pack") || m.name.toLowerCase().includes("deal");
+      }
+      if (query === "starters199") {
+        return m.category.toLowerCase().includes("starter") && m.price !== null && m.price < 199;
+      }
+      if (query === "biryani299") {
+        return m.category.toLowerCase().includes("biryani") && m.price !== null && m.price < 299;
+      }
+      if (query === "offers") {
+        return (m.mrp !== undefined && m.mrp !== null && m.mrp > (m.price ?? 0)) || m.name.toLowerCase().includes("bogo") || m.name.toLowerCase().includes("free");
+      }
+
       return (
         (m.name ?? "").toLowerCase().includes(query) ||
         (m.category ?? "").toLowerCase().includes(query)
