@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ref, onValue, update, set } from "firebase/database";
+import { ref, onValue, update } from "firebase/database";
 import { db } from "@/lib/firebase";
 import {
   Plus,
@@ -32,6 +32,8 @@ import {
   updatePopupCampaign,
   deletePopupCampaign,
   usePromotionLogs,
+  useSmartCollections,
+  saveSmartCollection,
   type Offer,
   type PopupCampaign
 } from "@/lib/promotions";
@@ -56,7 +58,7 @@ export const Route = createFileRoute("/admin/offers")({
   component: AdminOffers,
 });
 
-type TabType = "offers" | "popups" | "analytics";
+type TabType = "offers" | "popups" | "analytics" | "collections";
 
 const OFFER_TYPES = [
   { value: "percentage", label: "Percentage Discount" },
