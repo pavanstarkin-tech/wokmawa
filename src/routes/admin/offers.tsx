@@ -114,6 +114,7 @@ const DEFAULT_POPUP_FORM = {
   ctaText: "Get Offer",
   ctaType: "coupon" as PopupCampaign["ctaType"],
   ctaLink: "",
+  offerId: "",
   startDate: new Date().toISOString().split("T")[0],
   endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
   priority: 10,
@@ -314,6 +315,7 @@ function AdminOffers() {
       ctaText: campaign.ctaText || "Get Offer",
       ctaType: campaign.ctaType,
       ctaLink: campaign.ctaLink || "",
+      offerId: campaign.offerId || "",
       startDate: campaign.startDate || "",
       endDate: campaign.endDate || "",
       priority: campaign.priority,
@@ -335,6 +337,7 @@ function AdminOffers() {
         ctaText: popupForm.ctaText.trim(),
         ctaType: popupForm.ctaType,
         ctaLink: popupForm.ctaLink.trim(),
+        offerId: popupForm.offerId || undefined,
         startDate: popupForm.startDate,
         endDate: popupForm.endDate,
         priority: Number(popupForm.priority) || 0,
@@ -1227,8 +1230,68 @@ function AdminOffers() {
               </button>
             </div>
 
-            {/* Fields */}
-            <div className="p-6 space-y-4">
+             {/* Fields */}
+             <div className="p-6 space-y-4">
+              {/* Linked Offer Dropdown */}
+              <div>
+                <label className="block text-xs font-bold text-muted-foreground uppercase mb-1 font-semibold">Linked Promotional Offer (Optional)</label>
+                <select
+                  value={popupForm.offerId}
+                  onChange={e => {
+                    const offerId = e.target.value;
+                    const linkedOffer = offers.find(o => o.id === offerId);
+                    
+                    if (linkedOffer) {
+                      // Automatically autofill values from the Offer!
+                      let inferredCtaType: PopupCampaign["ctaType"] = "coupon";
+                      let inferredCtaLink = "";
+                      
+                      if (linkedOffer.type === "coupon" && linkedOffer.couponCode) {
+                        inferredCtaType = "coupon";
+                        inferredCtaLink = linkedOffer.couponCode;
+                      } else if (linkedOffer.targetType === "categories" && linkedOffer.targetCategories?.[0]) {
+                        inferredCtaType = "category";
+                        inferredCtaLink = linkedOffer.targetCategories[0];
+                      } else if (linkedOffer.targetType === "products" && linkedOffer.targetProducts?.[0]) {
+                        const pName = menuProducts.find(p => p.id === linkedOffer.targetProducts?.[0])?.name || linkedOffer.targetProducts[0];
+                        inferredCtaType = "product";
+                        inferredCtaLink = pName;
+                      } else if (linkedOffer.type === "bogo" && linkedOffer.conditions?.buyProductId) {
+                        const pName = menuProducts.find(p => p.id === linkedOffer.conditions?.buyProductId)?.name || linkedOffer.conditions.buyProductId;
+                        inferredCtaType = "product";
+                        inferredCtaLink = pName;
+                      } else {
+                        inferredCtaType = "offer_collection";
+                        inferredCtaLink = "offers";
+                      }
+                      
+                      setPopupForm(f => ({
+                        ...f,
+                        offerId,
+                        title: linkedOffer.name,
+                        description: linkedOffer.description,
+                        ctaType: inferredCtaType,
+                        ctaLink: inferredCtaLink,
+                        startDate: linkedOffer.startDate || f.startDate,
+                        endDate: linkedOffer.endDate || f.endDate,
+                        priority: linkedOffer.priority || f.priority,
+                      }));
+                    } else {
+                      setPopupForm(f => ({ ...f, offerId: "" }));
+                    }
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
+                >
+                  <option value="">— Not Linked to an Offer —</option>
+                  {offers.map(o => (
+                    <option key={o.id} value={o.id}>
+                      {o.name} ({o.type})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-muted-foreground mt-1">Linking an offer will automatically pre-fill dates, priorities, title, description, and CTA behaviors.</p>
+              </div>
+
               <div>
                 <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Campaign Title *</label>
                 <input
