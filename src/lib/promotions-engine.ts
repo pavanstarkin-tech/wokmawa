@@ -490,13 +490,27 @@ export function calculateCartPromotions(
   const tax = Math.round(taxableAmount * 0.05 * 100) / 100;
   const grandTotal = Math.round((taxableAmount + tax) * 100) / 100;
 
+  // Deterministic fake discount percentage between 10% and 30% based on item id
+  const getFakeDiscountPct = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return 10 + Math.abs(hash % 21); // 10 to 30
+  };
+
   // Savings is total discount + difference between MRP and selling price of items in the cart
   const mrpDiff = cartItems.reduce((sum, item) => {
     // If we have an MRP field, calculate original savings
     // We fetch MRP from menuItems list (fallback to cart item if mrp is passed there)
     const menuItem = allProducts.find(m => m.id === item.id);
     const price = item.price || 0;
-    const mrp = (menuItem as any)?.mrp || (price > 0 ? Math.round(price * 1.20) : 0);
+    
+    const discountPct = (menuItem as any)?.mrp && price > 0 && (menuItem as any).mrp > price
+      ? Math.round((((menuItem as any).mrp - price) / (menuItem as any).mrp) * 100)
+      : getFakeDiscountPct(item.id);
+
+    const mrp = (menuItem as any)?.mrp || (price > 0 ? Math.round(price / (1 - discountPct / 100)) : 0);
     if (mrp > price) {
       return sum + (mrp - price) * item.quantity;
     }
