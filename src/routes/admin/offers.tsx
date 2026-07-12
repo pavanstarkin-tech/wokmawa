@@ -868,9 +868,8 @@ function AdminOffers() {
                   
                   // All matching search items
                   const filteredItems = menuProducts.filter(p => {
-                    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-                                          p.category.toLowerCase().includes(search.toLowerCase());
-                    const matchesCategory = !catFilter || p.category === catFilter;
+                    const matchesSearch = !search.trim() || p.name.toLowerCase().includes(search.trim().toLowerCase());
+                    const matchesCategory = !catFilter || p.category.toLowerCase() === catFilter.toLowerCase();
                     return matchesSearch && matchesCategory;
                   });
 
