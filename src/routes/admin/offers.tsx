@@ -819,6 +819,133 @@ function AdminOffers() {
             {/* Modal Content */}
             <div className="p-6 space-y-5">
               
+              {/* Quick Template Presets */}
+              {offerModalMode === "add" && (
+                <div className="bg-gold/5 border border-gold/25 rounded-2xl p-4 space-y-2">
+                  <span className="text-[10px] tracking-wider font-extrabold text-gold uppercase block">⚡ Quick Offer Presets (Select to Autofill)</span>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {[
+                      {
+                        name: "Flat 10% Off",
+                        desc: "Apply 10% discount on the entire order value.",
+                        data: {
+                          name: "Flat 10% Off",
+                          description: "Get 10% discount on your bill value.",
+                          type: "percentage",
+                          targetType: "entire_order",
+                          discountPercentage: "10",
+                          discountValue: "",
+                          minCartValue: "",
+                          couponCode: "",
+                          isStackable: true,
+                          priority: 10
+                        }
+                      },
+                      {
+                        name: "Flat ₹100 Off (Min ₹500)",
+                        desc: "Flat ₹100 off when ordering above ₹500.",
+                        data: {
+                          name: "Flat ₹100 Off",
+                          description: "Flat ₹100 discount on bills above ₹500.",
+                          type: "fixed",
+                          targetType: "entire_order",
+                          discountPercentage: "",
+                          discountValue: "100",
+                          minCartValue: "500",
+                          couponCode: "",
+                          isStackable: true,
+                          priority: 20
+                        }
+                      },
+                      {
+                        name: "WELCOME100 Coupon",
+                        desc: "Coupon code WELCOME100 for ₹100 discount.",
+                        data: {
+                          name: "WELCOME100 Coupon Offer",
+                          description: "Use coupon WELCOME100 for flat ₹100 discount on orders above ₹399.",
+                          type: "coupon",
+                          targetType: "entire_order",
+                          discountPercentage: "",
+                          discountValue: "100",
+                          minCartValue: "399",
+                          couponCode: "WELCOME100",
+                          isStackable: true,
+                          priority: 30
+                        }
+                      },
+                      {
+                        name: "Buy 1 Get 1 (BOGO)",
+                        desc: "Buy one item, get the same item free.",
+                        data: {
+                          name: "Buy 1 Get 1 Free (BOGO)",
+                          description: "Add 2 of the same item to cart, pay for only 1.",
+                          type: "bogo",
+                          targetType: "products",
+                          discountPercentage: "",
+                          discountValue: "",
+                          minCartValue: "",
+                          couponCode: "",
+                          buyQuantity: "1",
+                          freeQuantity: "1",
+                          isStackable: false,
+                          priority: 40
+                        }
+                      },
+                      {
+                        name: "Weekend 15% Off",
+                        desc: "Automated 15% discount active on Saturday/Sunday.",
+                        data: {
+                          name: "Weekend Special 15% Off",
+                          description: "15% discount applied automatically on Saturdays and Sundays.",
+                          type: "weekend",
+                          targetType: "entire_order",
+                          discountPercentage: "15",
+                          discountValue: "",
+                          minCartValue: "",
+                          couponCode: "",
+                          weekdays: ["Saturday", "Sunday"],
+                          isStackable: true,
+                          priority: 15
+                        }
+                      },
+                      {
+                        name: "Free Gift on ₹999+",
+                        desc: "Add a free reward item for orders above ₹999.",
+                        data: {
+                          name: "Free Dessert on orders above ₹999",
+                          description: "Get a free item when your bill crosses ₹999.",
+                          type: "free_gift",
+                          targetType: "entire_order",
+                          discountPercentage: "",
+                          discountValue: "",
+                          minCartValue: "999",
+                          couponCode: "",
+                          isStackable: true,
+                          priority: 25
+                        }
+                      }
+                    ].map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setOfferForm(f => ({
+                            ...DEFAULT_OFFER_FORM,
+                            ...preset.data,
+                            startDate: f.startDate,
+                            endDate: f.endDate,
+                          }));
+                        }}
+                        className="p-2.5 rounded-xl border border-gold/20 hover:border-gold bg-card hover:bg-gold/5 text-left transition-all cursor-pointer active:scale-95 flex flex-col justify-between"
+                      >
+                        <span className="text-[10px] font-bold text-brown-deep block leading-tight">{preset.name}</span>
+                        <span className="text-[8px] text-muted-foreground mt-1 block leading-snug line-clamp-2">{preset.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Row 1: Name and Priority */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2">
