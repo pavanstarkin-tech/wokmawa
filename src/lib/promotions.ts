@@ -270,8 +270,9 @@ export function usePromotionLogs() {
 
 // ─── Smart Collections ────────────────────────────────────────────────────────
 
-export function useSmartCollections(): Record<string, string[]> {
+export function useSmartCollections() {
   const [data, setData] = useState<Record<string, string[]>>({});
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     const r = ref(db, "restaurant/smart_collections");
     const unsub = onValue(r, (snap) => {
@@ -294,10 +295,11 @@ export function useSmartCollections(): Record<string, string[]> {
       } else {
         setData({});
       }
+      setLoading(false);
     });
     return () => unsub();
   }, []);
-  return data;
+  return { data, loading };
 }
 
 export async function saveSmartCollection(collectionId: string, itemIds: string[]) {

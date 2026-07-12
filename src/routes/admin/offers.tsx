@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { ref, onValue, update } from "firebase/database";
 import { db } from "@/lib/firebase";
 import {
@@ -217,9 +217,10 @@ function AdminOffers() {
   const { offers, loading: loadingOffers } = useOffers();
   const { campaigns, loading: loadingCampaigns } = usePopupCampaigns();
   const { logs } = usePromotionLogs();
-  const smartCollections = useSmartCollections();
+  const { data: smartCollections } = useSmartCollections();
 
   const [menuProducts, setMenuProducts] = useState<{ id: string; name: string; category: string; price?: number | null; image?: string }[]>([]);
+  const uniqueCategories = useMemo(() => Array.from(new Set(menuProducts.map(p => p.category))).sort(), [menuProducts]);
 
   // Modals state
   const [showOfferModal, setShowOfferModal] = useState(false);
@@ -942,7 +943,7 @@ function AdminOffers() {
                               className="w-32 px-2 py-2 rounded-xl border border-border bg-background text-xs focus:border-gold focus:outline-none shrink-0"
                             >
                               <option value="">All Categories</option>
-                              {CATEGORIES.map(cat => (
+                              {uniqueCategories.map(cat => (
                                 <option key={cat} value={cat}>{cat}</option>
                               ))}
                             </select>
@@ -1341,7 +1342,7 @@ function AdminOffers() {
                     <div>
                       <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Target Categories</label>
                       <div className="max-h-24 overflow-y-auto border border-border bg-background p-2 rounded-xl text-xs space-y-1.5">
-                        {CATEGORIES.map(cat => (
+                        {uniqueCategories.map(cat => (
                           <label key={cat} className="flex items-center gap-2 cursor-pointer font-medium text-brown-deep">
                             <input
                               type="checkbox"
@@ -1516,7 +1517,7 @@ function AdminOffers() {
                           className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
                         >
                           <option value="">— Select Category —</option>
-                          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                          {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                       </div>
                       <div>
@@ -1527,7 +1528,7 @@ function AdminOffers() {
                           className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
                         >
                           <option value="">— Select Category —</option>
-                          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                          {uniqueCategories.map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
                       </div>
                     </>

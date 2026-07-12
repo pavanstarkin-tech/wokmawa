@@ -112,7 +112,7 @@ function MenuPage() {
   }, []);
 
   const fullMenu = useMenu();
-  const savedCollections = useSmartCollections();
+  const { data: savedCollections, loading: collectionsLoading } = useSmartCollections();
 
   const filtered = useMemo(() => {
     const query = q.trim().toLowerCase();
@@ -144,7 +144,7 @@ function MenuPage() {
 
         // Auto filter match
         if (smartCollection === "bogo") {
-          matchesCollection = matchesCollection || true;
+          matchesCollection = matchesCollection || false;
         } else if (smartCollection === "under199") {
           matchesCollection = matchesCollection || price < 199;
         } else if (smartCollection === "under299") {
@@ -232,7 +232,7 @@ function MenuPage() {
 
       {/* Search + Veg toggle */}
       <div className="relative z-10 -mx-4 md:-mx-8 lg:-mx-12 mt-4 px-4 md:px-8 lg:px-12 pb-3 pt-2 mb-2">
-        <div className="flex items-center gap-3 max-w-2xl mx-auto w-full">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-2xl mx-auto w-full">
           <div className="flex-1 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 shadow-luxe focus-within:border-gold transition-colors">
             <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <input
@@ -350,35 +350,61 @@ function MenuPage() {
 
       {/* Menu sections */}
       <div className="mt-5 space-y-8">
-        {orderedCategories.map((c) => {
-          const items = grouped.get(c) ?? [];
-          if (items.length === 0) return null;
-          return (
-            <section
-              key={c}
-              ref={(el) => {
-                sectionRefs.current[c] = el;
-              }}
-            >
-              <div className="mb-3 flex items-center gap-3">
-                <div className="h-px flex-1 bg-gold-gradient opacity-40" />
-                <h2 className="text-xs font-bold uppercase tracking-[0.35em] text-brown-deep">{c}</h2>
-                <div className="h-px flex-1 bg-gold-gradient opacity-40" />
+        {(fullMenu.length === 0 || (smartCollection !== null && collectionsLoading)) ? (
+          <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-sm border border-border animate-pulse">
+                <div className="relative aspect-[4/3] w-full bg-muted/40" />
+                <div className="flex flex-1 flex-col justify-between p-3 gap-4">
+                  <div className="space-y-2">
+                    <div className="h-3 w-3/4 rounded-full bg-muted/60" />
+                    <div className="h-2 w-1/2 rounded-full bg-muted/40" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="h-3 w-1/3 rounded-full bg-muted/60" />
+                    <div className="h-6 w-14 rounded-full bg-muted/60" />
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-                {items.map((m) => (
-                  <MiniCategoryCard key={m.id} item={m} />
-                ))}
-              </div>
-            </section>
-          );
-        })}
+            ))}
+          </div>
+        ) : (
+          <>
+            {orderedCategories.map((c) => {
+              const items = grouped.get(c) ?? [];
+              if (items.length === 0) return null;
+              return (
+                <section
+                  key={c}
+                  ref={(el) => {
+                    sectionRefs.current[c] = el;
+                  }}
+                >
+                  <div className="mb-3 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-gold-gradient opacity-40" />
+                    <h2 className="text-xs font-bold uppercase tracking-[0.35em] text-brown-deep">{c}</h2>
+                    <div className="h-px flex-1 bg-gold-gradient opacity-40" />
+                  </div>
+                  <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                    {items.map((m) => (
+                      <MiniCategoryCard key={m.id} item={m} />
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
+          </>
+        )}
 
-        {filtered.length === 0 && (
+        {fullMenu.length > 0 && filtered.length === 0 && (
           <div className="rounded-2xl bg-card p-8 text-center border border-border/60 shadow-luxe">
             <div className="text-2xl mb-2">🍽️</div>
-            <div className="text-sm font-semibold text-brown-deep">No dishes match your search.</div>
-            <div className="mt-1 text-xs text-muted-foreground">Try clearing filters or a different keyword.</div>
+            <div className="text-sm font-semibold text-brown-deep">
+              {smartCollection ? "There are no offers today." : "No dishes match your search."}
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              {smartCollection ? "Check back later for exciting deals!" : "Try clearing filters or a different keyword."}
+            </div>
             <button
               onClick={() => {
                 setQ("");
@@ -388,7 +414,7 @@ function MenuPage() {
               }}
               className="mt-4 text-xs font-bold text-gold underline underline-offset-2"
             >
-              Clear search
+              {smartCollection ? "View Full Menu" : "Clear search"}
             </button>
           </div>
         )}
