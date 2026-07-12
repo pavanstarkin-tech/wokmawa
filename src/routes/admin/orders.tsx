@@ -177,6 +177,29 @@ function OrderCard({ order, onNext, nextLabel, onCancel }: any) {
           </div>
         ))}
       </div>
+      
+      {/* Subtotal, Discounts and Applied Offers */}
+      {((order.discount && order.discount > 0) || order.appliedCoupon) && (
+        <div className="border-t border-border/40 pt-2 mb-3 space-y-1 text-xs">
+          {order.subtotal && (
+            <div className="flex justify-between text-muted-foreground">
+              <span>Subtotal:</span>
+              <span>₹{order.subtotal}</span>
+            </div>
+          )}
+          {order.discount > 0 && (
+            <div className="flex justify-between text-green-700 font-semibold">
+              <span>Promo Discount:</span>
+              <span>-₹{order.discount}</span>
+            </div>
+          )}
+          {order.appliedCoupon && (
+            <div className="text-[10px] text-muted-foreground font-medium">
+              Coupon: <span className="font-bold text-brown-deep bg-gold/10 px-1.5 py-0.5 rounded border border-gold/25">{order.appliedCoupon}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="flex items-center gap-2">
         <button 
