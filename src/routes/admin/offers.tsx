@@ -942,7 +942,7 @@ function AdminOffers() {
                               return (
                                 <label
                                   key={p.id}
-                                  className={`relative flex gap-3 p-2 rounded-2xl border text-xs transition-all ${
+                                  className={`relative flex gap-3 p-2.5 rounded-2xl border text-xs transition-all ${
                                     isAuto
                                       ? "bg-green-50/25 border-green-200/50 cursor-not-allowed opacity-85"
                                       : checked
@@ -951,11 +951,12 @@ function AdminOffers() {
                                   }`}
                                 >
                                   {/* Thumbnail */}
-                                  <div className="h-12 w-12 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/50">
+                                  <div className="h-14 w-14 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/50">
                                     <img
                                       src={p.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100"}
                                       alt={p.name}
                                       className="h-full w-full object-cover"
+                                      loading="lazy"
                                     />
                                   </div>
 
@@ -964,12 +965,16 @@ function AdminOffers() {
                                       <span className={`font-bold block truncate ${checked ? "text-brown-deep" : "text-muted-foreground"}`}>{p.name}</span>
                                       <span className="text-[9px] text-muted-foreground/60 block truncate">{p.category}</span>
                                     </div>
-                                    <span className="text-[9px] font-bold text-muted-foreground/80">
-                                      ₹{p.price}
-                                      {col.ceilingPrice && p.price && p.price > col.ceilingPrice && checked && !isAuto && (
-                                        <span className="text-amber-600 font-extrabold ml-1 bg-amber-100 px-1 py-0.5 rounded">→ ₹{col.ceilingPrice}</span>
+                                    <div className="text-[10px] font-extrabold text-brown-deep flex items-center gap-1.5 flex-wrap mt-1">
+                                      {col.ceilingPrice && p.price && p.price > col.ceilingPrice && checked && !isAuto ? (
+                                        <>
+                                          <span className="line-through text-red-500 font-normal">₹{p.price}</span>
+                                          <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-black">₹{col.ceilingPrice}</span>
+                                        </>
+                                      ) : (
+                                        <span>₹{p.price ?? "—"}</span>
                                       )}
-                                    </span>
+                                    </div>
                                   </div>
 
                                   <div className="flex flex-col items-end justify-between shrink-0">
@@ -1008,12 +1013,13 @@ function AdminOffers() {
                             <div className="max-h-[380px] overflow-y-auto border border-border rounded-xl p-2.5 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-muted/5">
                               {/* Auto Items First */}
                               {autoItems.map(p => (
-                                <div key={p.id} className="relative flex gap-3 p-2 rounded-2xl border border-green-200/50 bg-green-50/15 text-xs">
-                                  <div className="h-12 w-12 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/50">
+                                <div key={p.id} className="relative flex gap-3 p-2.5 rounded-2xl border border-green-200/50 bg-green-50/15 text-xs">
+                                  <div className="h-14 w-14 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/50">
                                     <img
                                       src={p.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100"}
                                       alt={p.name}
                                       className="h-full w-full object-cover"
+                                      loading="lazy"
                                     />
                                   </div>
                                   <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5">
@@ -1021,19 +1027,20 @@ function AdminOffers() {
                                       <span className="text-xs font-bold text-brown-deep block truncate">{p.name}</span>
                                       <span className="text-[9px] text-muted-foreground/60 block truncate">{p.category}</span>
                                     </div>
-                                    <span className="text-[9px] font-bold text-muted-foreground/80">₹{p.price}</span>
+                                    <span className="text-[10px] font-extrabold text-brown-deep block mt-1">₹{p.price}</span>
                                   </div>
                                   <span className="absolute top-2 right-2 text-[8px] bg-green-100 text-green-700 font-extrabold uppercase px-1 py-0.5 rounded tracking-wider scale-90 origin-top-right">Auto</span>
                                 </div>
                               ))}
                               {/* Manual Curated Overrides */}
                               {manualItems.map(p => (
-                                <div key={p.id} className="relative flex gap-3 p-2 rounded-2xl border border-amber-200/50 bg-amber-50/10 text-xs">
-                                  <div className="h-12 w-12 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/50">
+                                <div key={p.id} className="relative flex gap-3 p-2.5 rounded-2xl border border-amber-200/50 bg-amber-50/10 text-xs">
+                                  <div className="h-14 w-14 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/50">
                                     <img
                                       src={p.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100"}
                                       alt={p.name}
                                       className="h-full w-full object-cover"
+                                      loading="lazy"
                                     />
                                   </div>
                                   <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5">
@@ -1041,16 +1048,16 @@ function AdminOffers() {
                                       <span className="text-xs font-bold text-brown-deep block truncate">{p.name}</span>
                                       <span className="text-[9px] text-muted-foreground/60 block truncate">{p.category}</span>
                                     </div>
-                                    <span className="text-[9px] font-bold text-muted-foreground/80">
+                                    <div className="text-[10px] font-extrabold text-brown-deep flex items-center gap-1.5 flex-wrap mt-1">
                                       {col.ceilingPrice && p.price && p.price > col.ceilingPrice ? (
                                         <>
-                                          <span className="line-through mr-1 text-muted-foreground">₹{p.price}</span>
-                                          <span className="text-amber-600 font-bold">₹{col.ceilingPrice}</span>
+                                          <span className="line-through text-red-500 font-normal">₹{p.price}</span>
+                                          <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-black">₹{col.ceilingPrice}</span>
                                         </>
                                       ) : (
-                                        ` ₹${p.price}`
+                                        <span>₹{p.price}</span>
                                       )}
-                                    </span>
+                                    </div>
                                   </div>
                                   <div className="absolute top-2 right-2 flex items-center gap-1">
                                     <span className="text-[8px] bg-amber-100 text-amber-700 font-extrabold uppercase px-1 py-0.5 rounded tracking-wider scale-90 origin-top-right">Curated</span>
