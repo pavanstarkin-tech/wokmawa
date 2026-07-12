@@ -141,6 +141,7 @@ function AdminOffers() {
   const [popupForm, setPopupForm] = useState({ ...DEFAULT_POPUP_FORM });
 
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   // Load menu items for conditions dropdown
   useEffect(() => {
@@ -297,6 +298,34 @@ function AdminOffers() {
   const toggleOfferStatus = async (id: string, currentStatus: Offer["status"]) => {
     const nextStatus: Offer["status"] = currentStatus === "active" ? "inactive" : "active";
     await updateOffer(id, { status: nextStatus });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await fetch("https://api.imgbb.com/1/upload?key=e3c5095dc4ee2bf7c87c1be980b1e428", {
+        method: "POST",
+        body: formData,
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        setPopupForm(f => ({ ...f, image: data.data.url }));
+      } else {
+        throw new Error(data.error?.message || "Upload failed");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed to upload image");
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   /* ---------- Popup Campaign CRUD Handlers ---------- */
@@ -1314,15 +1343,40 @@ function AdminOffers() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Popup Banner Image (9:16 URL) *</label>
-                <input
-                  type="text"
-                  placeholder="https://images.unsplash.com/..."
-                  value={popupForm.image}
-                  onChange={e => setPopupForm(f => ({ ...f, image: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
-                />
-                <p className="text-[10px] text-muted-foreground mt-1">Image ratio must be 9:16 for optimal mobile display.</p>
+                <label className="block text-xs font-bold text-muted-foreground uppercase mb-1 font-semibold">Popup Banner Image (9:16) *</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Paste image URL..."
+                    value={popupForm.image}
+                    onChange={e => setPopupForm(f => ({ ...f, image: e.target.value }))}
+                    className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
+                  />
+                  <div className="relative shrink-0">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="absolute inset-0 opacity-0 w-full h-full cursor-pointer disabled:cursor-not-allowed z-10"
+                      id="popup-image-upload"
+                    />
+                    <label
+                      htmlFor="popup-image-upload"
+                      className={`h-full px-4 py-2.5 rounded-xl border border-dashed border-gold text-gold font-bold text-xs flex items-center justify-center cursor-pointer transition-all hover:bg-gold/5 ${
+                        uploadingImage ? "opacity-50 pointer-events-none" : ""
+                      }`}
+                    >
+                      {uploadingImage ? "Uploading..." : "Upload File"}
+                    </label>
+                  </div>
+                </div>
+                {popupForm.image && (
+                  <div className="mt-2 relative rounded-xl overflow-hidden border border-border/80 aspect-[9/16] h-32 self-start bg-muted shadow-sm">
+                    <img src={popupForm.image} alt="Preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <p className="text-[10px] text-muted-foreground mt-1 font-normal">Directly upload from your device or paste a URL. Display is optimized for a 9:16 aspect ratio.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
