@@ -20,6 +20,7 @@ import { Route as AdminUpdatesRouteImport } from './routes/admin/updates'
 import { Route as AdminTablesRouteImport } from './routes/admin/tables'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
+import { Route as AdminOffersRouteImport } from './routes/admin/offers'
 import { Route as AdminMenuRouteImport } from './routes/admin/menu'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
@@ -79,6 +80,11 @@ const AdminOrdersRoute = AdminOrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOffersRoute = AdminOffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminMenuRoute = AdminMenuRouteImport.update({
   id: '/menu',
   path: '/menu',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
+  '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tables': typeof AdminTablesRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
+  '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tables': typeof AdminTablesRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
+  '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tables': typeof AdminTablesRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/login'
     | '/admin/menu'
+    | '/admin/offers'
     | '/admin/orders'
     | '/admin/settings'
     | '/admin/tables'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/login'
     | '/admin/menu'
+    | '/admin/offers'
     | '/admin/orders'
     | '/admin/settings'
     | '/admin/tables'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/login'
     | '/admin/menu'
+    | '/admin/offers'
     | '/admin/orders'
     | '/admin/settings'
     | '/admin/tables'
@@ -284,6 +296,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminOrdersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/offers': {
+      id: '/admin/offers'
+      path: '/offers'
+      fullPath: '/admin/offers'
+      preLoaderRoute: typeof AdminOffersRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/menu': {
       id: '/admin/menu'
       path: '/menu'
@@ -312,6 +331,7 @@ interface AdminRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMenuRoute: typeof AdminMenuRoute
+  AdminOffersRoute: typeof AdminOffersRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminTablesRoute: typeof AdminTablesRoute
@@ -322,6 +342,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMenuRoute: AdminMenuRoute,
+  AdminOffersRoute: AdminOffersRoute,
   AdminOrdersRoute: AdminOrdersRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminTablesRoute: AdminTablesRoute,
