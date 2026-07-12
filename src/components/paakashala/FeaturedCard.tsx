@@ -74,9 +74,8 @@ export function FeaturedCard({ item }: { item: MenuItem }) {
       </div>
 
       {/* Info Block */}
-      <div className="px-3 py-2 flex flex-col justify-between flex-1 min-h-[86px]">
+      <div className="px-3 py-2 flex flex-col justify-between flex-1 min-h-[72px]">
         <div>
-          <span className="text-[9px] text-muted-foreground uppercase tracking-widest font-semibold">{item.category}</span>
           <h4 className="line-clamp-2 text-[10px] font-bold text-brown-deep leading-tight mt-0.5">{item.name}</h4>
         </div>
 
