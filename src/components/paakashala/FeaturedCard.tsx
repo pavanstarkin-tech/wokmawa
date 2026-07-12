@@ -8,9 +8,22 @@ export function FeaturedCard({ item }: { item: MenuItem }) {
   const count = inCart?.quantity || 0;
 
   const price = item.price ?? 0;
-  const mrp = item.mrp || (price > 0 ? Math.round(price * 1.20) : 0);
+  
+  // Deterministic fake discount percentage between 10% and 30% based on item id
+  const getFakeDiscountPct = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return 10 + Math.abs(hash % 21); // 10 to 30
+  };
+
+  const discountPct = item.mrp && price > 0 && item.mrp > price
+    ? Math.round(((item.mrp - price) / item.mrp) * 100)
+    : getFakeDiscountPct(item.id);
+
+  const mrp = item.mrp || (price > 0 ? Math.round(price / (1 - discountPct / 100)) : 0);
   const hasDiscount = mrp > price;
-  const discountPct = hasDiscount ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
   return (
     <div className="w-full overflow-hidden rounded-2xl bg-card border border-border/60 shadow-luxe flex flex-col group hover:shadow-xl transition-shadow duration-300 relative">
@@ -71,19 +84,19 @@ export function FeaturedCard({ item }: { item: MenuItem }) {
 
           {item.price != null && (
             count > 0 ? (
-              <div className="flex items-center gap-0.5 rounded-full border border-gold/50 bg-cream px-0.5 py-0.5 shadow-sm shrink-0 w-full justify-between">
-                <button onClick={() => setQty(item.id, count - 1)} className="grid h-4 w-4 place-items-center rounded-full text-brown-deep active:scale-90 transition">
-                  <Minus className="h-2 w-2" />
+              <div className="flex items-center gap-0.5 rounded-full border border-gold/50 bg-cream px-1.5 py-1.5 shadow-sm shrink-0 w-full justify-between">
+                <button onClick={() => setQty(item.id, count - 1)} className="grid h-5 w-5 place-items-center rounded-full text-brown-deep active:scale-90 transition">
+                  <Minus className="h-3 w-3" />
                 </button>
                 <span className="text-[10px] font-bold text-brown-deep min-w-[12px] text-center">{count}</span>
-                <button onClick={() => setQty(item.id, count + 1)} className="grid h-4 w-4 place-items-center rounded-full bg-gold-gradient text-brown-deep active:scale-90 transition">
-                  <Plus className="h-2 w-2" />
+                <button onClick={() => setQty(item.id, count + 1)} className="grid h-5 w-5 place-items-center rounded-full bg-gold-gradient text-brown-deep active:scale-90 transition">
+                  <Plus className="h-3 w-3" />
                 </button>
               </div>
             ) : (
               <button
                 onClick={() => add(item)}
-                className="w-full py-1 rounded-xl bg-gold-gradient text-brown-deep font-bold text-[9px] uppercase tracking-widest shadow-sm active:scale-95 transition"
+                className="w-full py-2.5 rounded-xl bg-gold-gradient text-brown-deep font-bold text-[10px] uppercase tracking-widest shadow-sm active:scale-95 transition"
                 aria-label={`Add ${item.name}`}
               >
                 Add to Table
