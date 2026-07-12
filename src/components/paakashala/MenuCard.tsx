@@ -101,11 +101,16 @@ export function MenuCard({ item }: { item: MenuItem }) {
           {item.price == null ? (
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Ask at restaurant</span>
           ) : inCart ? (
-            <QuantitySelector
-              qty={inCart.quantity}
-              onDec={() => setQty(item.id, inCart.quantity - 1)}
-              onInc={() => setQty(item.id, inCart.quantity + 1)}
-            />
+            <div className="flex flex-col items-center gap-1 shrink-0">
+              <div className="text-[9px] font-bold text-green-600 uppercase tracking-wider animate-pulse leading-none">
+                ✓ Added
+              </div>
+              <QuantitySelector
+                qty={inCart.quantity}
+                onDec={() => setQty(item.id, inCart.quantity - 1)}
+                onInc={() => setQty(item.id, inCart.quantity + 1)}
+              />
+            </div>
           ) : (
             <button
               onClick={() => add(item)}
