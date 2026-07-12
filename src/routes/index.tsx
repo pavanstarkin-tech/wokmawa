@@ -205,12 +205,12 @@ function Index() {
   const andhra = filteredMenu.filter((m) => m.category === "South Indian Starters").slice(0, 6);
 
   const smartCollections = [
-    { id: "bogo", title: "Buy 1 Get 1", query: "bogo", icon: <Gift className="h-4 w-4" /> },
-    { id: "under199", title: "Under ₹199", query: "under199", icon: <Percent className="h-4 w-4" /> },
-    { id: "under299", title: "Under ₹299", query: "under299", icon: <Percent className="h-4 w-4" /> },
-    { id: "combos", title: "Combo Deals", query: "combo", icon: <Flame className="h-4 w-4" /> },
-    { id: "starters199", title: "Starters < ₹199", query: "starters199", icon: <Award className="h-4 w-4" /> },
-    { id: "biryani299", title: "Biryanis < ₹299", query: "biryani299", icon: <Compass className="h-4 w-4" /> },
+    { id: "bogo", title: "Buy 1 Get 1", query: "bogo", image: "/collections/1.png" },
+    { id: "under199", title: "Under ₹199", query: "under199", image: "/collections/2.png" },
+    { id: "under299", title: "Under ₹299", query: "under299", image: "/collections/3.png" },
+    { id: "combos", title: "Combo Deals", query: "combo", image: "/collections/4.png" },
+    { id: "starters199", title: "Starters < ₹199", query: "starters199", image: "/collections/5.png" },
+    { id: "biryani299", title: "Biryanis < ₹299", query: "biryani299", image: "/collections/6.png" },
   ];
 
   return (
@@ -238,14 +238,18 @@ function Index() {
               <button
                 key={col.id}
                 onClick={() => navigate({ to: "/menu", search: { q: col.query } })}
-                className="flex flex-col items-center justify-between p-3 rounded-2xl bg-card border border-border/60 hover:border-gold/50 shadow-sm w-[92px] shrink-0 text-center transition-all active:scale-95 cursor-pointer"
+                className="flex flex-col items-center p-2 rounded-2xl bg-card border border-border/60 hover:border-gold/50 shadow-sm w-[92px] shrink-0 text-center transition-all active:scale-95 cursor-pointer group"
               >
-                <div className="h-8 w-8 rounded-full flex items-center justify-center bg-gold/10 text-gold mb-2">
-                  {col.icon}
+                <div className="h-16 w-16 rounded-xl overflow-hidden mb-2 relative shadow-sm border border-border/40">
+                  <img
+                    src={col.image}
+                    alt={col.title}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-black/5" />
                 </div>
-                <span className="text-[9px] font-black text-brown-deep leading-tight uppercase tracking-wider">
-                  {col.title}
-                </span>
+                <span className="text-[10px] font-bold text-brown-deep leading-tight">{col.title}</span>
               </button>
             ))}
           </div>
