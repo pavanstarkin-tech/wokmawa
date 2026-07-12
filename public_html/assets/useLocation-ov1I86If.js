@@ -1,0 +1,1 @@
+import{i as e,r as t}from"./link-Dn2jAesU.js";import{n}from"./useNavigate-SIVatQXw.js";function r(r){let i=n();return e(i.stores.location,t(r,i))}export{r as t};
