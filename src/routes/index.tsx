@@ -7,7 +7,7 @@ import { HeroCarousel } from "@/components/paakashala/HeroCarousel";
 import { FeaturedCard } from "@/components/paakashala/FeaturedCard";
 import { MiniCategoryCard } from "@/components/paakashala/MiniCategoryCard";
 import { CATEGORIES, CATEGORY_IMAGE, MENU, FEATURED_IDS, type Category } from "@/lib/paakashala-menu";
-import { usePopupCampaigns, recordPopupView, recordPopupClick, useSmartCollections, type PopupCampaign } from "@/lib/promotions";
+import { usePopupCampaigns, recordPopupView, recordPopupClick, type PopupCampaign } from "@/lib/promotions";
 import { PromoPopup } from "@/components/paakashala/PromoPopup";
 import { Gift, Percent, Flame, Award, Compass } from "lucide-react";
 
@@ -204,8 +204,14 @@ function Index() {
   const bestBiryani = filteredMenu.filter((m) => m.category === "Biryani").slice(0, 6);
   const andhra = filteredMenu.filter((m) => m.category === "South Indian Starters").slice(0, 6);
 
-  const { collections: smartCollections } = useSmartCollections();
-  const activeSmartCollections = smartCollections.filter((c) => c.status === "active");
+  const smartCollections = [
+    { id: "bogo", title: "Buy 1 Get 1", query: "bogo", image: "/collections/1.png" },
+    { id: "under199", title: "Under ₹199", query: "under199", image: "/collections/2.png" },
+    { id: "under299", title: "Under ₹299", query: "under299", image: "/collections/3.png" },
+    { id: "combos", title: "Combo Deals", query: "combo", image: "/collections/4.png" },
+    { id: "starters199", title: "Starters < ₹199", query: "starters199", image: "/collections/5.png" },
+    { id: "biryani299", title: "Biryanis < ₹299", query: "biryani299", image: "/collections/6.png" },
+  ];
 
   return (
     <AppShell>
@@ -228,7 +234,7 @@ function Index() {
         </div>
         <div className="-mx-[15px] md:-mx-8 lg:-mx-12 overflow-x-auto no-scrollbar">
           <div className="flex gap-2.5 px-[15px] md:px-8 lg:px-12 pb-3 w-max">
-            {activeSmartCollections.map((col) => (
+            {smartCollections.map((col) => (
               <button
                 key={col.id}
                 onClick={() => navigate({ to: "/menu", search: { q: col.query } })}
