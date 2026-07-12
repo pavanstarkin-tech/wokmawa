@@ -157,7 +157,7 @@ function AdminUpdates() {
                     ></iframe>
                   ) : (
                     <video
-                      src={update.videoUrl}
+                      src={`${update.videoUrl}#t=2`}
                       className="w-full h-full object-cover"
                       controls
                     />
