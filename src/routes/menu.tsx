@@ -6,7 +6,7 @@ import { AppShell } from "@/components/paakashala/AppShell";
 import { MiniCategoryCard } from "@/components/paakashala/MiniCategoryCard";
 import { CATEGORIES, CATEGORY_IMAGE, type Category } from "@/lib/paakashala-menu";
 import { KEYS, useMenu } from "@/lib/paakashala-store";
-import { useSmartCollections } from "@/routes/admin/offers";
+import { useSmartCollections } from "@/lib/promotions";
 
 const searchSchema = z.object({
   category: z.string().optional(),
