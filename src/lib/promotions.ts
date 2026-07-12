@@ -275,8 +275,25 @@ export function useSmartCollections(): Record<string, string[]> {
   useEffect(() => {
     const r = ref(db, "restaurant/smart_collections");
     const unsub = onValue(r, (snap) => {
-      if (snap.exists()) setData(snap.val());
-      else setData({});
+      if (snap.exists()) {
+        // Firebase stores JS arrays as {0: val, 1: val, ...} objects.
+        // Normalize every value back into a real string[].
+        const raw = snap.val() as Record<string, unknown>;
+        const normalized: Record<string, string[]> = {};
+        Object.keys(raw).forEach((key) => {
+          const v = raw[key];
+          if (Array.isArray(v)) {
+            normalized[key] = v.filter(Boolean) as string[];
+          } else if (v && typeof v === "object") {
+            normalized[key] = Object.values(v).filter(Boolean) as string[];
+          } else {
+            normalized[key] = [];
+          }
+        });
+        setData(normalized);
+      } else {
+        setData({});
+      }
     });
     return () => unsub();
   }, []);
@@ -284,5 +301,9 @@ export function useSmartCollections(): Record<string, string[]> {
 }
 
 export async function saveSmartCollection(collectionId: string, itemIds: string[]) {
-  await set(ref(db, `restaurant/smart_collections/${collectionId}`), itemIds);
+  // Store as a plain object with string keys so Firebase preserves order
+  // and reading back is safe via Object.values()
+  const payload: Record<string, string> = {};
+  itemIds.forEach((id, i) => { payload[i] = id; });
+  await set(ref(db, `restaurant/smart_collections/${collectionId}`), payload);
 }
