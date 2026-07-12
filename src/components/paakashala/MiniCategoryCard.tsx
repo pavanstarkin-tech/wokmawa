@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Plus, Minus } from "lucide-react";
 import { useCart } from "@/lib/paakashala-store";
 import type { MenuItem } from "@/lib/paakashala-menu";
@@ -5,6 +6,16 @@ import type { MenuItem } from "@/lib/paakashala-menu";
 export function MiniCategoryCard({ item }: { item: MenuItem }) {
   const { items, add, setQty } = useCart();
   const inCart = items.find((c) => c.id === item.id);
+
+  const [isAddedFeedback, setIsAddedFeedback] = useState(false);
+
+  const handleAdd = () => {
+    add(item);
+    setIsAddedFeedback(true);
+    setTimeout(() => {
+      setIsAddedFeedback(false);
+    }, 400);
+  };
 
   const price = item.price ?? 0;
   
@@ -79,7 +90,14 @@ export function MiniCategoryCard({ item }: { item: MenuItem }) {
           </div>
 
           {item.price != null && (
-            inCart ? (
+            isAddedFeedback ? (
+              <button
+                className="w-full py-2.5 rounded-xl bg-green-600 text-white font-bold text-[10px] uppercase tracking-widest shadow-sm transition-all"
+                disabled
+              >
+                Added!
+              </button>
+            ) : inCart ? (
               <div className="flex items-center gap-0.5 rounded-full border border-gold/50 bg-cream px-1.5 py-1.5 shadow-sm shrink-0 w-full justify-between">
                 <button onClick={() => setQty(item.id, inCart.quantity - 1)} className="grid h-5 w-5 place-items-center rounded-full text-brown-deep active:scale-90 transition">
                   <Minus className="h-3 w-3" />
@@ -91,7 +109,7 @@ export function MiniCategoryCard({ item }: { item: MenuItem }) {
               </div>
             ) : (
               <button
-                onClick={() => add(item)}
+                onClick={handleAdd}
                 className="w-full py-2.5 rounded-xl bg-gold-gradient text-brown-deep font-bold text-[10px] uppercase tracking-widest shadow-sm active:scale-95 transition"
                 aria-label={`Add ${item.name}`}
               >
