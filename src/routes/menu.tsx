@@ -123,8 +123,14 @@ function MenuPage() {
       // 1. Filter by Smart Collection
       if (smartCollection) {
         // Check if admin has manually curated items for this collection
-        const savedIds: string[] | undefined = (savedCollections as Record<string, string[]>)[smartCollection];
-        if (savedIds && savedIds.length > 0) {
+        const raw = (savedCollections as Record<string, unknown>)[smartCollection];
+        // Normalize: Firebase may return object {0:id,1:id} or array
+        const savedIds: string[] = Array.isArray(raw)
+          ? (raw as string[]).filter(Boolean)
+          : raw && typeof raw === "object"
+            ? (Object.values(raw as object) as string[]).filter(Boolean)
+            : [];
+        if (savedIds.length > 0) {
           // Admin curated — show ONLY those exact items
           if (!savedIds.includes(m.id)) return false;
         } else {
