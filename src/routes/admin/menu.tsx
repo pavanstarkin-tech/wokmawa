@@ -12,6 +12,7 @@ type Product = {
   id: string;
   name: string;
   price: number;
+  mrp?: number;
   available: boolean;
   image?: string;
   veg?: boolean;
@@ -28,6 +29,7 @@ type MenuCategory = {
 const EMPTY_FORM = {
   name: "",
   price: "",
+  mrp: "",
   image: "",
   type: "veg",
   categoryName: "",
@@ -116,6 +118,7 @@ function AdminMenu() {
     setForm({
       name: product.name,
       price: String(product.price),
+      mrp: product.mrp ? String(product.mrp) : "",
       image: product.image || "",
       type,
       categoryName,
@@ -148,6 +151,7 @@ function AdminMenu() {
         id: `item_${Date.now()}`,
         name: form.name.trim(),
         price: Number(form.price),
+        mrp: form.mrp ? Number(form.mrp) : undefined,
         available: true,
         veg: form.type === "veg",
         spicy: form.spicy,
@@ -167,6 +171,7 @@ function AdminMenu() {
               ...p,
               name: form.name.trim(),
               price: Number(form.price),
+              mrp: form.mrp ? Number(form.mrp) : undefined,
               spicy: form.spicy,
               popular: form.popular,
               veg: form.type === "veg",
@@ -277,7 +282,12 @@ function AdminMenu() {
 
                   {/* Name & Price */}
                   <h3 className="font-bold text-brown-deep text-[10px] leading-tight line-clamp-2 w-full">{product.name}</h3>
-                  <div className="text-gold font-bold text-[10px]">₹{product.price}</div>
+                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                    {product.mrp && product.mrp > product.price && (
+                      <span className="text-[9px] line-through text-muted-foreground">₹{product.mrp}</span>
+                    )}
+                    <span className="text-gold font-bold text-[10px]">₹{product.price}</span>
+                  </div>
 
                   {/* Toggle */}
                   <label className="relative inline-flex items-center cursor-pointer">
@@ -380,16 +390,28 @@ function AdminMenu() {
                 />
               </div>
 
-              {/* Price */}
-              <div>
-                <label className="block text-sm font-semibold text-brown-deep mb-1.5">Price (₹) *</label>
-                <input
-                  type="number"
-                  placeholder="e.g. 220"
-                  value={form.price}
-                  onChange={(e) => setForm(f => ({ ...f, price: e.target.value }))}
-                  className="w-full px-4 py-2.5 rounded-xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
-                />
+              {/* Price & MRP Group */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-semibold text-brown-deep mb-1.5">Price (₹) *</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 220"
+                    value={form.price}
+                    onChange={(e) => setForm(f => ({ ...f, price: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-brown-deep mb-1.5">MRP / Original (₹)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 250"
+                    value={form.mrp}
+                    onChange={(e) => setForm(f => ({ ...f, mrp: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+                  />
+                </div>
               </div>
 
               {/* Image URL / Upload */}
