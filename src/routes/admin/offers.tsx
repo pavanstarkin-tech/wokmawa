@@ -236,6 +236,7 @@ function AdminOffers() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [targetProductSearch, setTargetProductSearch] = useState("");
   const [collectionSearch, setCollectionSearch] = useState<Record<string, string>>({});
+  const [collectionCategory, setCollectionCategory] = useState<Record<string, string>>({});
   const [collectionDraft, setCollectionDraft] = useState<Record<string, string[]>>({});
   const [collectionSaving, setCollectionSaving] = useState<string | null>(null);
 
@@ -863,11 +864,15 @@ function AdminOffers() {
                   const autoItems = col.mode === "hybrid" ? menuProducts.filter(p => col.autoFilter!(p as any)) : [];
                   const autoIds = autoItems.map(p => p.id);
 
+                  const catFilter = collectionCategory[col.id] || "";
+                  
                   // All matching search items
-                  const filteredItems = menuProducts.filter(p =>
-                    p.name.toLowerCase().includes(search.toLowerCase()) ||
-                    p.category.toLowerCase().includes(search.toLowerCase())
-                  );
+                  const filteredItems = menuProducts.filter(p => {
+                    const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
+                                          p.category.toLowerCase().includes(search.toLowerCase());
+                    const matchesCategory = !catFilter || p.category === catFilter;
+                    return matchesSearch && matchesCategory;
+                  });
 
                   // Curated/manual items
                   const manualItems = menuProducts.filter(p => selectedIds.includes(p.id) && !autoIds.includes(p.id));
@@ -924,13 +929,25 @@ function AdminOffers() {
                         {/* Left: Item Picker */}
                         <div className="space-y-3">
                           <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider block">All Menu Items</label>
-                          <input
-                            type="text"
-                            placeholder="Search by name or category..."
-                            value={search}
-                            onChange={e => setCollectionSearch(s => ({ ...s, [col.id]: e.target.value }))}
-                            className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:border-gold focus:outline-none"
-                          />
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder="Search by name..."
+                              value={search}
+                              onChange={e => setCollectionSearch(s => ({ ...s, [col.id]: e.target.value }))}
+                              className="flex-1 min-w-0 px-3 py-2 rounded-xl border border-border bg-background text-xs focus:border-gold focus:outline-none"
+                            />
+                            <select
+                              value={collectionCategory[col.id] || ""}
+                              onChange={e => setCollectionCategory(c => ({ ...c, [col.id]: e.target.value }))}
+                              className="w-32 px-2 py-2 rounded-xl border border-border bg-background text-xs focus:border-gold focus:outline-none shrink-0"
+                            >
+                              <option value="">All Categories</option>
+                              {CATEGORIES.map(cat => (
+                                <option key={cat} value={cat}>{cat}</option>
+                              ))}
+                            </select>
+                          </div>
                           <div className="max-h-[380px] overflow-y-auto border border-border rounded-xl p-2.5 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-muted/5">
                             {filteredItems.length === 0 ? (
                               <div className="col-span-full p-6 text-center text-xs text-muted-foreground">No products match</div>
