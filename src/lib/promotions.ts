@@ -72,6 +72,7 @@ export interface PopupCampaign {
   ctaText?: string;
   ctaType: "offer_collection" | "category" | "product" | "external" | "coupon";
   ctaLink?: string; // Link target or code
+  offerId?: string; // Optional reference to a promotional offer
   startDate: string;
   endDate: string;
   priority: number;
