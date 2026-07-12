@@ -258,7 +258,12 @@ function AdminOffers() {
             if (productsStr) {
               try {
                 const products = JSON.parse(productsStr);
-                parsed.push(...products.map((p: any) => ({ id: p.id, name: p.name, category: catName })));
+                parsed.push(...products.map((p: any) => ({ 
+                  id: p.id, 
+                  name: p.name, 
+                  category: catName,
+                  price: p.price ? Number(p.price) : null
+                })));
               } catch (e) {}
             }
           }
