@@ -64,6 +64,9 @@ function AdminLayout() {
             <Link to="/admin/tables" className="shrink-0 flex items-center gap-2 lg:gap-3 rounded-xl px-4 py-2.5 lg:py-3 text-sm font-semibold transition-colors [&.active]:bg-brown-gradient [&.active]:text-cream hover:bg-gold/5 text-brown-deep/80">
               Tables & QR
             </Link>
+            <Link to="/admin/offers" className="shrink-0 flex items-center gap-2 lg:gap-3 rounded-xl px-4 py-2.5 lg:py-3 text-sm font-semibold transition-colors [&.active]:bg-brown-gradient [&.active]:text-cream hover:bg-gold/5 text-brown-deep/80">
+              Offers & Promo
+            </Link>
             <Link to="/admin/updates" className="shrink-0 flex items-center gap-2 lg:gap-3 rounded-xl px-4 py-2.5 lg:py-3 text-sm font-semibold transition-colors [&.active]:bg-brown-gradient [&.active]:text-cream hover:bg-gold/5 text-brown-deep/80">
               Latest Updates
             </Link>
