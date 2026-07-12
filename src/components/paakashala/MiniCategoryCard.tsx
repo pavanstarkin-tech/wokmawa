@@ -6,8 +6,10 @@ export function MiniCategoryCard({ item }: { item: MenuItem }) {
   const { items, add, setQty } = useCart();
   const inCart = items.find((c) => c.id === item.id);
 
-  const hasDiscount = item.mrp && item.price && item.mrp > item.price;
-  const discountPct = hasDiscount ? Math.round(((item.mrp! - item.price!) / item.mrp!) * 100) : 0;
+  const price = item.price ?? 0;
+  const mrp = item.mrp || (price > 0 ? Math.round(price * 1.20) : 0);
+  const hasDiscount = mrp > price;
+  const discountPct = hasDiscount ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
   return (
     <div className="w-full overflow-hidden rounded-2xl bg-card border border-border/60 shadow-luxe flex flex-col group hover:shadow-xl transition-shadow duration-300 relative">
@@ -55,7 +57,7 @@ export function MiniCategoryCard({ item }: { item: MenuItem }) {
           <div className="flex items-center gap-1.5 flex-wrap">
             {hasDiscount && (
               <span className="text-[10px] line-through text-muted-foreground">
-                ₹{item.mrp}
+                ₹{mrp}
               </span>
             )}
             <span className={`text-[11px] font-extrabold ${item.price == null ? "text-muted-foreground/70 italic" : "text-brown-deep"}`}>
