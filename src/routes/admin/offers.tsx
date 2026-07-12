@@ -121,6 +121,95 @@ const DEFAULT_POPUP_FORM = {
   status: "active" as PopupCampaign["status"]
 };
 
+interface SearchableProductSelectProps {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder: string;
+  products: { id: string; name: string; category: string }[];
+}
+
+function SearchableProductSelect({ value, onChange, placeholder, products }: SearchableProductSelectProps) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const selectedProduct = products.find(p => p.id === value);
+  const filtered = products.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase()) ||
+    p.category.toLowerCase().includes(search.toLowerCase())
+  );
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    if (!open) return;
+    const handleOutside = () => setOpen(false);
+    window.addEventListener("click", handleOutside);
+    return () => window.removeEventListener("click", handleOutside);
+  }, [open]);
+
+  return (
+    <div className="relative" onClick={e => e.stopPropagation()}>
+      <button
+        type="button"
+        onClick={() => {
+          setOpen(!open);
+          setSearch("");
+        }}
+        className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none text-left flex items-center justify-between cursor-pointer"
+      >
+        <span className={selectedProduct ? "text-brown-deep font-semibold" : "text-muted-foreground"}>
+          {selectedProduct ? `${selectedProduct.name} (${selectedProduct.category})` : placeholder}
+        </span>
+        <span className="text-xs text-muted-foreground">▼</span>
+      </button>
+
+      {open && (
+        <div className="absolute left-0 right-0 mt-1 z-50 bg-card border border-border rounded-xl shadow-xl max-h-60 overflow-y-auto flex flex-col p-2 gap-2 animate-in fade-in duration-100">
+          <input
+            type="text"
+            placeholder="Type to search product..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-border bg-background text-xs focus:border-gold focus:outline-none"
+            autoFocus
+          />
+          <div className="overflow-y-auto flex-1 space-y-1">
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+              }}
+              className="w-full text-left px-3 py-2 rounded-lg hover:bg-muted text-xs text-muted-foreground transition-colors cursor-pointer"
+            >
+              {placeholder}
+            </button>
+            {filtered.length === 0 ? (
+              <div className="px-3 py-2 text-xs text-muted-foreground text-center">No products found</div>
+            ) : (
+              filtered.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => {
+                    onChange(p.id);
+                    setOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-lg hover:bg-gold/10 text-xs transition-colors cursor-pointer flex justify-between ${
+                    p.id === value ? "bg-gold/10 text-gold font-bold" : "text-brown-deep"
+                  }`}
+                >
+                  <span>{p.name}</span>
+                  <span className="text-[9px] text-muted-foreground/80 font-normal uppercase">{p.category}</span>
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function AdminOffers() {
   const [activeTab, setActiveTab] = useState<TabType>("offers");
   const { offers, loading: loadingOffers } = useOffers();
@@ -142,6 +231,7 @@ function AdminOffers() {
 
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [targetProductSearch, setTargetProductSearch] = useState("");
 
   // Load menu items for conditions dropdown
   useEffect(() => {
@@ -173,6 +263,7 @@ function AdminOffers() {
     setOfferForm({ ...DEFAULT_OFFER_FORM });
     setOfferModalMode("add");
     setSelectedOfferId(null);
+    setTargetProductSearch("");
     setShowOfferModal(true);
   };
 
@@ -210,6 +301,7 @@ function AdminOffers() {
     });
     setSelectedOfferId(offer.id);
     setOfferModalMode("edit");
+    setTargetProductSearch("");
     setShowOfferModal(true);
   };
 
@@ -1065,27 +1157,38 @@ function AdminOffers() {
 
                   {offerForm.targetType === "products" && (
                     <div>
-                      <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Target Products (Match name)</label>
-                      <div className="max-h-24 overflow-y-auto border border-border bg-background p-2 rounded-xl text-xs space-y-1.5">
-                        {menuProducts.map(p => (
-                          <label key={p.id} className="flex items-center gap-2 cursor-pointer font-medium text-brown-deep">
-                            <input
-                              type="checkbox"
-                              checked={offerForm.targetProducts.includes(p.id)}
-                              onChange={e => {
-                                const list = [...offerForm.targetProducts];
-                                if (e.target.checked) list.push(p.id);
-                                else {
-                                  const idx = list.indexOf(p.id);
-                                  if (idx > -1) list.splice(idx, 1);
-                                }
-                                setOfferForm(f => ({ ...f, targetProducts: list }));
-                              }}
-                              className="rounded"
-                            />
-                            {p.name}
-                          </label>
-                        ))}
+                      <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Target Products</label>
+                      <div className="space-y-1.5">
+                        <input
+                          type="text"
+                          placeholder="Search product name..."
+                          value={targetProductSearch}
+                          onChange={e => setTargetProductSearch(e.target.value)}
+                          className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-xs focus:border-gold focus:outline-none"
+                        />
+                        <div className="max-h-24 overflow-y-auto border border-border bg-background p-2 rounded-xl text-xs space-y-1.5">
+                          {menuProducts
+                            .filter(p => p.name.toLowerCase().includes(targetProductSearch.toLowerCase()))
+                            .map(p => (
+                              <label key={p.id} className="flex items-center gap-2 cursor-pointer font-medium text-brown-deep">
+                                <input
+                                  type="checkbox"
+                                  checked={offerForm.targetProducts.includes(p.id)}
+                                  onChange={e => {
+                                    const list = [...offerForm.targetProducts];
+                                    if (e.target.checked) list.push(p.id);
+                                    else {
+                                      const idx = list.indexOf(p.id);
+                                      if (idx > -1) list.splice(idx, 1);
+                                    }
+                                    setOfferForm(f => ({ ...f, targetProducts: list }));
+                                  }}
+                                  className="rounded"
+                                />
+                                {p.name}
+                              </label>
+                            ))}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1155,26 +1258,22 @@ function AdminOffers() {
                   {["bogo", "buy_x_get_y"].includes(offerForm.type) && (
                     <>
                       <div>
-                        <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Buy Product *</label>
-                        <select
+                        <label className="block text-xs font-bold text-muted-foreground uppercase mb-1 font-semibold">Buy Product *</label>
+                        <SearchableProductSelect
                           value={offerForm.buyProductId}
-                          onChange={e => setOfferForm(f => ({ ...f, buyProductId: e.target.value }))}
-                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
-                        >
-                          <option value="">— Select item —</option>
-                          {menuProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                        </select>
+                          onChange={val => setOfferForm(f => ({ ...f, buyProductId: val }))}
+                          placeholder="— Select item —"
+                          products={menuProducts}
+                        />
                       </div>
                       <div>
-                        <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Free Reward Product</label>
-                        <select
+                        <label className="block text-xs font-bold text-muted-foreground uppercase mb-1 font-semibold">Free Reward Product</label>
+                        <SearchableProductSelect
                           value={offerForm.freeProductId}
-                          onChange={e => setOfferForm(f => ({ ...f, freeProductId: e.target.value }))}
-                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-sm focus:border-gold focus:outline-none"
-                        >
-                          <option value="">— Same as Buy Product —</option>
-                          {menuProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                        </select>
+                          onChange={val => setOfferForm(f => ({ ...f, freeProductId: val }))}
+                          placeholder="— Same as Buy Product —"
+                          products={menuProducts}
+                        />
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-muted-foreground uppercase mb-1">Required Buy Qty</label>
