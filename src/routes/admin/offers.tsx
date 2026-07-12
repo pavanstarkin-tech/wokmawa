@@ -920,10 +920,10 @@ function AdminOffers() {
                         </div>
                       </div>
 
-                      <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="p-4 grid grid-cols-1 xl:grid-cols-2 gap-4">
                         {/* Left: Item Picker */}
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">All Menu Items</label>
+                        <div className="space-y-3">
+                          <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider block">All Menu Items</label>
                           <input
                             type="text"
                             placeholder="Search by name or category..."
@@ -931,9 +931,9 @@ function AdminOffers() {
                             onChange={e => setCollectionSearch(s => ({ ...s, [col.id]: e.target.value }))}
                             className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs focus:border-gold focus:outline-none"
                           />
-                          <div className="max-h-52 overflow-y-auto border border-border rounded-xl divide-y divide-border/40">
+                          <div className="max-h-[380px] overflow-y-auto border border-border rounded-xl p-2.5 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-muted/5">
                             {filteredItems.length === 0 ? (
-                              <div className="p-4 text-center text-xs text-muted-foreground">No products match</div>
+                              <div className="col-span-full p-6 text-center text-xs text-muted-foreground">No products match</div>
                             ) : filteredItems.map(p => {
                               const isAuto = autoIds.includes(p.id);
                               const checked = isAuto || selectedIds.includes(p.id);
@@ -942,36 +942,55 @@ function AdminOffers() {
                               return (
                                 <label
                                   key={p.id}
-                                  className={`flex items-center gap-2.5 px-3 py-2.5 text-xs transition-colors ${
-                                    isAuto ? "bg-green-50/20 cursor-not-allowed opacity-85" : checked ? "bg-amber-50/60 cursor-pointer" : "hover:bg-muted/40 cursor-pointer"
+                                  className={`relative flex gap-3 p-2 rounded-2xl border text-xs transition-all ${
+                                    isAuto
+                                      ? "bg-green-50/25 border-green-200/50 cursor-not-allowed opacity-85"
+                                      : checked
+                                      ? "bg-amber-50/60 border-amber-300 shadow-sm cursor-pointer"
+                                      : "bg-card border-border hover:bg-muted/40 cursor-pointer"
                                   }`}
                                 >
-                                  <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    disabled={!canToggle}
-                                    onChange={e => {
-                                      if (!canToggle) return;
-                                      setCollectionDraft(d => {
-                                        const list = [...(d[col.id] || [])];
-                                        if (e.target.checked) { if (!list.includes(p.id)) list.push(p.id); }
-                                        else { const i = list.indexOf(p.id); if (i > -1) list.splice(i, 1); }
-                                        return { ...d, [col.id]: list };
-                                      });
-                                    }}
-                                    className="accent-amber-600 h-3.5 w-3.5 rounded disabled:accent-green-600"
-                                  />
-                                  <div className="min-w-0 flex-1">
-                                    <span className={`font-semibold block truncate ${checked ? "text-brown-deep" : "text-muted-foreground"}`}>{p.name}</span>
-                                    <span className="text-[9px] text-muted-foreground/70">
-                                      {p.category} · ₹{p.price}
+                                  {/* Thumbnail */}
+                                  <div className="h-12 w-12 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/50">
+                                    <img
+                                      src={p.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100"}
+                                      alt={p.name}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  </div>
+
+                                  <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5">
+                                    <div>
+                                      <span className={`font-bold block truncate ${checked ? "text-brown-deep" : "text-muted-foreground"}`}>{p.name}</span>
+                                      <span className="text-[9px] text-muted-foreground/60 block truncate">{p.category}</span>
+                                    </div>
+                                    <span className="text-[9px] font-bold text-muted-foreground/80">
+                                      ₹{p.price}
                                       {col.ceilingPrice && p.price && p.price > col.ceilingPrice && checked && !isAuto && (
-                                        <span className="text-amber-600 font-bold ml-1.5">→ Promo ₹{col.ceilingPrice}</span>
+                                        <span className="text-amber-600 font-extrabold ml-1 bg-amber-100 px-1 py-0.5 rounded">→ ₹{col.ceilingPrice}</span>
                                       )}
                                     </span>
                                   </div>
-                                  {isAuto && <span className="text-green-600 text-[10px] font-black shrink-0">Auto</span>}
-                                  {!isAuto && checked && <span className="text-amber-600 text-[10px] font-black shrink-0">Curated</span>}
+
+                                  <div className="flex flex-col items-end justify-between shrink-0">
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      disabled={!canToggle}
+                                      onChange={e => {
+                                        if (!canToggle) return;
+                                        setCollectionDraft(d => {
+                                          const list = [...(d[col.id] || [])];
+                                          if (e.target.checked) { if (!list.includes(p.id)) list.push(p.id); }
+                                          else { const i = list.indexOf(p.id); if (i > -1) list.splice(i, 1); }
+                                          return { ...d, [col.id]: list };
+                                        });
+                                      }}
+                                      className="accent-amber-600 h-4 w-4 rounded disabled:accent-green-600 cursor-pointer disabled:cursor-not-allowed"
+                                    />
+                                    {isAuto && <span className="text-[8px] font-black text-green-700 bg-green-100 border border-green-200 px-1 rounded uppercase tracking-wider scale-90 origin-bottom-right">Auto</span>}
+                                    {!isAuto && checked && <span className="text-[8px] font-black text-amber-700 bg-amber-100 border border-amber-200 px-1 rounded uppercase tracking-wider scale-90 origin-bottom-right">Curated</span>}
+                                  </div>
                                 </label>
                               );
                             })}
@@ -979,34 +998,53 @@ function AdminOffers() {
                         </div>
 
                         {/* Right: Selected Items Preview */}
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Preview Items ({totalCount})</label>
+                        <div className="space-y-3">
+                          <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider block">Preview Items ({totalCount})</label>
                           {totalCount === 0 ? (
-                            <div className="h-full min-h-[150px] border-2 border-dashed border-border/40 rounded-xl flex items-center justify-center">
+                            <div className="h-full min-h-[180px] border-2 border-dashed border-border/40 rounded-xl flex items-center justify-center bg-muted/5">
                               <p className="text-xs text-muted-foreground text-center px-4">No items in this collection yet.<br/>Check items from the list.</p>
                             </div>
                           ) : (
-                            <div className="max-h-52 overflow-y-auto border border-border rounded-xl divide-y divide-border/40">
+                            <div className="max-h-[380px] overflow-y-auto border border-border rounded-xl p-2.5 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-muted/5">
                               {/* Auto Items First */}
                               {autoItems.map(p => (
-                                <div key={p.id} className="flex items-center justify-between px-3 py-2.5 bg-green-50/15">
-                                  <div className="min-w-0 flex-1">
-                                    <span className="text-xs font-semibold text-brown-deep block truncate">{p.name}</span>
-                                    <span className="text-[9px] text-muted-foreground/70">{p.category} · ₹{p.price}</span>
+                                <div key={p.id} className="relative flex gap-3 p-2 rounded-2xl border border-green-200/50 bg-green-50/15 text-xs">
+                                  <div className="h-12 w-12 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/50">
+                                    <img
+                                      src={p.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100"}
+                                      alt={p.name}
+                                      className="h-full w-full object-cover"
+                                    />
                                   </div>
-                                  <span className="text-[8px] bg-green-100 text-green-700 font-extrabold uppercase px-1.5 py-0.5 rounded tracking-wider shrink-0">Auto</span>
+                                  <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5">
+                                    <div>
+                                      <span className="text-xs font-bold text-brown-deep block truncate">{p.name}</span>
+                                      <span className="text-[9px] text-muted-foreground/60 block truncate">{p.category}</span>
+                                    </div>
+                                    <span className="text-[9px] font-bold text-muted-foreground/80">₹{p.price}</span>
+                                  </div>
+                                  <span className="absolute top-2 right-2 text-[8px] bg-green-100 text-green-700 font-extrabold uppercase px-1 py-0.5 rounded tracking-wider scale-90 origin-top-right">Auto</span>
                                 </div>
                               ))}
                               {/* Manual Curated Overrides */}
                               {manualItems.map(p => (
-                                <div key={p.id} className="flex items-center justify-between px-3 py-2.5 bg-amber-50/10">
-                                  <div className="min-w-0 flex-1">
-                                    <span className="text-xs font-semibold text-brown-deep block truncate">{p.name}</span>
-                                    <span className="text-[9px] text-muted-foreground/70">
-                                      {p.category} · 
+                                <div key={p.id} className="relative flex gap-3 p-2 rounded-2xl border border-amber-200/50 bg-amber-50/10 text-xs">
+                                  <div className="h-12 w-12 rounded-xl overflow-hidden bg-muted shrink-0 border border-border/50">
+                                    <img
+                                      src={p.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100"}
+                                      alt={p.name}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  </div>
+                                  <div className="min-w-0 flex-1 flex flex-col justify-between py-0.5">
+                                    <div>
+                                      <span className="text-xs font-bold text-brown-deep block truncate">{p.name}</span>
+                                      <span className="text-[9px] text-muted-foreground/60 block truncate">{p.category}</span>
+                                    </div>
+                                    <span className="text-[9px] font-bold text-muted-foreground/80">
                                       {col.ceilingPrice && p.price && p.price > col.ceilingPrice ? (
                                         <>
-                                          <span className="line-through mx-1 text-muted-foreground">₹{p.price}</span>
+                                          <span className="line-through mr-1 text-muted-foreground">₹{p.price}</span>
                                           <span className="text-amber-600 font-bold">₹{col.ceilingPrice}</span>
                                         </>
                                       ) : (
@@ -1014,16 +1052,16 @@ function AdminOffers() {
                                       )}
                                     </span>
                                   </div>
-                                  <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                                    <span className="text-[8px] bg-amber-100 text-amber-700 font-extrabold uppercase px-1.5 py-0.5 rounded tracking-wider">Curated</span>
+                                  <div className="absolute top-2 right-2 flex items-center gap-1">
+                                    <span className="text-[8px] bg-amber-100 text-amber-700 font-extrabold uppercase px-1 py-0.5 rounded tracking-wider scale-90 origin-top-right">Curated</span>
                                     <button
                                       onClick={() => setCollectionDraft(d => {
                                         const list = (d[col.id] || []).filter(id => id !== p.id);
                                         return { ...d, [col.id]: list };
                                       })}
-                                      className="p-1 rounded-full hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
+                                      className="p-0.5 rounded-full hover:bg-red-50 text-red-400 hover:text-red-600 transition-colors"
                                     >
-                                      <X className="h-3 w-3" />
+                                      <X className="h-3.5 w-3.5" />
                                     </button>
                                   </div>
                                 </div>
