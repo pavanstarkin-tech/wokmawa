@@ -74,10 +74,10 @@ function MenuPage() {
         return m.category === "Thali" || m.name.toLowerCase().includes("combo") || m.name.toLowerCase().includes("pack") || m.name.toLowerCase().includes("deal");
       }
       if (query === "starters199") {
-        return m.category.toLowerCase().includes("starter") && m.price !== null && m.price < 199;
+        return (m.category ?? "").toLowerCase().includes("starter") && m.price !== null && m.price < 199;
       }
       if (query === "biryani299") {
-        return m.category.toLowerCase().includes("biryani") && m.price !== null && m.price < 299;
+        return (m.category ?? "").toLowerCase().includes("biryani") && m.price !== null && m.price < 299;
       }
       if (query === "offers") {
         return (m.mrp !== undefined && m.mrp !== null && m.mrp > (m.price ?? 0)) || m.name.toLowerCase().includes("bogo") || m.name.toLowerCase().includes("free");
