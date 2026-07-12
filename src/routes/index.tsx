@@ -119,7 +119,7 @@ function VideoPlayer({ src }: { src: string }) {
     <div className="relative w-full h-full" onClick={togglePlay}>
       <video
         ref={videoRef}
-        src={objectUrl ?? undefined}
+        src={objectUrl ? `${objectUrl}#t=2` : undefined}
         loop
         muted={isMuted}
         playsInline
