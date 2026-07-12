@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ShoppingBag, Minus, Plus, Trash2, Ticket, CheckCircle2 } from "lucide-react";
+import { ShoppingBag, Minus, Plus, Trash2, Ticket, CheckCircle2, Heart } from "lucide-react";
 import { useState, useEffect } from "react";
 import { AppShell } from "@/components/paakashala/AppShell";
 import { EmptyState } from "@/components/paakashala/EmptyState";
@@ -48,6 +48,10 @@ function CartPage() {
   });
   const [couponError, setCouponError] = useState("");
   const [couponSuccess, setCouponSuccess] = useState("");
+
+  const [tipAmount, setTipAmount] = useState<number>(0);
+  const [customTipInput, setCustomTipInput] = useState("");
+  const [isCustomTip, setIsCustomTip] = useState(false);
 
   const hasPriceOnRequest = items.some((i) => i.price == null);
 
@@ -108,8 +112,9 @@ function CartPage() {
     }
 
     try {
-      // Use promotional grand total
-      const amountInPaise = Math.round(promoResult.grandTotal * 100);
+      // Use promotional grand total plus servant tip
+      const finalGrandTotal = promoResult.grandTotal + tipAmount;
+      const amountInPaise = Math.round(finalGrandTotal * 100);
       const receiptId = Math.floor(1000 + Math.random() * 9000).toString();
 
       const response = await fetch("/api/create-order.php", {
@@ -150,7 +155,8 @@ function CartPage() {
             subtotal: promoResult.subtotal,
             discount: promoResult.discount,
             tax: promoResult.tax,
-            total: promoResult.grandTotal,
+            tip: tipAmount,
+            total: finalGrandTotal,
             appliedCoupon: appliedCoupon || null,
             appliedOffers: promoResult.appliedOffers.map((o) => o.offer.name),
             paymentId: paymentResponse.razorpay_payment_id,
@@ -389,8 +395,88 @@ function CartPage() {
                 ))}
               </div>
             )}
-          </div>
+            
+            {/* Servant Tip Section */}
+            <div className="rounded-md bg-card p-4 border border-border/60 shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-brown-deep font-bold text-xs">
+                  <Heart className="h-4 w-4 text-red-500 fill-red-500/25 animate-pulse" /> Support the Servant (Tip)
+                </div>
+                {tipAmount > 0 && (
+                  <button 
+                    onClick={() => {
+                      setTipAmount(0);
+                      setCustomTipInput("");
+                      setIsCustomTip(false);
+                    }}
+                    className="text-[10px] font-bold text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded transition-colors cursor-pointer"
+                  >
+                    Clear Tip
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground leading-snug">
+                Thank your waiter with a tip. 100% of the tips are directly transferred to the service staff.
+              </p>
+              
+              <div className="flex gap-2">
+                {[20, 30, 50].map((amt) => {
+                  const isActive = tipAmount === amt && !isCustomTip;
+                  return (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => {
+                        setTipAmount(amt);
+                        setIsCustomTip(false);
+                        setCustomTipInput("");
+                      }}
+                      className={`flex-1 py-2.5 rounded-md text-xs font-bold transition-all border cursor-pointer ${
+                        isActive 
+                          ? "bg-brown-gradient text-cream border-transparent" 
+                          : "bg-background hover:bg-gold/5 text-brown-deep border-border/80"
+                      }`}
+                    >
+                      ₹{amt}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCustomTip(true);
+                    setTipAmount(0);
+                  }}
+                  className={`flex-1 py-2.5 rounded-md text-xs font-bold transition-all border cursor-pointer ${
+                    isCustomTip 
+                      ? "bg-brown-gradient text-cream border-transparent" 
+                      : "bg-background hover:bg-gold/5 text-brown-deep border-border/80"
+                  }`}
+                >
+                  {isCustomTip && customTipInput ? `₹${customTipInput}` : "Other"}
+                </button>
+              </div>
 
+              {isCustomTip && (
+                <div className="flex gap-2 items-center animate-in fade-in duration-200 mt-2">
+                  <input
+                    type="number"
+                    value={customTipInput}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCustomTipInput(val);
+                      const num = Number(val);
+                      setTipAmount(num > 0 ? num : 0);
+                    }}
+                    placeholder="Enter tip amount in ₹"
+                    className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-xs focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
+                    min="1"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+ 
           {/* Pricing Summary Block */}
           <div className="mt-5 rounded-2xl bg-card p-5 border border-border/60 shadow-luxe space-y-2.5">
             <div className="flex items-center justify-between text-xs">
@@ -410,19 +496,26 @@ function CartPage() {
               <span className="font-semibold text-brown-deep">₹{promoResult.tax.toFixed(0)}</span>
             </div>
 
+            {tipAmount > 0 && (
+              <div className="flex items-center justify-between text-xs text-green-700 font-semibold">
+                <span>Servant Tip</span>
+                <span>₹{tipAmount.toFixed(0)}</span>
+              </div>
+            )}
+ 
             {customer && (
               <div className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">Contact</span>
                 <span className="font-semibold text-brown-deep">+91 {customer.phone}</span>
               </div>
             )}
-
+ 
             <div className="my-3 h-px bg-gold-gradient opacity-40" />
             
             <div className="flex items-end justify-between">
               <div>
                 <div className="text-[10px] tracking-[0.35em] uppercase text-gold">Grand Total</div>
-                <div className="mt-1 text-3xl font-bold text-brown-deep">₹{promoResult.grandTotal.toFixed(0)}</div>
+                <div className="mt-1 text-3xl font-bold text-brown-deep">₹{(promoResult.grandTotal + tipAmount).toFixed(0)}</div>
               </div>
               {hasPriceOnRequest && (
                 <div className="max-w-[140px] text-right text-[10px] leading-tight text-muted-foreground">
