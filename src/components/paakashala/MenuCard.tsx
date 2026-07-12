@@ -15,29 +15,21 @@ export function VegBadge({ type }: { type: "veg" | "non-veg" }) {
   );
 }
 
-export function QuantitySelector({
-  qty,
-  onInc,
-  onDec,
-}: {
-  qty: number;
-  onInc: () => void;
-  onDec: () => void;
-}) {
+export function QuantitySelector({ qty, onDec, onInc }: any) {
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-gold/50 bg-cream px-1 py-1 shadow-luxe">
+    <div className="flex items-center gap-2.5 rounded-xl border border-gold/50 bg-cream p-1 shadow-sm">
       <button
         onClick={onDec}
         aria-label="Decrease"
-        className="grid h-7 w-7 place-items-center rounded-md text-brown-deep transition active:scale-90"
+        className="grid h-8 w-8 place-items-center rounded-lg bg-gold/10 text-brown-deep transition active:scale-90"
       >
         <Minus className="h-3.5 w-3.5" />
       </button>
-      <span className="min-w-4 text-center text-sm font-semibold text-brown-deep">{qty}</span>
+      <span className="min-w-4 text-center text-sm font-bold text-brown-deep">{qty}</span>
       <button
         onClick={onInc}
         aria-label="Increase"
-        className="grid h-7 w-7 place-items-center rounded-md bg-gold-gradient text-brown-deep transition active:scale-90"
+        className="grid h-8 w-8 place-items-center rounded-lg bg-gold-gradient text-brown-deep transition active:scale-90"
       >
         <Plus className="h-3.5 w-3.5" />
       </button>
@@ -50,9 +42,22 @@ export function MenuCard({ item }: { item: MenuItem }) {
   const inCart = items.find((c) => c.id === item.id);
 
   const price = item.price ?? 0;
-  const mrp = item.mrp || (price > 0 ? Math.round(price * 1.20) : 0);
+
+  // Deterministic fake discount percentage between 10% and 30% based on item id
+  const getFakeDiscountPct = (id: string) => {
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return 10 + Math.abs(hash % 21); // 10 to 30
+  };
+
+  const discountPct = item.mrp && price > 0 && item.mrp > price
+    ? Math.round(((item.mrp - price) / item.mrp) * 100)
+    : getFakeDiscountPct(item.id);
+
+  const mrp = item.mrp || (price > 0 ? Math.round(price / (1 - discountPct / 100)) : 0);
   const hasDiscount = mrp > price;
-  const discountPct = hasDiscount ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
   return (
     <article className="group flex gap-3 rounded-2xl bg-card p-3 border border-border/60 shadow-luxe transition hover:-translate-y-0.5 relative">
@@ -104,7 +109,7 @@ export function MenuCard({ item }: { item: MenuItem }) {
           ) : (
             <button
               onClick={() => add(item)}
-              className="inline-flex items-center gap-1 rounded-lg border border-gold bg-cream px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-brown-deep transition hover:bg-gold-gradient active:scale-95 shadow-luxe"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-gold bg-cream px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-brown-deep transition hover:bg-gold-gradient active:scale-95 shadow-luxe"
             >
               {item.type === "veg" ? <Leaf className="h-3.5 w-3.5" /> : <Drumstick className="h-3.5 w-3.5" />}
               Add
