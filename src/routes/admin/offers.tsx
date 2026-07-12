@@ -219,7 +219,7 @@ function AdminOffers() {
   const { logs } = usePromotionLogs();
   const smartCollections = useSmartCollections();
 
-  const [menuProducts, setMenuProducts] = useState<{ id: string; name: string; category: string }[]>([]);
+  const [menuProducts, setMenuProducts] = useState<{ id: string; name: string; category: string; price?: number | null }[]>([]);
 
   // Modals state
   const [showOfferModal, setShowOfferModal] = useState(false);
