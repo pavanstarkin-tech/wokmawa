@@ -122,21 +122,48 @@ function MenuPage() {
       if (smartCollection) {
         let matchesCollection = false;
         if (smartCollection === "bogo") {
-          matchesCollection = m.name.toLowerCase().includes("bogo") || m.name.toLowerCase().includes("buy 1 get 1") || m.name.toLowerCase().includes("free");
+          // BOGO = show all items that could be part of a buy-1-get-1 deal
+          // Since it's a promotion that applies to any item, show entire catalog
+          // but prioritize items with promotional pricing (mrp set) or starters/snacks
+          matchesCollection = true; // Show all items — BOGO can apply to any item
         } else if (smartCollection === "under199") {
-          matchesCollection = m.price !== null && m.price < 199;
+          matchesCollection = m.price !== null && m.price !== undefined && Number(m.price) < 199;
         } else if (smartCollection === "under299") {
-          matchesCollection = m.price !== null && m.price < 299;
+          matchesCollection = m.price !== null && m.price !== undefined && Number(m.price) < 299;
         } else if (smartCollection === "combo") {
-          matchesCollection = m.category === "Thali" || m.name.toLowerCase().includes("combo") || m.name.toLowerCase().includes("pack") || m.name.toLowerCase().includes("deal");
+          // Combo = Thali category + any item that looks like a combo/meal deal
+          matchesCollection =
+            (m.category ?? "").toLowerCase().includes("thali") ||
+            (m.category ?? "").toLowerCase().includes("combo") ||
+            (m.category ?? "").toLowerCase().includes("biryani") || // biryanis are often combo meals
+            m.name.toLowerCase().includes("combo") ||
+            m.name.toLowerCase().includes("pack") ||
+            m.name.toLowerCase().includes("meal") ||
+            m.name.toLowerCase().includes("deal") ||
+            m.name.toLowerCase().includes("full") ||
+            m.name.toLowerCase().includes("half");
         } else if (smartCollection === "starters199") {
-          matchesCollection = (m.category ?? "").toLowerCase().includes("starter") && m.price !== null && m.price < 199;
+          // Starters under 199 — broaden to include all starter-like categories
+          const cat = (m.category ?? "").toLowerCase();
+          matchesCollection = (
+            cat.includes("starter") ||
+            cat.includes("snack") ||
+            cat.includes("appetizer") ||
+            cat.includes("fry") ||
+            cat.includes("kebab") ||
+            cat.includes("tikka") ||
+            cat.includes("manchuri") ||
+            cat.includes("65")
+          ) && m.price !== null && m.price !== undefined && Number(m.price) < 199;
         } else if (smartCollection === "biryani299") {
-          matchesCollection = (m.category ?? "").toLowerCase().includes("biryani") && m.price !== null && m.price < 299;
+          matchesCollection = (m.category ?? "").toLowerCase().includes("biryani") &&
+            m.price !== null && m.price !== undefined && Number(m.price) < 299;
         } else if (smartCollection === "offers") {
-          matchesCollection = (m.mrp !== undefined && m.mrp !== null && m.mrp > (m.price ?? 0)) || m.name.toLowerCase().includes("bogo") || m.name.toLowerCase().includes("free");
+          // Offers = items with mrp discount set, or any discounted/promotional item
+          const hasDiscount = m.mrp !== undefined && m.mrp !== null && Number(m.mrp) > Number(m.price ?? 0);
+          matchesCollection = hasDiscount || Number(m.price) < 200; // Show budget items too
         }
-        
+
         if (!matchesCollection) return false;
       }
 
