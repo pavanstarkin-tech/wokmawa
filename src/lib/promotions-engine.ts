@@ -495,8 +495,8 @@ export function calculateCartPromotions(
     // If we have an MRP field, calculate original savings
     // We fetch MRP from menuItems list (fallback to cart item if mrp is passed there)
     const menuItem = allProducts.find(m => m.id === item.id);
-    const mrp = (menuItem as any)?.mrp || 0;
     const price = item.price || 0;
+    const mrp = (menuItem as any)?.mrp || (price > 0 ? Math.round(price * 1.20) : 0);
     if (mrp > price) {
       return sum + (mrp - price) * item.quantity;
     }
