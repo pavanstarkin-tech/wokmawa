@@ -199,3 +199,43 @@ ipcMain.handle("export-printer-diagnostics", async (event, { diagnosticsData }) 
     return { success: false, error: err.message };
   }
 });
+
+// --- Phase 3 SQLite database operations ---
+const dbAdapter = require("./BetterSQLiteAdapter");
+
+try {
+  dbAdapter.initialize();
+  dbAdapter.healthCheck().then((res) => {
+    console.log(`[MAIN] Database health integrity check: ${res.healthy ? "OK" : "CORRUPT: " + res.details}`);
+  });
+} catch (err) {
+  console.error("[MAIN] Database load error:", err.message);
+}
+
+ipcMain.handle("db-execute", async (event, { sql, params }) => {
+  return dbAdapter.execute(sql, params);
+});
+
+ipcMain.handle("db-query", async (event, { sql, params }) => {
+  return dbAdapter.query(sql, params);
+});
+
+ipcMain.handle("db-transaction", async (event, { queries }) => {
+  return dbAdapter.transaction(queries);
+});
+
+ipcMain.handle("db-backup", async () => {
+  return dbAdapter.backup();
+});
+
+ipcMain.handle("db-restore", async (event, { backupPath }) => {
+  return dbAdapter.restore(backupPath);
+});
+
+ipcMain.handle("db-vacuum", async () => {
+  return dbAdapter.vacuum();
+});
+
+ipcMain.handle("db-health", async () => {
+  return dbAdapter.healthCheck();
+});
