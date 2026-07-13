@@ -22,6 +22,10 @@ export class RecoveryManager {
       
       // 2. Validate schemas and run migrations
       await SchemaManager.initialize(db);
+      
+      // Initialize automatic stock consumption engine
+      consumptionEngine.initialize();
+      
       logger.info("system", "Crash recovery phase 1 completed: Database & Schema initialized.");
 
       // 3. Restore print queues
