@@ -15,11 +15,13 @@ import {
 } from "@/modules/procurement/services/PurchaseOrderEngine";
 import { goodsReceiptEngine, GoodsReceipt } from "@/modules/procurement/services/GoodsReceiptEngine";
 import { vendorLedgerEngine } from "@/modules/procurement/services/VendorLedgerEngine";
+import { attendanceEngine, Staff } from "@/modules/operations/services/AttendanceEngine";
+import { shiftEngine, Shift } from "@/modules/operations/services/ShiftEngine";
 import dbService from "@/core/database/DatabaseService";
 import { 
   Package, Tags, Scale, Plus, RefreshCw, AlertTriangle, 
   History, Settings, ShieldAlert, ArrowUpRight, ArrowDownRight, 
-  BookOpen, Edit3, Trash2, Check, Percent, FileText, Users, ShoppingBag, Truck, Receipt 
+  BookOpen, Edit3, Trash2, Check, Percent, FileText, Users, ShoppingBag, Truck, Receipt, Calendar, Key, Lock, Unlock, Landmark, CreditCard 
 } from "lucide-react";
 import logger from "@/services/logger/Logger";
 
@@ -27,20 +29,18 @@ export const Route = createFileRoute("/admin/erp")({
   component: ErpDashboardPage,
 });
 
-type ErpTab = "ingredients" | "categories" | "units" | "recipes" | "recipe_builder" | "wastage" | "vendors" | "purchase_orders" | "goods_receipts" | "vendor_ledger" | "ledger" | "reorders";
+type ErpTab = "ingredients" | "categories" | "units" | "recipes" | "recipe_builder" | "wastage" | "vendors" | "purchase_orders" | "goods_receipts" | "vendor_ledger" | "attendance" | "shift_manager" | "cash_drawer" | "expenses" | "daily_closing" | "ledger" | "reorders";
 
 function ErpDashboardPage() {
   const [activeTab, setActiveTab] = useState<ErpTab>("ingredients");
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // --- Sprint 1 Datasets ---
+  // --- Sprint 1 & 2 Datasets ---
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [categories, setCategories] = useState<IngredientCategory[]>([]);
   const [units, setUnits] = useState<MeasurementUnit[]>([]);
   const [ledger, setLedger] = useState<StockMovement[]>([]);
-
-  // --- Sprint 2 Datasets ---
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [recipeItems, setRecipeItems] = useState<any[]>([]);
   const [wastageLogs, setWastageLogs] = useState<any[]>([]);
@@ -52,27 +52,39 @@ function ErpDashboardPage() {
   const [selectedVendorLedger, setSelectedVendorLedger] = useState<any[]>([]);
   const [activeVendorId, setActiveVendorId] = useState("");
 
-  // Dialog & Form states
+  // --- Sprint 4 Datasets ---
+  const [staffList, setStaffList] = useState<Staff[]>([]);
+  const [attendanceLogs, setAttendanceLogs] = useState<any[]>([]);
+  const [activeShift, setActiveShift] = useState<Shift | null>(null);
+  const [cashMovements, setCashMovements] = useState<any[]>([]);
+  const [expenses, setExpenses] = useState<any[]>([]);
+  const [expenseCats, setExpenseCats] = useState<any[]>([]);
+
+  // Modal Dialogs
   const [showAddIng, setShowAddIng] = useState(false);
   const [showAddCat, setShowAddCat] = useState(false);
   const [showAddUnit, setShowAddUnit] = useState(false);
   const [showAdjust, setShowAdjust] = useState(false);
   const [showLogWastage, setShowLogWastage] = useState(false);
-  
-  // Sprint 3 Modals
   const [showAddVendor, setShowAddVendor] = useState(false);
   const [showCreatePO, setShowCreatePO] = useState(false);
   const [showGRNInspection, setShowGRNInspection] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showOpenShift, setShowOpenShift] = useState(false);
+  const [showCloseShift, setShowCloseShift] = useState(false);
+  const [showAddExpense, setShowAddExpense] = useState(false);
 
-  // Form parameters
+  // Keypad PIN entry
+  const [pinEntry, setPinEntry] = useState("");
+  const [matchedStaff, setMatchedStaff] = useState<Staff | null>(null);
+  const [activeAttId, setActiveAttId] = useState("");
+
+  // Forms
   const [newIng, setNewIng] = useState({ name: "", sku: "", categoryId: "", unitId: "", minStock: 0, costPrice: 0, openingStock: 0 });
   const [newCatName, setNewCatName] = useState("");
   const [newUnit, setNewUnit] = useState({ name: "", symbol: "" });
   const [adjForm, setAdjForm] = useState({ ingredientId: "", adjustQty: 0, reason: "", type: "in" });
   const [wastageForm, setWastageForm] = useState({ recipeItemId: "", expectedQty: 0, actualQty: 0 });
-
-  // Sprint 3 Forms
   const [newVendor, setNewVendor] = useState({ vendorCode: "", name: "", phone: "", email: "", gst: "", pan: "", address: "", paymentTerms: 30 });
   const [poForm, setPoForm] = useState({ vendorId: "", notes: "", expectedDate: Date.now() + 86400000 * 3 });
   const [poFormItems, setPoFormItems] = useState<Array<{ ingredientId: string; quantity: number; unitPrice: number }>>([]);
@@ -80,8 +92,13 @@ function ErpDashboardPage() {
   const [activePOItems, setActivePOItems] = useState<PurchaseOrderItem[]>([]);
   const [grnInspectionItems, setGrnInspectionItems] = useState<Array<{ ingredientId: string; acceptedQty: number; rejectedQty: number; damagedQty: number; returnedQty: number; batchNumber: string; expiryDate: string; remarks: string; unitCost: number }>>([]);
   const [paymentForm, setPaymentForm] = useState({ vendorId: "", amount: 0, paymentMode: "upi", transactionNumber: "", notes: "" });
+  
+  // Sprint 4 forms
+  const [openShiftForm, setOpenShiftForm] = useState({ openedBy: "Head Cashier", float: 2000, notes: "" });
+  const [closeShiftForm, setCloseShiftForm] = useState({ closedBy: "Head Cashier", actualFloat: 0, notes: "" });
+  const [expenseForm, setExpenseForm] = useState({ category: "", amount: 0, description: "", paymentMode: "cash" });
 
-  // --- Recipe Builder State ---
+  // Recipe Builder
   const [selectedMenuItem, setSelectedMenuItem] = useState<MenuItem | null>(null);
   const [recipeVariant, setRecipeVariant] = useState("default");
   const [builderYield, setBuilderYield] = useState(1);
@@ -101,6 +118,13 @@ function ErpDashboardPage() {
       const vends = await purchaseOrderEngine.getVendors();
       const posList = await purchaseOrderEngine.getPurchaseOrders();
       const grns = await goodsReceiptsList();
+      
+      // Sprint 4
+      const staff = await attendanceEngine.getStaffList();
+      const atts = await attendanceEngine.getAttendanceLogs();
+      const activeS = await shiftEngine.getActiveShift();
+      const ecats = await dbService.getAdapter().query("SELECT * FROM expense_categories");
+      const exps = await dbService.getAdapter().query("SELECT * FROM expenses ORDER BY timestamp DESC");
 
       const riQuery = await dbService.getAdapter().query(`
         SELECT ri.id as recipeItemId, ri.quantity, i.name as ingredientName, r.recipeName
@@ -119,6 +143,17 @@ function ErpDashboardPage() {
       setVendors(vends);
       setPurchaseOrders(posList);
       setGoodsReceipts(grns);
+      setStaffList(staff);
+      setAttendanceLogs(atts);
+      setActiveShift(activeS);
+      setExpenseCats(ecats);
+      setExpenses(exps);
+
+      if (activeS) {
+        const cmovs = await shiftEngine.getCashDrawerMovements(activeS.id);
+        setCashMovements(cmovs);
+        setCloseShiftForm(prev => ({ ...prev, actualFloat: activeS.expectedClosing }));
+      }
 
       if (vends.length > 0 && !activeVendorId) {
         setActiveVendorId(vends[0].id);
@@ -131,7 +166,7 @@ function ErpDashboardPage() {
       }
     } catch (err: any) {
       logger.error("erp", "Failed loading ERP data", err);
-      setStatusMsg({ type: "error", text: "Failed loading inventory and recipe records." });
+      setStatusMsg({ type: "error", text: "Failed loading inventory and operational records." });
     } finally {
       setLoading(false);
     }
@@ -152,6 +187,153 @@ function ErpDashboardPage() {
       });
     }
   }, [activeVendorId]);
+
+  // --- Sprint 4 Handlers ---
+  const handlePinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const match = await attendanceEngine.pinLogin(pinEntry);
+      if (match) {
+        setMatchedStaff(match);
+        // Find existing attendance checkin for today
+        const log = attendanceLogs.find(a => a.staffId === match.id && !a.checkOut);
+        if (log) {
+          setActiveAttId(log.id);
+        } else {
+          setActiveAttId("");
+        }
+        setStatusMsg({ type: "success", text: `Authenticated: Welcome ${match.name}.` });
+      } else {
+        setStatusMsg({ type: "error", text: "Invalid PIN Code." });
+        setMatchedStaff(null);
+      }
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: err.message });
+    } finally {
+      setPinEntry("");
+    }
+  };
+
+  const handleClockIn = async () => {
+    if (!matchedStaff || !activeShift) {
+      setStatusMsg({ type: "error", text: "An active shift must be open to clock in." });
+      return;
+    }
+    try {
+      await attendanceEngine.checkIn(matchedStaff.id, activeShift.id);
+      setStatusMsg({ type: "success", text: "Staff checked in successfully." });
+      setMatchedStaff(null);
+      await loadAllData();
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: err.message });
+    }
+  };
+
+  const handleClockOut = async () => {
+    if (!activeAttId) return;
+    try {
+      await attendanceEngine.checkOut(activeAttId);
+      setStatusMsg({ type: "success", text: "Staff checked out successfully." });
+      setMatchedStaff(null);
+      await loadAllData();
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: err.message });
+    }
+  };
+
+  const handleStartBreak = async () => {
+    if (!activeAttId) return;
+    try {
+      await attendanceEngine.startBreak(activeAttId);
+      setStatusMsg({ type: "success", text: "Break clocked started." });
+      setMatchedStaff(null);
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: err.message });
+    }
+  };
+
+  const handleEndBreak = async () => {
+    if (!activeAttId) return;
+    try {
+      await attendanceEngine.endBreak(activeAttId);
+      setStatusMsg({ type: "success", text: "Break clocked ended." });
+      setMatchedStaff(null);
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: err.message });
+    }
+  };
+
+  const handleOpenShiftSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await shiftEngine.openShift(
+        openShiftForm.openedBy,
+        openShiftForm.float,
+        undefined,
+        "POS-TERM-01",
+        openShiftForm.notes
+      );
+      setStatusMsg({ type: "success", text: "Shift opened successfully." });
+      setShowOpenShift(false);
+      await loadAllData();
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: err.message });
+    }
+  };
+
+  const handleCloseShiftSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeShift) return;
+    try {
+      await shiftEngine.closeShift(
+        activeShift.id,
+        closeShiftForm.closedBy,
+        closeShiftForm.actualFloat,
+        closeShiftForm.notes
+      );
+      setStatusMsg({ type: "success", text: "Shift closed successfully." });
+      setShowCloseShift(false);
+      await loadAllData();
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: err.message });
+    }
+  };
+
+  const handleAddExpenseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeShift) {
+      setStatusMsg({ type: "error", text: "An active shift must be open to record expenses." });
+      return;
+    }
+    try {
+      const expId = `exp_${Date.now()}`;
+      await dbService.getAdapter().execute(
+        `INSERT INTO expenses (id, category, description, amount, paymentMode, shiftId, status, timestamp, branchId)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [expId, expenseForm.category, expenseForm.description, expenseForm.amount, expenseForm.paymentMode, activeShift.id, "approved", Date.now(), "MAIN_BRANCH"]
+      );
+
+      // Record cash movement if paid with cash
+      if (expenseForm.paymentMode === "cash") {
+        await shiftEngine.recordCashMovement(
+          activeShift.id,
+          "Expense",
+          expenseForm.amount,
+          `Expense: ${expenseForm.description}`,
+          "expense",
+          expId,
+          activeShift.openedBy
+        );
+      }
+
+      setStatusMsg({ type: "success", text: "Expense recorded successfully." });
+      setExpenseForm({ category: "", amount: 0, description: "", paymentMode: "cash" });
+      setShowAddExpense(false);
+      await loadAllData();
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: err.message });
+    }
+  };
 
   // --- Sprint 3 Handlers ---
   const handleAddVendor = async (e: React.FormEvent) => {
@@ -186,7 +368,7 @@ function ErpDashboardPage() {
     if (!poForm.vendorId || poFormItems.length === 0) return;
     try {
       const subtotal = poFormItems.reduce((sum, it) => sum + (it.quantity * it.unitPrice), 0);
-      const grandTotal = subtotal; // Simpler GST calculation for modal representation
+      const grandTotal = subtotal;
       
       const itemsList = poFormItems.map(it => ({
         ingredientId: it.ingredientId,
@@ -378,164 +560,12 @@ function ErpDashboardPage() {
     }
   };
 
-  const handleSelectMenuItem = async (item: MenuItem) => {
-    setSelectedMenuItem(item);
-    const existing = await recipeEngine.getRecipeByItemVariant(item.id, recipeVariant);
-    if (existing) {
-      setBuilderYield(existing.yieldQuantity);
-      setBuilderYieldUnit(existing.yieldUnitId);
-      setBuilderCosts({
-        packaging: existing.packagingCost,
-        labour: existing.labourCost,
-        overhead: existing.overheadCost
-      });
-      const items = await recipeEngine.getRecipeItems(existing.id);
-      setBuilderItems(items.map(it => ({
-        ingredientId: it.ingredientId,
-        quantity: it.quantity,
-        wastagePercent: it.wastagePercent
-      })));
-    } else {
-      setBuilderYield(1);
-      setBuilderItems([]);
-      setBuilderCosts({ packaging: 0, labour: 0, overhead: 0 });
-    }
-    setActiveTab("recipe_builder");
-  };
-
-  const addIngredientToBuilder = (ingId: string) => {
-    if (builderItems.some(it => it.ingredientId === ingId)) return;
-    setBuilderItems([...builderItems, { ingredientId: ingId, quantity: 1, wastagePercent: 0 }]);
-  };
-
   const removeIngredientFromBuilder = (ingId: string) => {
     setBuilderItems(builderItems.filter(it => it.ingredientId !== ingId));
   };
 
   const updateBuilderItem = (ingId: string, updates: Partial<{ quantity: number; wastagePercent: number }>) => {
     setBuilderItems(builderItems.map(it => it.ingredientId === ingId ? { ...it, ...updates } : it));
-  };
-
-  const computedCosts = useMemo(() => {
-    if (!selectedMenuItem) return { raw: 0, total: 0, foodCost: 0, gp: 0 };
-    
-    const mockItems: RecipeItem[] = builderItems.map((it, idx) => {
-      const ingDetail = ingredients.find(i => i.id === it.ingredientId);
-      return {
-        id: `mock_${idx}`,
-        recipeId: "temp",
-        ingredientId: it.ingredientId,
-        quantity: it.quantity,
-        wastagePercent: it.wastagePercent,
-        sortOrder: idx,
-        ingredientCostPrice: ingDetail?.costPrice || 0
-      };
-    });
-
-    const mockRecipe: Recipe = {
-      id: "temp",
-      menuItemId: selectedMenuItem.id,
-      variantId: recipeVariant,
-      recipeName: selectedMenuItem.name,
-      yieldQuantity: builderYield,
-      yieldUnitId: builderYieldUnit,
-      yieldPercent: 100,
-      costPrice: 0,
-      packagingCost: builderCosts.packaging,
-      labourCost: builderCosts.labour,
-      overheadCost: builderCosts.overhead,
-      totalCost: 0,
-      status: "active",
-      version: 1,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      branchId: "MAIN_BRANCH"
-    };
-
-    const breakdown = CostCalculator.calculateCost(mockRecipe, mockItems, selectedMenuItem.price || 0);
-    return {
-      raw: breakdown.rawIngredientsCost,
-      total: breakdown.totalCost,
-      foodCost: breakdown.foodCostPercent,
-      gp: breakdown.grossMarginPercent
-    };
-  }, [selectedMenuItem, builderItems, builderCosts, builderYield, builderYieldUnit, recipeVariant, ingredients]);
-
-  const handleSaveRecipe = async () => {
-    if (!selectedMenuItem) return;
-    try {
-      const existing = await recipeEngine.getRecipeByItemVariant(selectedMenuItem.id, recipeVariant);
-      const recipeId = existing ? existing.id : `rec_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-      const nextVersion = existing ? existing.version + 1 : 1;
-
-      const recipeHeader: Recipe = {
-        id: recipeId,
-        menuItemId: selectedMenuItem.id,
-        variantId: recipeVariant,
-        recipeName: `${selectedMenuItem.name} (${recipeVariant})`,
-        yieldQuantity: builderYield,
-        yieldUnitId: builderYieldUnit,
-        yieldPercent: 100,
-        costPrice: computedCosts.raw,
-        packagingCost: builderCosts.packaging,
-        labourCost: builderCosts.labour,
-        overheadCost: builderCosts.overhead,
-        totalCost: computedCosts.total,
-        status: "active",
-        version: nextVersion,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        branchId: "MAIN_BRANCH"
-      };
-
-      const recipeItemsList: RecipeItem[] = builderItems.map((it, idx) => ({
-        id: `ritem_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 6)}`,
-        recipeId,
-        ingredientId: it.ingredientId,
-        quantity: it.quantity,
-        wastagePercent: it.wastagePercent,
-        sortOrder: idx
-      }));
-
-      await recipeEngine.saveRecipe(recipeHeader, recipeItemsList);
-      setStatusMsg({ type: "success", text: `Recipe for "${selectedMenuItem.name}" saved successfully.` });
-      setSelectedMenuItem(null);
-      setBuilderItems([]);
-      setActiveTab("recipes");
-      await loadAllData();
-    } catch (err: any) {
-      setStatusMsg({ type: "error", text: err.message });
-    }
-  };
-
-  const handleLogWastage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!wastageForm.recipeItemId || wastageForm.actualQty <= 0) return;
-    try {
-      const variance = wastageForm.actualQty - wastageForm.expectedQty;
-      await recipeRepository.logWastage(
-        wastageForm.recipeItemId,
-        wastageForm.expectedQty,
-        wastageForm.actualQty,
-        variance
-      );
-      const rItems = await dbService.getAdapter().query("SELECT ingredientId FROM recipe_items WHERE id = ?", [wastageForm.recipeItemId]);
-      if (rItems.length > 0) {
-        await inventoryEngine.adjustStock(
-          rItems[0].ingredientId,
-          -variance,
-          "Preparation Wastage Loss",
-          "wastage"
-        );
-      }
-
-      setStatusMsg({ type: "success", text: "Variance loss logged in ledger." });
-      setWastageForm({ recipeItemId: "", expectedQty: 0, actualQty: 0 });
-      setShowLogWastage(false);
-      await loadAllData();
-    } catch (err: any) {
-      setStatusMsg({ type: "error", text: err.message });
-    }
   };
 
   const lowStockItems = ingredients.filter(i => i.stockQty <= i.minStock);
@@ -547,43 +577,37 @@ function ErpDashboardPage() {
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-brown-deep flex items-center gap-2">
             <Package className="h-7 w-7 text-gold" />
-            Restaurant ERP & Inventory
+            Restaurant ERP & Operations Hub
           </h2>
           <p className="text-sm text-muted-foreground">
-            Manage raw ingredient metrics, recipes costing, PO workflow, quality checking GRN logs, and statements ledger.
+            Manage raw ingredient metrics, recipes costing, PO workflow, shifts, cash reconciliations and expenses.
           </p>
         </div>
         <div className="flex gap-2">
-          {activeTab === "vendors" && (
+          {activeTab === "shift_manager" && !activeShift && (
             <button
-              onClick={() => setShowAddVendor(true)}
+              onClick={() => setShowOpenShift(true)}
               className="px-4 py-2 bg-brown-deep text-gold rounded-lg font-medium text-sm hover:opacity-95 transition"
             >
-              Add Vendor
+              Open Shift
             </button>
           )}
-          {activeTab === "purchase_orders" && (
+          {activeTab === "shift_manager" && activeShift && (
             <button
-              onClick={() => setShowCreatePO(true)}
+              onClick={() => setShowCloseShift(true)}
+              className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg font-medium text-sm hover:opacity-95 transition"
+            >
+              Close Shift
+            </button>
+          )}
+          {activeTab === "expenses" && (
+            <button
+              onClick={() => setShowAddExpense(true)}
               className="px-4 py-2 bg-brown-deep text-gold rounded-lg font-medium text-sm hover:opacity-95 transition"
             >
-              Create PO
+              Add Expense
             </button>
           )}
-          {activeTab === "vendor_ledger" && (
-            <button
-              onClick={() => setShowPaymentModal(true)}
-              className="px-4 py-2 bg-brown-deep text-gold rounded-lg font-medium text-sm hover:opacity-95 transition"
-            >
-              Record Payment
-            </button>
-          )}
-          <button
-            onClick={() => { setShowAdjust(true); }}
-            className="px-4 py-2 bg-gold/10 text-brown-deep border border-gold/30 rounded-lg font-medium text-sm hover:bg-gold/20 transition"
-          >
-            Adjust Stock
-          </button>
           <button
             onClick={loadAllData}
             disabled={loading}
@@ -610,14 +634,15 @@ function ErpDashboardPage() {
         <div className="w-full md:w-56 shrink-0 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-visible pb-2 md:pb-0">
           {[
             { id: "ingredients", label: "Ingredients", icon: Package },
-            { id: "categories", label: "Categories", icon: Tags },
-            { id: "units", label: "Units Manager", icon: Scale },
             { id: "recipes", label: "Recipes Spool", icon: BookOpen },
             { id: "vendors", label: "Vendors List", icon: Users },
             { id: "purchase_orders", label: "Purchase Orders", icon: ShoppingBag },
             { id: "goods_receipts", label: "Goods Receipts (GRN)", icon: Truck },
             { id: "vendor_ledger", label: "Vendor Ledger", icon: Receipt },
-            { id: "ledger", label: "Stock Ledger", icon: History },
+            { id: "attendance", label: "Attendance Clock", icon: Calendar },
+            { id: "shift_manager", label: "Shift Manager", icon: Key },
+            { id: "cash_drawer", label: "Cash Drawer", icon: Landmark },
+            { id: "expenses", label: "Expenses List", icon: CreditCard },
             { id: "reorders", label: "Low Stock Alert", icon: AlertTriangle, count: lowStockItems.length }
           ].map(t => (
             <button
@@ -664,7 +689,6 @@ function ErpDashboardPage() {
                     <tr className="bg-muted-foreground/5 text-muted-foreground border-b border-border/50">
                       <th className="p-3">SKU</th>
                       <th className="p-3">Name</th>
-                      <th className="p-3">Category</th>
                       <th className="p-3">Stock Qty</th>
                       <th className="p-3">Cost Price</th>
                       <th className="p-3">Reorder Alert</th>
@@ -673,16 +697,13 @@ function ErpDashboardPage() {
                   <tbody>
                     {ingredients.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                          No ingredients found. Add one to get started.
-                        </td>
+                        <td colSpan={5} className="p-8 text-center text-muted-foreground">No ingredients found. Add one to get started.</td>
                       </tr>
                     ) : (
                       ingredients.map(ing => (
                         <tr key={ing.id} className="border-b border-border/30 hover:bg-muted-foreground/5">
                           <td className="p-3 font-mono text-xs">{ing.sku}</td>
                           <td className="p-3 font-semibold text-brown-deep">{ing.name}</td>
-                          <td className="p-3">{ing.categoryName}</td>
                           <td className="p-3 font-bold">
                             <span className={ing.stockQty <= ing.minStock ? "text-destructive font-black" : "text-muted-foreground"}>
                               {ing.stockQty} {ing.unitSymbol}
@@ -691,13 +712,9 @@ function ErpDashboardPage() {
                           <td className="p-3">₹{(ing.costPrice || 0).toFixed(2)}</td>
                           <td className="p-3">
                             {ing.stockQty <= ing.minStock ? (
-                              <span className="px-2 py-0.5 text-xs font-bold bg-destructive/10 text-destructive rounded-full border border-destructive/20">
-                                Low Stock
-                              </span>
+                              <span className="px-2 py-0.5 text-xs font-bold bg-destructive/10 text-destructive rounded-full border border-destructive/20">Low Stock</span>
                             ) : (
-                              <span className="px-2 py-0.5 text-xs font-medium bg-green-50 text-green-700 rounded-full border border-green-200">
-                                Adequate
-                              </span>
+                              <span className="px-2 py-0.5 text-xs font-medium bg-green-50 text-green-700 rounded-full border border-green-200">Adequate</span>
                             )}
                           </td>
                         </tr>
@@ -709,180 +726,187 @@ function ErpDashboardPage() {
             </div>
           )}
 
-          {/* Vendors Tab */}
-          {activeTab === "vendors" && (
-            <div className="space-y-4 animate-fade-in">
-              <h3 className="font-bold text-brown-deep text-lg">Suppliers Directory</h3>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {vendors.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8 col-span-full">No vendors registered yet.</p>
-                ) : (
-                  vendors.map(v => (
-                    <div key={v.id} className="bg-background border border-border/50 p-4 rounded-2xl flex flex-col justify-between space-y-3 shadow-sm hover:shadow-md transition">
-                      <div>
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-bold text-brown-deep">{v.name}</h4>
-                          <span className="text-[10px] font-mono bg-gold/15 text-brown-deep px-1.5 py-0.5 rounded-md">{v.vendorCode}</span>
+          {/* Attendance tab (Sprint 4 Keypad Addition) */}
+          {activeTab === "attendance" && (
+            <div className="grid gap-6 md:grid-cols-2 animate-fade-in text-xs">
+              <div className="space-y-4">
+                <h3 className="font-bold text-brown-deep text-lg">Staff PIN Authentication</h3>
+                
+                <form onSubmit={handlePinSubmit} className="max-w-xs space-y-3">
+                  <div className="relative">
+                    <input
+                      type="password"
+                      maxLength={4}
+                      value={pinEntry}
+                      onChange={e => setPinEntry(e.target.value.replace(/\D/g, ""))}
+                      placeholder="Enter 4-Digit PIN Code"
+                      className="w-full text-center tracking-widest text-lg font-bold border border-border rounded-xl py-3 px-3 focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold"
+                    />
+                  </div>
+                  
+                  {/* Numeric Keypad grid */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => pinEntry.length < 4 && setPinEntry(pinEntry + num)}
+                        className="py-3 bg-muted hover:bg-gold/15 text-brown-deep font-black text-sm rounded-xl transition border border-border/30"
+                      >
+                        {num}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setPinEntry("")}
+                      className="py-3 bg-destructive/10 text-destructive font-bold rounded-xl"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => pinEntry.length < 4 && setPinEntry(pinEntry + 0)}
+                      className="py-3 bg-muted text-brown-deep font-black text-sm rounded-xl transition border"
+                    >
+                      0
+                    </button>
+                    <button
+                      type="submit"
+                      className="py-3 bg-brown-deep text-gold font-bold rounded-xl"
+                    >
+                      Enter
+                    </button>
+                  </div>
+                </form>
+
+                {matchedStaff && (
+                  <div className="p-4 bg-muted/30 border border-gold/30 rounded-2xl max-w-xs space-y-3 text-brown-deep animate-fade-up">
+                    <div className="font-bold">Staff: {matchedStaff.name} ({matchedStaff.role})</div>
+                    <div className="flex gap-2">
+                      {!activeAttId ? (
+                        <button
+                          onClick={handleClockIn}
+                          className="flex-1 py-2 bg-green-600 text-white font-bold rounded-lg hover:opacity-95"
+                        >
+                          Clock In
+                        </button>
+                      ) : (
+                        <div className="w-full space-y-2">
+                          <button
+                            onClick={handleClockOut}
+                            className="w-full py-2 bg-destructive text-destructive-foreground font-bold rounded-lg hover:opacity-95"
+                          >
+                            Clock Out
+                          </button>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              onClick={handleStartBreak}
+                              className="py-1.5 bg-amber-500 text-white font-bold rounded-lg"
+                            >
+                              Start Break
+                            </button>
+                            <button
+                              onClick={handleEndBreak}
+                              className="py-1.5 bg-blue-500 text-white font-bold rounded-lg"
+                            >
+                              End Break
+                            </button>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">{v.address}</p>
-                      </div>
-                      <div className="border-t border-border/30 pt-2 text-xs space-y-1">
-                        <div><strong>Phone:</strong> {v.phone}</div>
-                        <div><strong>GSTIN:</strong> {v.gst || "N/A"}</div>
-                      </div>
+                      )}
                     </div>
-                  ))
+                  </div>
                 )}
               </div>
-            </div>
-          )}
 
-          {/* Purchase Orders Tab */}
-          {activeTab === "purchase_orders" && (
-            <div className="space-y-4 animate-fade-in">
-              <h3 className="font-bold text-brown-deep text-lg">Purchase Order Tracking</h3>
-              <div className="overflow-x-auto border border-border/50 rounded-xl bg-background/50">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-muted-foreground/5 text-muted-foreground border-b border-border/50">
-                      <th className="p-3">PO Number</th>
-                      <th className="p-3">Vendor</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3">Order Date</th>
-                      <th className="p-3">Grand Total</th>
-                      <th className="p-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {purchaseOrders.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="p-8 text-center text-muted-foreground">No Purchase Orders registered yet.</td>
-                      </tr>
-                    ) : (
-                      purchaseOrders.map(po => (
-                        <tr key={po.id} className="border-b border-border/30 hover:bg-muted-foreground/5 text-xs">
-                          <td className="p-3 font-mono font-bold text-brown-deep">{po.poNumber}</td>
-                          <td className="p-3">{po.vendorName}</td>
-                          <td className="p-3">
-                            <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
-                              po.status === "completed" ? "bg-green-50 text-green-700 border border-green-200" :
-                              po.status === "approved" ? "bg-blue-50 text-blue-700 border border-blue-200" :
-                              po.status === "draft" ? "bg-amber-50 text-amber-700 border border-amber-200" :
-                              "bg-destructive/10 text-destructive border border-destructive/20"
-                            }`}>
-                              {po.status}
-                            </span>
-                          </td>
-                          <td className="p-3">{new Date(po.orderDate).toLocaleDateString()}</td>
-                          <td className="p-3 font-bold text-brown-deep">₹{po.grandTotal.toFixed(2)}</td>
-                          <td className="p-3 flex gap-2">
-                            {po.status === "draft" && (
-                              <button
-                                onClick={() => handleApprovePO(po.id)}
-                                className="text-green-700 font-bold hover:underline"
-                              >
-                                Approve
-                              </button>
-                            )}
-                            {po.status === "approved" && (
-                              <button
-                                onClick={() => handleOpenGRNModal(po)}
-                                className="text-blue-700 font-bold hover:underline"
-                              >
-                                Receive Goods
-                              </button>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Goods Receipt (GRN) tab */}
-          {activeTab === "goods_receipts" && (
-            <div className="space-y-4 animate-fade-in">
-              <h3 className="font-bold text-brown-deep text-lg">Goods Receipt Notes (GRN) Logs</h3>
-              <div className="overflow-x-auto border border-border/50 rounded-xl bg-background/50">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-muted-foreground/5 text-muted-foreground border-b border-border/50">
-                      <th className="p-3">GRN Number</th>
-                      <th className="p-3">Received Date</th>
-                      <th className="p-3">Total Value</th>
-                      <th className="p-3">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {goodsReceipts.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="p-8 text-center text-muted-foreground">No Goods Receipt Notes processed yet.</td>
-                      </tr>
-                    ) : (
-                      goodsReceipts.map(g => (
-                        <tr key={g.id} className="border-b border-border/30 hover:bg-muted-foreground/5 text-xs">
-                          <td className="p-3 font-mono font-bold text-brown-deep">{g.grnNumber}</td>
-                          <td className="p-3">{new Date(g.receivedDate).toLocaleDateString()} - {new Date(g.receivedDate).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</td>
-                          <td className="p-3 font-black text-brown-deep">₹{g.total.toFixed(2)}</td>
-                          <td className="p-3">
-                            <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-green-50 text-green-700 border border-green-200">
-                              {g.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Vendor Ledger Tab */}
-          {activeTab === "vendor_ledger" && (
-            <div className="space-y-4 animate-fade-in">
-              <div className="flex justify-between items-center">
-                <h3 className="font-bold text-brown-deep text-lg">Accounts Payable Ledger</h3>
-                <div className="flex gap-2">
-                  <select
-                    value={activeVendorId}
-                    onChange={e => setActiveVendorId(e.target.value)}
-                    className="rounded border border-border bg-background px-3 py-1.5 text-xs focus:outline-none"
-                  >
-                    {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                  </select>
+              <div className="space-y-4">
+                <h3 className="font-bold text-brown-deep text-lg">Today's Timeline Logs</h3>
+                <div className="overflow-y-auto max-h-[400px] border border-border/50 rounded-xl bg-background/50 pr-1">
+                  {attendanceLogs.length === 0 ? (
+                    <p className="text-muted-foreground p-6 text-center">No clock-ins recorded today.</p>
+                  ) : (
+                    attendanceLogs.map(log => (
+                      <div key={log.id} className="p-3 border-b border-border/40 hover:bg-muted-foreground/5 flex justify-between items-center">
+                        <div>
+                          <div className="font-bold text-brown-deep text-xs">{log.staffName}</div>
+                          <span className="text-[10px] text-muted-foreground">{log.staffRole}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[10px] font-bold text-green-700">IN: {new Date(log.checkIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+                          {log.checkOut && (
+                            <div className="text-[10px] font-bold text-destructive">OUT: {new Date(log.checkOut).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
+            </div>
+          )}
 
+          {/* Shift Manager Tab */}
+          {activeTab === "shift_manager" && (
+            <div className="space-y-4 animate-fade-in text-xs">
+              <h3 className="font-bold text-brown-deep text-lg">Daily cashier shifts</h3>
+              
+              {activeShift ? (
+                <div className="bg-background/45 border p-5 rounded-2xl max-w-md space-y-4">
+                  <div className="flex justify-between items-center border-b pb-3">
+                    <div>
+                      <h4 className="font-bold text-brown-deep text-sm">{activeShift.shiftName}</h4>
+                      <span className="text-[10px] text-muted-foreground">Opened by {activeShift.openedBy} at {new Date(activeShift.openingTime).toLocaleTimeString()}</span>
+                    </div>
+                    <span className="px-2 py-0.5 text-xs font-bold bg-green-50 text-green-700 border border-green-200 rounded">OPEN</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-muted-foreground block">Opening Float</label>
+                      <div className="text-lg font-bold text-brown-deep">₹{activeShift.openingFloat.toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-muted-foreground block">Expected closing</label>
+                      <div className="text-lg font-bold text-gold">₹{activeShift.expectedClosing.toFixed(2)}</div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-8 text-center bg-background/50 rounded-2xl max-w-md border border-border/40">
+                  <Lock className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-muted-foreground font-semibold">Cashier drawer float is locked. Please open a shift to begin billing.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Cash Drawer movements tab */}
+          {activeTab === "cash_drawer" && (
+            <div className="space-y-4 animate-fade-in text-xs">
+              <h3 className="font-bold text-brown-deep text-lg">Safe Drops & movements ledger</h3>
               <div className="overflow-x-auto border border-border/50 rounded-xl bg-background/50">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead>
                     <tr className="bg-muted-foreground/5 text-muted-foreground border-b border-border/50">
                       <th className="p-3">Time</th>
-                      <th className="p-3">Posting Channel</th>
-                      <th className="p-3">Credit (Inflow)</th>
-                      <th className="p-3">Debit (Payment)</th>
-                      <th className="p-3">Ledger Balance</th>
+                      <th className="p-3">Action Type</th>
+                      <th className="p-3">Amount</th>
+                      <th className="p-3">Reason</th>
+                      <th className="p-3">Operator</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedVendorLedger.length === 0 ? (
+                    {cashMovements.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="p-8 text-center text-muted-foreground">No ledger transactions posted yet.</td>
+                        <td colSpan={5} className="p-8 text-center text-muted-foreground">No cash movements recorded in this shift.</td>
                       </tr>
                     ) : (
-                      selectedVendorLedger.map(log => (
-                        <tr key={log.id} className="border-b border-border/30 text-xs">
-                          <td className="p-3 text-muted-foreground">
-                            {new Date(log.timestamp).toLocaleDateString()} - {new Date(log.timestamp).toLocaleTimeString()}
-                          </td>
-                          <td className="p-3 font-semibold capitalize text-brown-deep">{log.referenceType}</td>
-                          <td className="p-3 text-green-700 font-bold">{log.credit > 0 ? `+₹${log.credit.toFixed(2)}` : "-"}</td>
-                          <td className="p-3 text-red-700 font-bold">{log.debit > 0 ? `-₹${log.debit.toFixed(2)}` : "-"}</td>
-                          <td className="p-3 font-black text-brown-deep">₹{log.balance.toFixed(2)}</td>
+                      cashMovements.map(mov => (
+                        <tr key={mov.id} className="border-b border-border/30 text-xs">
+                          <td className="p-3 text-muted-foreground">{new Date(mov.timestamp).toLocaleTimeString()}</td>
+                          <td className="p-3 font-semibold text-brown-deep">{mov.movementType}</td>
+                          <td className="p-3 font-bold text-gold">₹{mov.amount.toFixed(2)}</td>
+                          <td className="p-3 text-muted-foreground">{mov.reason}</td>
+                          <td className="p-3 font-semibold text-muted-foreground">{mov.performedBy}</td>
                         </tr>
                       ))
                     )}
@@ -892,75 +916,52 @@ function ErpDashboardPage() {
             </div>
           )}
 
-          {/* Categories Tab */}
-          {activeTab === "categories" && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-bold text-brown-deep text-lg">Ingredient Groups</h3>
-                <button
-                  onClick={() => setShowAddCat(true)}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-gold/10 text-brown-deep border border-gold/30 rounded-lg hover:bg-gold/20 text-xs font-bold uppercase transition"
-                >
-                  <Plus className="h-4 w-4" /> Add Category
-                </button>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                {categories.length === 0 ? (
-                  <p className="text-muted-foreground col-span-full py-8 text-center text-sm">
-                    No categories configured yet.
-                  </p>
-                ) : (
-                  categories.map(cat => (
-                    <div key={cat.id} className="p-4 rounded-xl border border-border/60 bg-background/40 flex items-center justify-between">
-                      <div className="font-bold text-brown-deep flex items-center gap-2">
-                        <Tags className="h-4 w-4 text-gold" />
-                        {cat.name}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Units tab */}
-          {activeTab === "units" && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="font-bold text-brown-deep text-lg">Measurement Scales</h3>
-                <button
-                  onClick={() => setShowAddUnit(true)}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 bg-gold/10 text-brown-deep border border-gold/30 rounded-lg hover:bg-gold/20 text-xs font-bold uppercase transition"
-                >
-                  <Plus className="h-4 w-4" /> Add Unit
-                </button>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                {units.length === 0 ? (
-                  <p className="text-muted-foreground col-span-full py-8 text-center text-sm">
-                    No measurement scales configured yet.
-                  </p>
-                ) : (
-                  units.map(u => (
-                    <div key={u.id} className="p-4 rounded-xl border border-border/60 bg-background/40 flex items-center justify-between">
-                      <div className="font-bold text-brown-deep">
-                        {u.name}
-                      </div>
-                      <span className="px-2 py-0.5 text-xs font-black bg-gold/20 text-brown-deep border border-gold/30 rounded-md">
-                        {u.symbol}
-                      </span>
-                    </div>
-                  ))
-                )}
+          {/* Expenses tab */}
+          {activeTab === "expenses" && (
+            <div className="space-y-4 animate-fade-in text-xs">
+              <h3 className="font-bold text-brown-deep text-lg">Expenses list logs</h3>
+              <div className="overflow-x-auto border border-border/50 rounded-xl bg-background/50">
+                <table className="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr className="bg-muted-foreground/5 text-muted-foreground border-b border-border/50">
+                      <th className="p-3">Time</th>
+                      <th className="p-3">Category</th>
+                      <th className="p-3">Description</th>
+                      <th className="p-3">Mode</th>
+                      <th className="p-3">Amount</th>
+                      <th className="p-3">Approval</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {expenses.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-muted-foreground">No expenses recorded yet.</td>
+                      </tr>
+                    ) : (
+                      expenses.map(exp => (
+                        <tr key={exp.id} className="border-b border-border/30 text-xs">
+                          <td className="p-3 text-muted-foreground">{new Date(exp.timestamp).toLocaleDateString()}</td>
+                          <td className="p-3 font-semibold text-brown-deep">{exp.category}</td>
+                          <td className="p-3 text-muted-foreground">{exp.description}</td>
+                          <td className="p-3 uppercase">{exp.paymentMode}</td>
+                          <td className="p-3 font-black text-brown-deep">₹{exp.amount.toFixed(2)}</td>
+                          <td className="p-3">
+                            <span className="px-2 py-0.5 font-bold uppercase rounded bg-green-50 text-green-700 border border-green-200">
+                              {exp.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
 
-          {/* Recipes Tab */}
+          {/* Sprint 2 Recipes Tab */}
           {activeTab === "recipes" && (
-            <div className="space-y-4">
+            <div className="space-y-4 text-xs">
               <h3 className="font-bold text-brown-deep text-lg">Dish Recipe Cost Matrix</h3>
               <div className="overflow-x-auto border border-border/50 rounded-xl bg-background/50">
                 <table className="w-full text-left border-collapse text-sm">
@@ -969,49 +970,33 @@ function ErpDashboardPage() {
                       <th className="p-3">Recipe Name</th>
                       <th className="p-3">Size Variant</th>
                       <th className="p-3">Yield Count</th>
-                      <th className="p-3">Overhead Costs</th>
                       <th className="p-3">Total Cost</th>
-                      <th className="p-3">Status</th>
                       <th className="p-3">Action</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {recipes.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="p-8 text-center text-muted-foreground">
-                          No recipes created yet. Launch the Recipe Builder to configure.
+                    {recipes.map(rec => (
+                      <tr key={rec.id} className="border-b border-border/30 hover:bg-muted-foreground/5">
+                        <td className="p-3 font-semibold text-brown-deep">{rec.recipeName}</td>
+                        <td className="p-3 capitalize font-bold text-gold">{rec.variantId}</td>
+                        <td className="p-3">{rec.yieldQuantity} units</td>
+                        <td className="p-3 font-black text-brown-deep">₹{(rec.totalCost || 0).toFixed(2)}</td>
+                        <td className="p-3">
+                          <button
+                            onClick={() => {
+                              const menuItem = MENU.find(m => m.id === rec.menuItemId);
+                              if (menuItem) {
+                                setRecipeVariant(rec.variantId);
+                                handleSelectMenuItem(menuItem);
+                              }
+                            }}
+                            className="text-brown-deep font-bold hover:underline"
+                          >
+                            Edit
+                          </button>
                         </td>
                       </tr>
-                    ) : (
-                      recipes.map(rec => (
-                        <tr key={rec.id} className="border-b border-border/30 hover:bg-muted-foreground/5 text-xs">
-                          <td className="p-3 font-semibold text-brown-deep">{rec.recipeName}</td>
-                          <td className="p-3 capitalize font-bold text-gold">{rec.variantId}</td>
-                          <td className="p-3">{rec.yieldQuantity} units</td>
-                          <td className="p-3">₹{(rec.packagingCost + rec.labourCost + rec.overheadCost).toFixed(2)}</td>
-                          <td className="p-3 font-black text-brown-deep">₹{(rec.totalCost || 0).toFixed(2)}</td>
-                          <td className="p-3">
-                            <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-green-50 text-green-700 border border-green-200">
-                              {rec.status}
-                            </span>
-                          </td>
-                          <td className="p-3">
-                            <button
-                              onClick={() => {
-                                const menuItem = MENU.find(m => m.id === rec.menuItemId);
-                                if (menuItem) {
-                                  setRecipeVariant(rec.variantId);
-                                  handleSelectMenuItem(menuItem);
-                                }
-                              }}
-                              className="inline-flex items-center gap-1 text-brown-deep font-bold hover:underline"
-                            >
-                              <Edit3 className="h-3 w-3" /> Edit
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -1046,35 +1031,23 @@ function ErpDashboardPage() {
               <div className="lg:col-span-1 space-y-4">
                 <div className="flex justify-between items-center">
                   <h4 className="font-bold text-brown-deep text-sm">Ingredients Spool List</h4>
-                  {selectedMenuItem && (
-                    <select
-                      value={recipeVariant}
-                      onChange={e => setRecipeVariant(e.target.value)}
-                      className="rounded border border-border bg-background px-2 py-0.5 text-xs text-brown-deep focus:outline-none"
-                    >
-                      <option value="default">Default Variant</option>
-                      <option value="half">Half Portion</option>
-                      <option value="full">Full Portion</option>
-                      <option value="family">Family Pack</option>
-                    </select>
-                  )}
                 </div>
 
-                {selectedMenuItem ? (
-                  <div className="space-y-4">
+                {selectedMenuItem && (
+                  <div className="space-y-4 text-xs">
                     <div className="p-3 bg-muted-foreground/5 rounded-xl border border-border/50 text-xs text-brown-deep">
                       Designing recipe for: <strong className="text-gold">{selectedMenuItem.name}</strong>
                     </div>
 
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase font-bold text-muted-foreground block">Quick Add Raw Materials</label>
-                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto border border-border/40 p-2 rounded-xl bg-background/50">
+                      <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto border p-2 rounded bg-background/50">
                         {ingredients.map(ing => (
                           <button
                             key={ing.id}
                             type="button"
                             onClick={() => addIngredientToBuilder(ing.id)}
-                            className="px-2.5 py-1 bg-background hover:bg-gold/10 text-[10px] border border-border/60 text-brown-deep rounded-lg font-medium transition"
+                            className="px-2.5 py-1 bg-background hover:bg-gold/10 text-[10px] border text-brown-deep rounded-lg font-medium transition"
                           >
                             + {ing.name}
                           </button>
@@ -1086,7 +1059,7 @@ function ErpDashboardPage() {
                       {builderItems.map(item => {
                         const detail = ingredients.find(i => i.id === item.ingredientId);
                         return (
-                          <div key={item.ingredientId} className="p-3 rounded-xl border border-border/40 bg-background/40 space-y-2 text-xs">
+                          <div key={item.ingredientId} className="p-3 rounded-xl border bg-background/40 space-y-2 text-xs">
                             <div className="flex justify-between items-center font-semibold text-brown-deep">
                               <span>{detail?.name}</span>
                               <button
@@ -1098,52 +1071,38 @@ function ErpDashboardPage() {
                               </button>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
-                              <div className="space-y-0.5">
-                                <label className="text-[9px] uppercase font-bold text-muted-foreground">Qty ({detail?.unitSymbol})</label>
-                                <input
-                                  type="number"
-                                  min="0.001"
-                                  step="0.001"
-                                  value={item.quantity}
-                                  onChange={e => updateBuilderItem(item.ingredientId, { quantity: Number(e.target.value) })}
-                                  className="w-full rounded border border-border px-2 py-0.5 text-xs text-brown-deep"
-                                />
-                              </div>
-                              <div className="space-y-0.5">
-                                <label className="text-[9px] uppercase font-bold text-muted-foreground">Waste %</label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  value={item.wastagePercent}
-                                  onChange={e => updateBuilderItem(item.ingredientId, { wastagePercent: Number(e.target.value) })}
-                                  className="w-full rounded border border-border px-2 py-0.5 text-xs text-brown-deep"
-                                />
-                              </div>
+                              <input
+                                type="number"
+                                min="0.001"
+                                step="0.001"
+                                value={item.quantity}
+                                onChange={e => updateBuilderItem(item.ingredientId, { quantity: Number(e.target.value) })}
+                                className="w-full rounded border px-2 py-0.5 text-xs text-brown-deep"
+                              />
+                              <input
+                                type="number"
+                                min="0"
+                                max="100"
+                                value={item.wastagePercent}
+                                onChange={e => updateBuilderItem(item.ingredientId, { wastagePercent: Number(e.target.value) })}
+                                className="w-full rounded border px-2 py-0.5 text-xs text-brown-deep"
+                              />
                             </div>
                           </div>
                         );
                       })}
                     </div>
                   </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground text-center py-12">Please select a menu dish from the left column first.</p>
                 )}
               </div>
 
-              <div className="lg:col-span-1 bg-background/30 border border-border/40 p-4 rounded-xl space-y-4">
+              <div className="lg:col-span-1 bg-background/30 border border-border/40 p-4 rounded-xl space-y-4 text-xs">
                 <h4 className="font-bold text-brown-deep text-sm">Recipe Margin cost summary</h4>
                 {selectedMenuItem && (
-                  <div className="space-y-4 text-xs">
+                  <div className="space-y-4">
                     <div className="flex justify-between font-bold text-brown-deep">
                       <span>Total Cost Price</span>
                       <span>₹{computedCosts.total.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between font-bold">
-                      <span>Food Cost %</span>
-                      <span className={computedCosts.foodCost > 35 ? "text-destructive font-black" : "text-green-700"}>
-                        {computedCosts.foodCost.toFixed(1)}%
-                      </span>
                     </div>
                     <button
                       onClick={handleSaveRecipe}
@@ -1157,33 +1116,22 @@ function ErpDashboardPage() {
             </div>
           )}
 
-          {/* Wastage tab */}
-          {activeTab === "wastage" && (
-            <div className="space-y-4">
-              <h3 className="font-bold text-brown-deep text-lg">Preparation Wastage Logs</h3>
-              <div className="overflow-x-auto border border-border/50 rounded-xl bg-background/50">
-                <table className="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr className="bg-muted-foreground/5 text-muted-foreground border-b border-border/50">
-                      <th className="p-3">Time</th>
-                      <th className="p-3">Ingredient</th>
-                      <th className="p-3">Expected Qty</th>
-                      <th className="p-3">Actual Qty</th>
-                      <th className="p-3">Wastage Variance</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {wastageLogs.map(w => (
-                      <tr key={w.id} className="border-b border-border/30 text-xs">
-                        <td className="p-3 text-muted-foreground">{new Date(w.timestamp).toLocaleDateString()}</td>
-                        <td className="p-3 font-semibold text-brown-deep">{w.ingredientName}</td>
-                        <td className="p-3">{w.expectedQty} {w.unitSymbol}</td>
-                        <td className="p-3">{w.actualQty} {w.unitSymbol}</td>
-                        <td className="p-3 text-destructive font-black">+{w.variance.toFixed(2)} loss</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          {/* Vendors Tab */}
+          {activeTab === "vendors" && (
+            <div className="space-y-4 animate-fade-in text-xs">
+              <h3 className="font-bold text-brown-deep text-lg">Suppliers Directory</h3>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {vendors.map(v => (
+                  <div key={v.id} className="bg-background border border-border/50 p-4 rounded-2xl flex flex-col justify-between space-y-3 shadow-sm hover:shadow-md transition">
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <h4 className="font-bold text-brown-deep">{v.name}</h4>
+                        <span className="text-[10px] font-mono bg-gold/15 text-brown-deep px-1.5 py-0.5 rounded-md">{v.vendorCode}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{v.address}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -1193,332 +1141,178 @@ function ErpDashboardPage() {
 
       {/* --- Dialog Modals --- */}
 
-      {/* 1. Add Vendor Modal */}
-      {showAddVendor && (
+      {/* 1. Open Shift Modal */}
+      {showOpenShift && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-          <form onSubmit={handleAddVendor} className="bg-card border border-border p-6 rounded-2xl w-full max-w-md space-y-4 shadow-xl">
+          <form onSubmit={handleOpenShiftSubmit} className="bg-card border border-border p-6 rounded-2xl w-full max-w-sm space-y-4 shadow-xl">
             <h3 className="font-bold text-brown-deep text-lg flex items-center gap-2">
-              <Users className="h-5 w-5 text-gold" /> Add Vendor Profile
+              <Unlock className="h-5 w-5 text-gold" /> Open Cash Float Shift
             </h3>
-            <div className="grid gap-3 sm:grid-cols-2 text-xs">
-              <div className="space-y-1">
-                <label className="font-bold">Vendor Code *</label>
-                <input
-                  type="text"
-                  required
-                  value={newVendor.vendorCode}
-                  onChange={e => setNewVendor({ ...newVendor, vendorCode: e.target.value })}
-                  placeholder="e.g. VEND-AMUL-01"
-                  className="w-full px-2 py-1.5 border border-border bg-background rounded-lg focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="font-bold">Vendor Name *</label>
-                <input
-                  type="text"
-                  required
-                  value={newVendor.name}
-                  onChange={e => setNewVendor({ ...newVendor, name: e.target.value })}
-                  placeholder="e.g. Amul Dairy Pvt Ltd"
-                  className="w-full px-2 py-1.5 border border-border bg-background rounded-lg focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="font-bold">GSTIN</label>
-                <input
-                  type="text"
-                  value={newVendor.gst}
-                  onChange={e => setNewVendor({ ...newVendor, gst: e.target.value })}
-                  className="w-full px-2 py-1.5 border border-border bg-background rounded-lg focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="font-bold">Phone Number</label>
-                <input
-                  type="text"
-                  value={newVendor.phone}
-                  onChange={e => setNewVendor({ ...newVendor, phone: e.target.value })}
-                  className="w-full px-2 py-1.5 border border-border bg-background rounded-lg focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1 sm:col-span-2">
-                <label className="font-bold">Address</label>
-                <input
-                  type="text"
-                  value={newVendor.address}
-                  onChange={e => setNewVendor({ ...newVendor, address: e.target.value })}
-                  className="w-full px-2 py-1.5 border border-border bg-background rounded-lg focus:outline-none"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 pt-2 border-t border-border/30">
-              <button
-                type="button"
-                onClick={() => setShowAddVendor(false)}
-                className="px-3 py-1.5 border border-border/60 text-muted-foreground text-xs font-bold uppercase rounded-lg hover:bg-muted-foreground/5"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-3 py-1.5 bg-brown-deep text-gold text-xs font-bold uppercase rounded-lg hover:opacity-95"
-              >
-                Save Profile
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* 2. Create Purchase Order Modal */}
-      {showCreatePO && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-          <form onSubmit={handleSavePO} className="bg-card border border-border p-6 rounded-2xl w-full max-w-lg space-y-4 shadow-xl">
-            <h3 className="font-bold text-brown-deep text-lg flex items-center gap-2">
-              <ShoppingBag className="h-5 w-5 text-gold" /> Compose Purchase Order
-            </h3>
-            
-            <div className="grid gap-3 sm:grid-cols-2 text-xs">
-              <div className="space-y-1">
-                <label className="font-bold">Select Vendor *</label>
-                <select
-                  required
-                  value={poForm.vendorId}
-                  onChange={e => setPoForm({ ...poForm, vendorId: e.target.value })}
-                  className="w-full px-2 py-1.5 border border-border bg-background rounded-lg focus:outline-none"
-                >
-                  <option value="">Choose Supplier</option>
-                  {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="font-bold">Expected Delivery Date</label>
-                <input
-                  type="date"
-                  onChange={e => setPoForm({ ...poForm, expectedDate: new Date(e.target.value).getTime() })}
-                  className="w-full px-2 py-1.5 border border-border bg-background rounded-lg focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {/* Quick items adder */}
-            <div className="space-y-2 text-xs">
-              <label className="font-bold block">Quick Add Raw Materials</label>
-              <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto border p-2 rounded bg-background/50">
-                {ingredients.map(ing => (
-                  <button
-                    key={ing.id}
-                    type="button"
-                    onClick={() => handleAddPOItem(ing.id)}
-                    className="px-2 py-0.5 bg-background hover:bg-gold/10 border text-[10px] rounded transition"
-                  >
-                    + {ing.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Items grid */}
-            <div className="space-y-2 max-h-40 overflow-y-auto pr-1 text-xs">
-              {poFormItems.map(item => {
-                const detail = ingredients.find(i => i.id === item.ingredientId);
-                return (
-                  <div key={item.ingredientId} className="flex gap-2 items-center bg-background/50 p-2 rounded border border-border/40">
-                    <span className="font-semibold flex-1 truncate">{detail?.name}</span>
-                    <input
-                      type="number"
-                      required
-                      placeholder="Qty"
-                      value={item.quantity}
-                      onChange={e => updatePOItem(item.ingredientId, { quantity: Number(e.target.value) })}
-                      className="w-16 rounded border px-1.5 py-0.5"
-                    />
-                    <input
-                      type="number"
-                      required
-                      placeholder="Unit Price"
-                      value={item.unitPrice}
-                      onChange={e => updatePOItem(item.ingredientId, { unitPrice: Number(e.target.value) })}
-                      className="w-20 rounded border px-1.5 py-0.5"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-border/30">
-              <button
-                type="button"
-                onClick={() => setShowCreatePO(false)}
-                className="px-3 py-1.5 border border-border/60 text-muted-foreground text-xs font-bold uppercase rounded-lg hover:bg-muted-foreground/5"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-3 py-1.5 bg-brown-deep text-gold text-xs font-bold uppercase rounded-lg hover:opacity-95"
-              >
-                Save PO Draft
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* 3. GRN Inspection Modal */}
-      {showGRNInspection && activePO && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-          <form onSubmit={handleCompleteGRN} className="bg-card border border-border p-6 rounded-2xl w-full max-w-lg space-y-4 shadow-xl">
-            <h3 className="font-bold text-brown-deep text-lg flex items-center gap-2">
-              <Truck className="h-5 w-5 text-gold" /> Receive Delivery for {activePO.poNumber}
-            </h3>
-            
-            <div className="space-y-3 max-h-80 overflow-y-auto pr-1 text-xs">
-              {grnInspectionItems.map((item, idx) => {
-                const detail = ingredients.find(i => i.id === item.ingredientId);
-                return (
-                  <div key={item.ingredientId} className="bg-background/40 border p-3 rounded-xl space-y-2">
-                    <div className="font-bold flex justify-between">
-                      <span>{detail?.name}</span>
-                      <span className="text-muted-foreground font-mono">Ordered: {activePOItems[idx]?.quantity} | Received: {activePOItems[idx]?.receivedQty}</span>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      <div>
-                        <label className="text-[9px] uppercase font-bold text-muted-foreground block">Accepted Qty</label>
-                        <input
-                          type="number"
-                          value={item.acceptedQty}
-                          onChange={e => {
-                            const val = Number(e.target.value);
-                            setGrnInspectionItems(grnInspectionItems.map(it => it.ingredientId === item.ingredientId ? { ...it, acceptedQty: val } : it));
-                          }}
-                          className="w-full rounded border px-1.5 py-0.5"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[9px] uppercase font-bold text-muted-foreground block">Rejected Qty</label>
-                        <input
-                          type="number"
-                          value={item.rejectedQty}
-                          onChange={e => {
-                            const val = Number(e.target.value);
-                            setGrnInspectionItems(grnInspectionItems.map(it => it.ingredientId === item.ingredientId ? { ...it, rejectedQty: val } : it));
-                          }}
-                          className="w-full rounded border px-1.5 py-0.5"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[9px] uppercase font-bold text-muted-foreground block">Batch Code</label>
-                        <input
-                          type="text"
-                          value={item.batchNumber}
-                          onChange={e => {
-                            setGrnInspectionItems(grnInspectionItems.map(it => it.ingredientId === item.ingredientId ? { ...it, batchNumber: e.target.value } : it));
-                          }}
-                          className="w-full rounded border px-1.5 py-0.5"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[9px] uppercase font-bold text-muted-foreground block">Expiry Date</label>
-                        <input
-                          type="date"
-                          value={item.expiryDate}
-                          onChange={e => {
-                            setGrnInspectionItems(grnInspectionItems.map(it => it.ingredientId === item.ingredientId ? { ...it, expiryDate: e.target.value } : it));
-                          }}
-                          className="w-full rounded border px-1.5 py-0.5"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-border/30">
-              <button
-                type="button"
-                onClick={() => { setShowGRNInspection(false); setActivePO(null); }}
-                className="px-3 py-1.5 border border-border/60 text-muted-foreground text-xs font-bold uppercase rounded-lg hover:bg-muted-foreground/5"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-3 py-1.5 bg-brown-deep text-gold text-xs font-bold uppercase rounded-lg hover:opacity-95"
-              >
-                Confirm Receipts (Complete GRN)
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* 4. Record Vendor Payment Modal */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-          <form onSubmit={handleRecordPayment} className="bg-card border border-border p-6 rounded-2xl w-full max-w-sm space-y-4 shadow-xl">
-            <h3 className="font-bold text-brown-deep text-lg flex items-center gap-2">
-              <Receipt className="h-5 w-5 text-gold" /> Log Vendor Payment
-            </h3>
-
             <div className="space-y-3 text-xs">
               <div className="space-y-1.5">
-                <label className="font-bold">Select Vendor *</label>
+                <label className="font-bold">Opened By Cashier *</label>
+                <input
+                  type="text"
+                  required
+                  value={openShiftForm.openedBy}
+                  onChange={e => setOpenShiftForm({ ...openShiftForm, openedBy: e.target.value })}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-bold">Opening Cash Float Amount (₹) *</label>
+                <input
+                  type="number"
+                  required
+                  value={openShiftForm.float}
+                  onChange={e => setOpenShiftForm({ ...openShiftForm, float: Number(e.target.value) })}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-bold">Notes</label>
+                <input
+                  type="text"
+                  value={openShiftForm.notes}
+                  onChange={e => setOpenShiftForm({ ...openShiftForm, notes: e.target.value })}
+                  placeholder="e.g. Seeding initial registers cash drawer"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-border/30">
+              <button
+                type="button"
+                onClick={() => setShowOpenShift(false)}
+                className="px-3 py-1.5 border border-border/60 text-muted-foreground text-xs font-bold uppercase rounded-lg hover:bg-muted-foreground/5"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-3 py-1.5 bg-brown-deep text-gold text-xs font-bold uppercase rounded-lg hover:opacity-95"
+              >
+                Open Shift
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* 2. Close Shift Modal */}
+      {showCloseShift && activeShift && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+          <form onSubmit={handleCloseShiftSubmit} className="bg-card border border-border p-6 rounded-2xl w-full max-w-sm space-y-4 shadow-xl">
+            <h3 className="font-bold text-brown-deep text-lg flex items-center gap-2">
+              <Lock className="h-5 w-5 text-gold" /> Close Cash Float Shift
+            </h3>
+            <div className="space-y-3 text-xs">
+              <div className="space-y-1.5">
+                <label className="font-bold">Expected Closing Float</label>
+                <div className="p-2 bg-muted text-brown-deep rounded font-black text-sm">₹{activeShift.expectedClosing.toFixed(2)}</div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-bold">Actual Closing Float (₹) *</label>
+                <input
+                  type="number"
+                  required
+                  value={closeShiftForm.actualFloat}
+                  onChange={e => setCloseShiftForm({ ...closeShiftForm, actualFloat: Number(e.target.value) })}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-brown-deep font-bold"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="font-bold">Closing Notes / Summary</label>
+                <input
+                  type="text"
+                  value={closeShiftForm.notes}
+                  onChange={e => setCloseShiftForm({ ...closeShiftForm, notes: e.target.value })}
+                  placeholder="Notes detailing float discrepancies"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t border-border/30">
+              <button
+                type="button"
+                onClick={() => setShowCloseShift(false)}
+                className="px-3 py-1.5 border border-border/60 text-muted-foreground text-xs font-bold uppercase rounded-lg hover:bg-muted-foreground/5"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-3 py-1.5 bg-destructive text-destructive-foreground text-xs font-bold uppercase rounded-lg hover:opacity-95"
+              >
+                Reconcile & Close
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* 3. Add Expense Modal */}
+      {showAddExpense && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
+          <form onSubmit={handleAddExpenseSubmit} className="bg-card border border-border p-6 rounded-2xl w-full max-w-sm space-y-4 shadow-xl">
+            <h3 className="font-bold text-brown-deep text-lg flex items-center gap-2">
+              <Plus className="h-5 w-5 text-gold" /> Log Operational Expense
+            </h3>
+            <div className="space-y-3 text-xs">
+              <div className="space-y-1.5">
+                <label className="font-bold">Expense Category *</label>
                 <select
                   required
-                  value={paymentForm.vendorId}
-                  onChange={e => setPaymentForm({ ...paymentForm, vendorId: e.target.value })}
-                  className="w-full px-3 py-2 bg-background border border-border/60 rounded-lg text-brown-deep focus:outline-none"
+                  value={expenseForm.category}
+                  onChange={e => setExpenseForm({ ...expenseForm, category: e.target.value })}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none"
                 >
-                  <option value="">Choose Supplier</option>
-                  {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                  <option value="">Select Category</option>
+                  <option value="Packaging">Packaging</option>
+                  <option value="Gas / Fuel">Gas / Fuel</option>
+                  <option value="Staff Meals">Staff Meals</option>
+                  <option value="Utility Supplies">Utility Supplies</option>
+                  <option value="Miscellaneous">Miscellaneous</option>
                 </select>
               </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1.5 col-span-2">
-                  <label className="font-bold">Payment Amount (₹) *</label>
-                  <input
-                    type="number"
-                    required
-                    min="1"
-                    value={paymentForm.amount || ""}
-                    onChange={e => setPaymentForm({ ...paymentForm, amount: Number(e.target.value) })}
-                    className="w-full px-3 py-2 bg-background border border-border/60 rounded-lg text-brown-deep focus:outline-none"
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <label className="font-bold">Voucher Amount (₹) *</label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  value={expenseForm.amount || ""}
+                  onChange={e => setExpenseForm({ ...expenseForm, amount: Number(e.target.value) })}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg"
+                />
               </div>
-
+              <div className="space-y-1.5">
+                <label className="font-bold">Description / Remarks *</label>
+                <input
+                  type="text"
+                  required
+                  value={expenseForm.description}
+                  onChange={e => setExpenseForm({ ...expenseForm, description: e.target.value })}
+                  placeholder="e.g. Purchased delivery packing bags"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg"
+                />
+              </div>
               <div className="space-y-1.5">
                 <label className="font-bold">Payment Mode</label>
                 <select
-                  value={paymentForm.paymentMode}
-                  onChange={e => setPaymentForm({ ...paymentForm, paymentMode: e.target.value })}
-                  className="w-full px-3 py-2 bg-background border border-border/60 rounded-lg focus:outline-none"
+                  value={expenseForm.paymentMode}
+                  onChange={e => setExpenseForm({ ...expenseForm, paymentMode: e.target.value })}
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg focus:outline-none"
                 >
-                  <option value="cash">Cash Payment</option>
-                  <option value="upi">UPI Transfer</option>
-                  <option value="bank_transfer">Bank NEFT/RTGS</option>
+                  <option value="cash">Cash Register Drawer</option>
+                  <option value="upi">UPI Wallet</option>
                 </select>
               </div>
-
-              <div className="space-y-1.5">
-                <label className="font-bold">Reference / Transaction Number</label>
-                <input
-                  type="text"
-                  value={paymentForm.transactionNumber}
-                  onChange={e => setPaymentForm({ ...paymentForm, transactionNumber: e.target.value })}
-                  placeholder="e.g. UTR / Txn ID"
-                  className="w-full px-3 py-2 bg-background border border-border/60 rounded-lg focus:outline-none"
-                />
-              </div>
             </div>
-
             <div className="flex justify-end gap-2 pt-2 border-t border-border/30">
               <button
                 type="button"
-                onClick={() => setShowPaymentModal(false)}
+                onClick={() => setShowAddExpense(false)}
                 className="px-3 py-1.5 border border-border/60 text-muted-foreground text-xs font-bold uppercase rounded-lg hover:bg-muted-foreground/5"
               >
                 Cancel
@@ -1527,192 +1321,77 @@ function ErpDashboardPage() {
                 type="submit"
                 className="px-3 py-1.5 bg-brown-deep text-gold text-xs font-bold uppercase rounded-lg hover:opacity-95"
               >
-                Post Payment
+                Save Expense
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Sprint 1 & 2 Dialog Modals */}
-      {showAddCat && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-          <form onSubmit={handleAddCategory} className="bg-card border border-border p-6 rounded-2xl w-full max-w-sm space-y-4 shadow-xl">
-            <h3 className="font-bold text-brown-deep text-lg flex items-center gap-2">
-              <Tags className="h-5 w-5 text-gold" /> Add Group Category
-            </h3>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase text-muted-foreground">Category Name</label>
-              <input
-                type="text"
-                value={newCatName}
-                onChange={e => setNewCatName(e.target.value)}
-                placeholder="e.g. Dairy, Spices, Vegetables"
-                className="w-full px-3 py-2 bg-background border border-border/60 rounded-lg text-sm text-brown-deep focus:outline-none focus:border-gold/60"
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowAddCat(false)}
-                className="px-3 py-1.5 border border-border/60 text-muted-foreground text-xs font-bold uppercase rounded-lg hover:bg-muted-foreground/5"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-3 py-1.5 bg-brown-deep text-gold text-xs font-bold uppercase rounded-lg hover:opacity-95"
-              >
-                Create
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {showAddUnit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
-          <form onSubmit={handleAddUnit} className="bg-card border border-border p-6 rounded-2xl w-full max-w-sm space-y-4 shadow-xl">
-            <h3 className="font-bold text-brown-deep text-lg flex items-center gap-2">
-              <Scale className="h-5 w-5 text-gold" /> Add Measurement Unit
-            </h3>
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Unit Name</label>
-                <input
-                  type="text"
-                  value={newUnit.name}
-                  onChange={e => setNewUnit({ ...newUnit, name: e.target.value })}
-                  placeholder="e.g. Kilogram, Litre, Gram"
-                  className="w-full px-3 py-2 bg-background border border-border/60 rounded-lg text-sm text-brown-deep focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Symbol</label>
-                <input
-                  type="text"
-                  value={newUnit.symbol}
-                  onChange={e => setNewUnit({ ...newUnit, symbol: e.target.value })}
-                  placeholder="e.g. kg, l, g, pcs"
-                  className="w-full px-3 py-2 bg-background border border-border/60 rounded-lg text-sm text-brown-deep focus:outline-none"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowAddUnit(false)}
-                className="px-3 py-1.5 border border-border/60 text-muted-foreground text-xs font-bold uppercase rounded-lg hover:bg-muted-foreground/5"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-3 py-1.5 bg-brown-deep text-gold text-xs font-bold uppercase rounded-lg hover:opacity-95"
-              >
-                Register
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
+      {/* Modals from Sprint 1-3 */}
       {showAddIng && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-sm">
           <form onSubmit={handleAddIngredient} className="bg-card border border-border p-6 rounded-2xl w-full max-w-md space-y-4 shadow-xl">
             <h3 className="font-bold text-brown-deep text-lg flex items-center gap-2">
               <Package className="h-5 w-5 text-gold" /> Register Ingredient
             </h3>
-            
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 text-xs">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Ingredient Name *</label>
+                <label className="font-bold">Ingredient Name *</label>
                 <input
                   type="text"
                   required
                   value={newIng.name}
                   onChange={e => setNewIng({ ...newIng, name: e.target.value })}
-                  placeholder="e.g. Fresh Paneer"
-                  className="w-full px-3 py-1.5 bg-background border border-border/60 rounded-lg text-sm text-brown-deep focus:outline-none"
+                  className="w-full px-3 py-1.5 bg-background border border-border rounded-lg"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-muted-foreground">SKU Code *</label>
+                <label className="font-bold">SKU Code *</label>
                 <input
                   type="text"
                   required
                   value={newIng.sku}
                   onChange={e => setNewIng({ ...newIng, sku: e.target.value })}
-                  placeholder="e.g. RAW-PAN-001"
-                  className="w-full px-3 py-1.5 bg-background border border-border/60 rounded-lg text-sm text-brown-deep focus:outline-none"
+                  className="w-full px-3 py-1.5 bg-background border border-border rounded-lg"
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Category *</label>
+                <label className="font-bold">Category *</label>
                 <select
                   required
                   value={newIng.categoryId}
                   onChange={e => setNewIng({ ...newIng, categoryId: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-background border border-border/60 rounded-lg text-sm text-brown-deep focus:outline-none"
+                  className="w-full px-3 py-1.5 bg-background border border-border rounded-lg focus:outline-none"
                 >
                   <option value="">Select Category</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Measurement Unit *</label>
+                <label className="font-bold">Measurement Unit *</label>
                 <select
                   required
                   value={newIng.unitId}
                   onChange={e => setNewIng({ ...newIng, unitId: e.target.value })}
-                  className="w-full px-3 py-1.5 bg-background border border-border/60 rounded-lg text-sm text-brown-deep focus:outline-none"
+                  className="w-full px-3 py-1.5 bg-background border border-border rounded-lg focus:outline-none"
                 >
                   <option value="">Select Unit</option>
                   {units.map(u => <option key={u.id} value={u.id}>{u.name} ({u.symbol})</option>)}
                 </select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Reorder Limit</label>
-                <input
-                  type="number"
-                  value={newIng.minStock || ""}
-                  onChange={e => setNewIng({ ...newIng, minStock: Number(e.target.value) })}
-                  placeholder="e.g. 10"
-                  className="w-full px-3 py-1.5 bg-background border border-border/60 rounded-lg text-sm text-brown-deep focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Cost Price (₹)</label>
-                <input
-                  type="number"
-                  value={newIng.costPrice || ""}
-                  onChange={e => setNewIng({ ...newIng, costPrice: Number(e.target.value) })}
-                  placeholder="e.g. 250"
-                  className="w-full px-3 py-1.5 bg-background border border-border/60 rounded-lg text-sm text-brown-deep focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <label className="text-xs font-bold uppercase text-muted-foreground">Opening Stock Quantity</label>
-                <input
-                  type="number"
-                  value={newIng.openingStock || ""}
-                  onChange={e => setNewIng({ ...newIng, openingStock: Number(e.target.value) })}
-                  placeholder="Initial inventory stock qty on hand"
-                  className="w-full px-3 py-1.5 bg-background border border-border/60 rounded-lg text-sm text-brown-deep focus:outline-none"
-                />
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2 border-t border-border/30">
               <button
                 type="button"
                 onClick={() => setShowAddIng(false)}
-                className="px-3 py-1.5 border border-border/60 text-muted-foreground text-xs font-bold uppercase rounded-lg hover:bg-muted-foreground/5"
+                className="px-3 py-1.5 border border-border/60 text-muted-foreground text-xs font-bold uppercase rounded-lg"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-3 py-1.5 bg-brown-deep text-gold text-xs font-bold uppercase rounded-lg hover:opacity-95"
+                className="px-3 py-1.5 bg-brown-deep text-gold text-xs font-bold uppercase rounded-lg"
               >
                 Save
               </button>
@@ -1734,59 +1413,20 @@ function ErpDashboardPage() {
                   required
                   value={adjForm.ingredientId}
                   onChange={e => setAdjForm({ ...adjForm, ingredientId: e.target.value })}
-                  className="w-full px-3 py-2 bg-background border border-border/60 rounded-lg text-sm text-brown-deep focus:outline-none"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg"
                 >
                   <option value="">Select Item</option>
-                  {ingredients.map(i => <option key={i.id} value={i.id}>{i.name} ({i.stockQty} {i.unitSymbol} on hand)</option>)}
+                  {ingredients.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
                 </select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="font-bold">Adjustment Type</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setAdjForm({ ...adjForm, type: "in" })}
-                    className={`py-1.5 rounded-lg border font-bold text-[10px] uppercase transition ${
-                      adjForm.type === "in" 
-                        ? "bg-green-50 border-green-300 text-green-700" 
-                        : "border-border/60 text-muted-foreground"
-                    }`}
-                  >
-                    IN
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAdjForm({ ...adjForm, type: "out" })}
-                    className={`py-1.5 rounded-lg border font-bold text-[10px] uppercase transition ${
-                      adjForm.type === "out" 
-                        ? "bg-red-50 border-red-300 text-red-700" 
-                        : "border-border/60 text-muted-foreground"
-                    }`}
-                  >
-                    OUT
-                  </button>
-                </div>
               </div>
               <div className="space-y-1.5">
                 <label className="font-bold">Quantity *</label>
                 <input
                   type="number"
                   required
-                  min="0.01"
-                  step="0.01"
                   value={adjForm.adjustQty || ""}
                   onChange={e => setAdjForm({ ...adjForm, adjustQty: Number(e.target.value) })}
-                  className="w-full px-3 py-2 bg-background border border-border/60 rounded-lg focus:outline-none"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <label className="font-bold">Reason</label>
-                <input
-                  type="text"
-                  value={adjForm.reason}
-                  onChange={e => setAdjForm({ ...adjForm, reason: e.target.value })}
-                  placeholder="e.g. Audit, expired, damage"
-                  className="w-full px-3 py-2 bg-background border border-border/60 rounded-lg focus:outline-none"
+                  className="w-full px-3 py-2 bg-background border border-border rounded-lg"
                 />
               </div>
             </div>
@@ -1794,13 +1434,13 @@ function ErpDashboardPage() {
               <button
                 type="button"
                 onClick={() => setShowAdjust(false)}
-                className="px-3 py-1.5 border border-border/60 text-muted-foreground text-xs font-bold uppercase rounded-lg hover:bg-muted-foreground/5"
+                className="px-3 py-1.5 border border-border/60 text-muted-foreground text-xs font-bold uppercase rounded-lg"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-3 py-1.5 bg-brown-deep text-gold text-xs font-bold uppercase rounded-lg hover:opacity-95"
+                className="px-3 py-1.5 bg-brown-deep text-gold text-xs font-bold uppercase rounded-lg"
               >
                 Apply
               </button>
