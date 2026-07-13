@@ -396,26 +396,36 @@ function AdminMenu() {
                 />
               </div>
 
-              {/* Price & MRP Group */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Price, MRP & Quantity Group */}
+              <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-brown-deep mb-1.5">Price (₹) *</label>
+                  <label className="block text-xs font-semibold text-brown-deep mb-1.5">Price (₹) *</label>
                   <input
                     type="number"
                     placeholder="e.g. 220"
                     value={form.price}
                     onChange={(e) => setForm(f => ({ ...f, price: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+                    className="w-full px-3 py-2 rounded-xl border border-border/80 bg-card text-xs focus:outline-none focus:ring-2 focus:ring-gold/50"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-brown-deep mb-1.5">MRP / Original (₹)</label>
+                  <label className="block text-xs font-semibold text-brown-deep mb-1.5">Original (₹)</label>
                   <input
                     type="number"
                     placeholder="e.g. 250"
                     value={form.mrp}
                     onChange={(e) => setForm(f => ({ ...f, mrp: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
+                    className="w-full px-3 py-2 rounded-xl border border-border/80 bg-card text-xs focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-brown-deep mb-1.5">Quantity</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 100"
+                    value={form.quantity}
+                    onChange={(e) => setForm(f => ({ ...f, quantity: e.target.value }))}
+                    className="w-full px-3 py-2 rounded-xl border border-border/80 bg-card text-xs focus:outline-none"
                   />
                 </div>
               </div>
