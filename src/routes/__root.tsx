@@ -122,8 +122,29 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+import { recoveryManager } from "../core/recovery/RecoveryManager";
+import { backgroundScheduler } from "../core/scheduler/BackgroundScheduler";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    // Sequentially boot local SQLite, run migrations, restore queues, start sync engine
+    const bootSystem = async () => {
+      try {
+        await recoveryManager.recoverAll();
+        backgroundScheduler.start();
+      } catch (err) {
+        console.error("[BOOT] Critical POS systems startup failed:", err);
+      }
+    };
+    
+    bootSystem();
+
+    return () => {
+      backgroundScheduler.stop();
+    };
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
