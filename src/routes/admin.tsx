@@ -6,7 +6,7 @@ import {
   LayoutDashboard, ShoppingCart, ListOrdered, ChefHat, 
   Settings, FolderKanban, Users, Gift, Package, 
   BarChart3, ShieldCheck, Printer, LogOut, Menu, 
-  ChevronLeft, ChevronRight, Bell, Search, AlertCircle, Wifi, WifiOff
+  ChevronLeft, ChevronRight, Bell, Search, AlertCircle, Wifi, WifiOff, Database
 } from "lucide-react";
 import syncManager from "@/services/sync/SyncManager";
 import sessionManager from "@/services/session/SessionManager";
@@ -81,6 +81,7 @@ function AdminLayout() {
     { label: "Menu CRUD", to: "/admin/menu", icon: FolderKanban },
     { label: "Offers", to: "/admin/offers", icon: Gift },
     { label: "Printer Manager", to: "/admin/printers", icon: Printer },
+    { label: "Database Ops", to: "/admin/database", icon: Database },
     { label: "Settings", to: "/admin/settings", icon: Settings },
   ];
 
