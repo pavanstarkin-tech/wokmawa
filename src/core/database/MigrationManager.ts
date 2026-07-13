@@ -1095,6 +1095,92 @@ export class MigrationManager {
         logger.info("database", "Successfully applied Version 8 schema migrations.");
       }
     });
+
+    // Migration Version 9: Phase 8 - Dual Printer Routing & Production Printing
+    this.migrations.push({
+      version: 9,
+      up: async (db: DatabaseAdapter) => {
+        logger.info("database", "Executing schema upgrade to Version 9 (Production Printing)...");
+
+        // 1. Printers Master Registry
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS printers (
+            id TEXT PRIMARY KEY,
+            name TEXT,
+            printerType TEXT,
+            connectionType TEXT,
+            ipAddress TEXT,
+            port INTEGER,
+            usbDevice TEXT,
+            paperWidth INTEGER DEFAULT 80,
+            isDefault INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'online',
+            createdAt INTEGER,
+            updatedAt INTEGER
+          );
+        `);
+
+        // 2. Category Routing Overrides
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS printer_routes (
+            id TEXT PRIMARY KEY,
+            categoryId TEXT,
+            printerId TEXT,
+            priority INTEGER DEFAULT 1,
+            FOREIGN KEY(printerId) REFERENCES printers(id)
+          );
+        `);
+
+        // 3. Print Jobs Queue
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS print_jobs (
+            id TEXT PRIMARY KEY,
+            printerId TEXT,
+            jobType TEXT,
+            entityType TEXT,
+            entityId TEXT,
+            copies INTEGER DEFAULT 1,
+            priority INTEGER DEFAULT 1,
+            status TEXT DEFAULT 'pending',
+            retryCount INTEGER DEFAULT 0,
+            errorMessage TEXT,
+            createdAt INTEGER,
+            completedAt INTEGER
+          );
+        `);
+
+        // 4. Print Log History
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS print_history (
+            id TEXT PRIMARY KEY,
+            jobId TEXT,
+            printerId TEXT,
+            result TEXT,
+            duration INTEGER,
+            printedAt INTEGER
+          );
+        `);
+
+        // 5. Heartbeat Status Checks
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS printer_heartbeat (
+            printerId TEXT PRIMARY KEY,
+            lastSeen INTEGER,
+            latency INTEGER,
+            paperStatus TEXT,
+            cutterStatus TEXT,
+            connectionStatus TEXT,
+            FOREIGN KEY(printerId) REFERENCES printers(id)
+          );
+        `);
+
+        // 6. Indexes
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_print_jobs_status ON print_jobs(status);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_printer_routes_cat ON printer_routes(categoryId);");
+
+        logger.info("database", "Successfully applied Version 9 schema migrations.");
+      }
+    });
   }
 
   /**
