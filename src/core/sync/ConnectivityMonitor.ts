@@ -3,12 +3,14 @@ import logger from "@/services/logger/Logger";
 type ConnectivityCallback = (online: boolean) => void;
 
 export class ConnectivityMonitor {
-  private online = navigator.onLine;
+  private online = typeof navigator !== "undefined" ? navigator.onLine : true;
   private listeners: ConnectivityCallback[] = [];
   private checkInterval: any = null;
 
   constructor() {
-    this.start();
+    if (typeof window !== "undefined") {
+      this.start();
+    }
   }
 
   public start() {
