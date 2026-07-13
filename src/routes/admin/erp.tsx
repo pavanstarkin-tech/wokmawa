@@ -36,6 +36,7 @@ function ErpDashboardPage() {
 
   // --- Sprint 2 Datasets ---
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipeItems, setRecipeItems] = useState<any[]>([]);
   const [wastageLogs, setWastageLogs] = useState<any[]>([]);
 
   // Dialog & Form states
@@ -69,12 +70,19 @@ function ErpDashboardPage() {
       const movs = await inventoryEngine.getStockMovements();
       const recs = await recipeEngine.getRecipes();
       const wastes = await recipeRepository.getWastageLogs();
+      const riQuery = await dbService.getAdapter().query(`
+        SELECT ri.id as recipeItemId, ri.quantity, i.name as ingredientName, r.recipeName
+        FROM recipe_items ri
+        JOIN ingredients i ON ri.ingredientId = i.id
+        JOIN recipes r ON ri.recipeId = r.id
+      `);
 
       setCategories(cats);
       setUnits(unts);
       setIngredients(ings);
       setLedger(movs);
       setRecipes(recs);
+      setRecipeItems(riQuery);
       setWastageLogs(wastes);
 
       if (unts.length > 0 && !builderYieldUnit) {
