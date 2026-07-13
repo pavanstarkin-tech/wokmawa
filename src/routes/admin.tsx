@@ -62,8 +62,27 @@ function AdminLayout() {
     return () => {
       window.removeEventListener("online", handleStatus);
       window.removeEventListener("offline", handleStatus);
-    };
   }, []);
+
+  // Listen to new orders for popup notifications
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const ordersRef = ref(db, "restaurant/orders");
+    const q = query(ordersRef, limitToLast(1));
+    const unsub = onValue(q, (snapshot) => {
+      snapshot.forEach((child) => {
+        const order = child.val();
+        if (order && order.createdAt) {
+          const orderTime = new Date(order.createdAt).getTime();
+          if (orderTime > lastOrderTime) {
+            setNewOrderPopup({ id: child.key, ...order });
+            setLastOrderTime(orderTime);
+          }
+        }
+      });
+    });
+    return () => unsub();
+  }, [isAuthenticated, lastOrderTime]);
 
   if (loading) {
     return (
