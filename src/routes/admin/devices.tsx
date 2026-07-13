@@ -117,6 +117,33 @@ function DevicesPage() {
               </div>
             ))}
           </div>
+
+          {/* Configured printers section */}
+          {printers.length > 0 && (
+            <div className="space-y-3 pt-4 border-t">
+              <h3 className="font-bold text-sm">Configured Dual Routing Printers</h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {printers.map(p => (
+                  <div key={p.id} className="p-4 bg-card/65 border border-border/50 rounded-2xl flex flex-col justify-between space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-bold text-brown-deep text-xs">{p.name}</h4>
+                        <span className="text-[9px] uppercase font-bold text-muted-foreground">{p.printerType} ({p.connectionType})</span>
+                      </div>
+                      <span className="px-2 py-0.5 text-[9px] font-bold rounded uppercase bg-green-50 text-green-700 border">
+                        {p.status}
+                      </span>
+                    </div>
+                    <div className="border-t border-border/20 pt-2 text-[10px] text-muted-foreground space-y-1">
+                      {p.ipAddress && <div>IP: <span className="font-mono">{p.ipAddress}:{p.port}</span></div>}
+                      {p.usbDevice && <div>USB Dev: <span className="font-mono">{p.usbDevice}</span></div>}
+                      <div>Paper Width: <span className="font-bold">{p.paperWidth}mm</span></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="md:col-span-1 space-y-4">
