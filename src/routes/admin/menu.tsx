@@ -13,6 +13,7 @@ type Product = {
   name: string;
   price: number;
   mrp?: number;
+  quantity?: number;
   available: boolean;
   image?: string;
   veg?: boolean;
@@ -30,6 +31,7 @@ const EMPTY_FORM = {
   name: "",
   price: "",
   mrp: "",
+  quantity: "",
   image: "",
   type: "veg",
   categoryName: "",
