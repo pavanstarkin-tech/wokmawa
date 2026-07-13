@@ -341,6 +341,80 @@ export class MigrationManager {
         logger.info("database", "Successfully initialized Version 1 schema and indexes.");
       }
     });
+
+    // Migration Version 2: Phase 4 Sprint 1 - Inventory Foundation Schemas
+    this.migrations.push({
+      version: 2,
+      up: async (db: DatabaseAdapter) => {
+        logger.info("database", "Executing schema upgrade to Version 2 (Inventory Foundation)...");
+
+        // 1. Create Tables
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS ingredient_categories (
+            id TEXT PRIMARY KEY,
+            name TEXT UNIQUE,
+            branchId TEXT
+          );
+        `);
+
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS units (
+            id TEXT PRIMARY KEY,
+            name TEXT UNIQUE,
+            symbol TEXT UNIQUE
+          );
+        `);
+
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS ingredients (
+            id TEXT PRIMARY KEY,
+            name TEXT UNIQUE,
+            sku TEXT UNIQUE,
+            categoryId TEXT,
+            unitId TEXT,
+            stockQty REAL DEFAULT 0,
+            minStock REAL DEFAULT 0,
+            costPrice REAL DEFAULT 0,
+            updatedAt INTEGER,
+            branchId TEXT,
+            FOREIGN KEY(categoryId) REFERENCES ingredient_categories(id),
+            FOREIGN KEY(unitId) REFERENCES units(id)
+          );
+        `);
+
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS stock_movements (
+            id TEXT PRIMARY KEY,
+            ingredientId TEXT,
+            type TEXT,
+            quantity REAL,
+            source TEXT,
+            referenceId TEXT,
+            timestamp INTEGER,
+            branchId TEXT,
+            FOREIGN KEY(ingredientId) REFERENCES ingredients(id) ON DELETE CASCADE
+          );
+        `);
+
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS stock_adjustments (
+            id TEXT PRIMARY KEY,
+            ingredientId TEXT,
+            adjustQty REAL,
+            reason TEXT,
+            timestamp INTEGER,
+            branchId TEXT,
+            FOREIGN KEY(ingredientId) REFERENCES ingredients(id) ON DELETE CASCADE
+          );
+        `);
+
+        // 2. Indexes
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_ingredients_sku ON ingredients(sku);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_stock_movements_ing ON stock_movements(ingredientId);");
+
+        logger.info("database", "Successfully applied Version 2 schema migrations.");
+      }
+    });
   }
 
   /**
