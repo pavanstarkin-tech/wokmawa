@@ -469,26 +469,101 @@ function StaffTab({ setStatusMsg }: any) {
 // ==========================================
 function SystemTab() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [metrics, setMetrics] = useState<SystemMetric[]>([]);
+  const [benchStatus, setBenchStatus] = useState("");
+  const [benchTime, setBenchTime] = useState<number | null>(null);
+
+  const loadDiagnostics = async () => {
+    const list = await healthMonitor.diagnoseSystem();
+    setMetrics(list);
+  };
 
   useEffect(() => {
-    setLogs(logger.getLogs().slice(-10)); // Get latest 10 logs
+    setLogs(logger.getLogs().slice(-10));
+    loadDiagnostics();
   }, []);
 
+  const handleBackup = async () => {
+    const res = await backupWizard.performFullBackup();
+    alert(`Backup ZIP successfully generated: ${res.filename} (${(res.size / 1024).toFixed(1)} KB)`);
+  };
+
+  const handleRestore = async () => {
+    const ok = await backupWizard.restoreDatabase("mock_backup.db");
+    if (ok) alert("System data restoration and verification complete.");
+  };
+
+  const handleBenchmark = async () => {
+    setBenchStatus("Running SQLite write transactions benchmark scale (1000 items)...");
+    const res = await performanceBenchmark.runScalingBenchmark(1000);
+    setBenchTime(res.timeSpentMs);
+    setBenchStatus(res.status);
+  };
+
   return (
-    <div className="space-y-6 text-xs font-semibold">
+    <div className="space-y-6 text-xs font-semibold text-brown-deep">
       <div>
-        <h3 className="text-base font-bold text-brown-deep">System Logs & Configuration Version</h3>
-        <p className="text-muted-foreground text-[11px] font-medium mt-1">Diagnostic system logs and config tags.</p>
-      </div>
-      
-      <div className="bg-background border border-border/60 rounded-2xl p-4 space-y-2">
-        <p>Config Schema Version: <strong>2.0.0</strong></p>
-        <p>Offline Sync Worker: <strong className="text-green-600">IDLE</strong></p>
+        <h3 className="text-base font-bold text-brown-deep">System Diagnostics & Backup Operations</h3>
+        <p className="text-muted-foreground text-[11px] font-medium mt-1">Perform full system health diagnostics audits, scaling tests, and database backups.</p>
       </div>
 
+      {/* Health diagnostics table */}
       <div className="space-y-2">
+        <h4 className="font-bold flex items-center gap-1.5 text-gold">Active Health Monitors</h4>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {metrics.map((m, i) => (
+            <div key={i} className="p-3 bg-background border rounded-xl flex justify-between items-center">
+              <span>{m.name}</span>
+              <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${
+                m.status === "green" ? "bg-green-50 text-green-700 border" : "bg-destructive/10 text-destructive border"
+              }`}>{m.value}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Backup wizard controls */}
+      <div className="space-y-2 border-t pt-4">
+        <h4 className="font-bold">Backup & Restore Wizard</h4>
+        <div className="flex gap-2">
+          <button
+            onClick={handleBackup}
+            className="px-4 py-2 bg-brown-deep text-gold rounded-xl font-bold hover:opacity-95"
+          >
+            Create Full ZIP Backup
+          </button>
+          <button
+            onClick={handleRestore}
+            className="px-4 py-2 bg-gold/10 hover:bg-gold/20 text-brown-deep rounded-xl font-bold border border-gold/30"
+          >
+            Verify & Restore Backup
+          </button>
+        </div>
+      </div>
+
+      {/* Performance Scaling Testing */}
+      <div className="space-y-2 border-t pt-4">
+        <h4 className="font-bold text-gold">SQLite Scaling Stress Testing</h4>
+        <div className="flex flex-col gap-2 bg-background border p-4 rounded-xl">
+          <p className="text-[10px] text-muted-foreground">Test SQLite latency bounds under 1,000 concurrent database write transactions.</p>
+          <div className="flex gap-2 items-center">
+            <button
+              onClick={handleBenchmark}
+              className="px-3 py-1.5 bg-gold/10 hover:bg-gold/20 text-brown-deep rounded-lg font-bold border"
+            >
+              Run Stress test
+            </button>
+            {benchTime !== null && (
+              <span className="text-[10px] font-mono text-green-700 font-bold">Latency: {benchTime} ms</span>
+            )}
+          </div>
+          {benchStatus && <p className="text-[9px] text-muted-foreground font-mono">{benchStatus}</p>}
+        </div>
+      </div>
+
+      <div className="space-y-2 border-t pt-4">
         <h4 className="font-bold flex items-center gap-1.5"><BadgeInfo className="h-4 w-4 text-gold" /> Latest System Events</h4>
-        <div className="bg-background border border-border/40 p-4 rounded-2xl font-mono text-[10px] max-h-48 overflow-y-auto space-y-1.5 text-brown-deep">
+        <div className="bg-background border border-border/45 p-4 rounded-2xl font-mono text-[10px] max-h-48 overflow-y-auto space-y-1.5 text-brown-deep">
           {logs.map((l, i) => (
             <div key={i} className="flex justify-between">
               <span>{new Date(l.timestamp).toLocaleTimeString()} [{l.category.toUpperCase()}] {l.message}</span>
