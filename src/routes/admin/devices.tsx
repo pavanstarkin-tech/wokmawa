@@ -13,6 +13,7 @@ export const Route = createFileRoute("/admin/devices")({
 
 function DevicesPage() {
   const [devices, setDevices] = useState<HardwareDevice[]>([]);
+  const [printers, setPrinters] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [diagnosticLog, setDiagnosticLog] = useState("");
 
@@ -21,6 +22,10 @@ function DevicesPage() {
     try {
       const list = await deviceManager.getConnectedDevices();
       setDevices(list);
+
+      const db = dbService.getAdapter();
+      const prns = await db.query("SELECT * FROM printers");
+      setPrinters(prns);
     } catch (err) {
       logger.error("devices", "Failed querying hardware heartbeats list", err);
     } finally {
