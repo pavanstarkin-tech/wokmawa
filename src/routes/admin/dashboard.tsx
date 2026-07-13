@@ -26,20 +26,15 @@ function AdminDashboard() {
     averageOrderValue: 0
   });
 
-  const [topItems, setTopItems] = useState<Array<{ name: string; count: number }>>([
-    { name: "HYD Chicken Dum Biryani", count: 24 },
-    { name: "Chicken Lollipop", count: 18 },
-    { name: "Paneer Butter Masala", count: 15 },
-    { name: "Butter Naan", count: 12 },
-  ]);
+  const [topItems, setTopItems] = useState<Array<{ name: string; count: number }>>([]);
 
   const [chartData, setChartData] = useState([
-    { name: "12:00", sales: 2400 },
-    { name: "14:00", sales: 4800 },
-    { name: "16:00", sales: 1200 },
-    { name: "18:00", sales: 8500 },
-    { name: "20:00", sales: 12400 },
-    { name: "22:00", sales: 5500 },
+    { name: "12:00", sales: 0 },
+    { name: "14:00", sales: 0 },
+    { name: "16:00", sales: 0 },
+    { name: "18:00", sales: 0 },
+    { name: "20:00", sales: 0 },
+    { name: "22:00", sales: 0 },
   ]);
 
   const [printersCount, setPrintersCount] = useState(0);
@@ -70,7 +65,7 @@ function AdminDashboard() {
       snapshot.forEach((child) => {
         if (child.val().active) activeCount++;
       });
-      setMetrics((m) => ({ ...m, totalTables: activeCount || 8 }));
+      setMetrics((m) => ({ ...m, totalTables: activeCount }));
     });
 
     // 5. Query orders from today
@@ -85,6 +80,15 @@ function AdminDashboard() {
       let itemsSold = 0;
       let pendingBills = 0;
       let orderCount = 0;
+      const itemCounts: Record<string, number> = {};
+      const hourlySales: Record<string, number> = {
+        "12:00": 0,
+        "14:00": 0,
+        "16:00": 0,
+        "18:00": 0,
+        "20:00": 0,
+        "22:00": 0
+      };
 
       snapshot.forEach((childSnapshot) => {
         const order = childSnapshot.val();
@@ -103,13 +107,33 @@ function AdminDashboard() {
           revenue += (order.total || 0);
           const items = order.items || [];
           items.forEach((item: any) => {
-            itemsSold += (item.quantity || 1);
+            const name = item.name;
+            const quantity = item.quantity || 1;
+            itemsSold += quantity;
+            itemCounts[name] = (itemCounts[name] || 0) + quantity;
           });
+
+          // Hourly distribution
+          const dt = new Date(order.createdAt);
+          const hr = dt.getHours();
+          let bucket = "12:00";
+          if (hr >= 22) bucket = "22:00";
+          else if (hr >= 20) bucket = "20:00";
+          else if (hr >= 18) bucket = "18:00";
+          else if (hr >= 16) bucket = "16:00";
+          else if (hr >= 14) bucket = "14:00";
+          hourlySales[bucket] = (hourlySales[bucket] || 0) + (order.total || 0);
         }
       });
 
       const avg = orderCount > 0 ? Math.round((revenue / orderCount) * 100) / 100 : 0;
+      const sortedItems = Object.entries(itemCounts)
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 4);
 
+      setTopItems(sortedItems);
+      setChartData(Object.entries(hourlySales).map(([name, sales]) => ({ name, sales })));
       setMetrics((m) => ({ 
         ...m, 
         revenue, 
