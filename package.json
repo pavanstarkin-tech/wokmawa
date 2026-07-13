@@ -47,6 +47,7 @@
     "@tanstack/react-start": "^1.168.26",
     "@tanstack/router-plugin": "^1.168.18",
     "@types/qrcode": "^1.5.6",
+    "@types/sql.js": "^1.4.11",
     "@yudiel/react-qr-scanner": "^2.6.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -65,6 +66,7 @@
     "react-resizable-panels": "^4.6.5",
     "recharts": "^2.15.4",
     "sonner": "^2.0.7",
+    "sql.js": "^1.14.1",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",
     "tw-animate-css": "^1.3.4",
@@ -80,6 +82,7 @@
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.2.0",
     "duckduckgo-images-api": "^1.0.5",
+    "electron": "^31.0.1",
     "eslint": "^9.32.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.6",
@@ -92,7 +95,6 @@
     "tsx": "^4.23.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^8.0.16",
-    "electron": "^31.0.1"
+    "vite": "^8.0.16"
   }
 }
