@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { ref, onValue, set, update, remove } from "firebase/database";
 import { db } from "@/lib/firebase";
 import QRCode from "qrcode";
