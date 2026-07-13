@@ -124,11 +124,17 @@ function RootShell({ children }: { children: ReactNode }) {
 
 import { recoveryManager } from "../core/recovery/RecoveryManager";
 import { backgroundScheduler } from "../core/scheduler/BackgroundScheduler";
+import { CommandPalette } from "../components/CommandPalette";
+import { LiveOrderPopup } from "../components/LiveOrderPopup";
+import { crashReporter } from "../modules/desktop/CrashReporter";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
+    // Initialise local crash listeners
+    crashReporter.initialize();
+
     // Sequentially boot local SQLite, run migrations, restore queues, start sync engine
     const bootSystem = async () => {
       try {
@@ -150,6 +156,10 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      
+      {/* Global Desktop overlays */}
+      <CommandPalette />
+      <LiveOrderPopup />
     </QueryClientProvider>
   );
 }
