@@ -9,12 +9,7 @@ export interface HardwareDevice {
 }
 
 export class DeviceManager {
-  private devices: HardwareDevice[] = [
-    { id: "prn-01", name: "Main KOT Printer", type: "printer", status: "online", latency: 5, driverVersion: "1.4.2", lastHeartbeat: Date.now() },
-    { id: "prn-02", name: "Billing LAN Printer", type: "printer", status: "online", latency: 12, driverVersion: "1.4.2", lastHeartbeat: Date.now() },
-    { id: "scan-01", name: "USB Barcode Reader", type: "scanner", status: "online", latency: 1, driverVersion: "2.0.1", lastHeartbeat: Date.now() },
-    { id: "scale-01", name: "Ingreds Weighing Scale", type: "scale", status: "offline", latency: 0, driverVersion: "1.0.0", lastHeartbeat: 0 }
-  ];
+  private devices: HardwareDevice[] = [];
 
   public async getConnectedDevices(): Promise<HardwareDevice[]> {
     // Dynamic heartbeat check Simulation
