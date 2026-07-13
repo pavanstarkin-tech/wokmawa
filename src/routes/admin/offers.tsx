@@ -1233,7 +1233,7 @@ function AdminOffers() {
                         onClick={() => {
                           setOfferForm(f => ({
                             ...DEFAULT_OFFER_FORM,
-                            ...preset.data,
+                            ...(preset.data as any),
                             startDate: f.startDate,
                             endDate: f.endDate,
                           }));
