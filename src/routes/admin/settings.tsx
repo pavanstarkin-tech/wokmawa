@@ -24,6 +24,7 @@ import { BackupValidation } from "@/modules/validation/BackupValidation";
 import { SecurityValidation } from "@/modules/validation/SecurityValidation";
 import { PerformanceValidation } from "@/modules/validation/PerformanceValidation";
 import { InstallerValidation } from "@/modules/validation/InstallerValidation";
+import { printerRepository, PrinterRegistry } from "@/modules/printing/repositories/PrinterRepository";
 
 export const Route = createFileRoute("/admin/settings")({
   component: UnifiedSettingsPage,
