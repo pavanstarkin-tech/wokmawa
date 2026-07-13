@@ -6,7 +6,7 @@ import {
   LayoutDashboard, ShoppingCart, ListOrdered, ChefHat, 
   Settings, FolderKanban, Users, Gift, Package, 
   BarChart3, ShieldCheck, Printer, LogOut, Menu, 
-  ChevronLeft, ChevronRight, Bell, Search, AlertCircle, Wifi, WifiOff, Database, Laptop
+  ChevronLeft, ChevronRight, Bell, Search, AlertCircle, Wifi, WifiOff, Database, Laptop, Building2
 } from "lucide-react";
 import syncManager from "@/services/sync/SyncManager";
 import sessionManager from "@/services/session/SessionManager";
