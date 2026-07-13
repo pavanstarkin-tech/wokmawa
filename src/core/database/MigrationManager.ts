@@ -880,6 +880,79 @@ export class MigrationManager {
         logger.info("database", "Successfully applied Version 5 schema migrations.");
       }
     });
+
+    // Migration Version 6: Phase 4.5 - Commercial Business Modules
+    this.migrations.push({
+      version: 6,
+      up: async (db: DatabaseAdapter) => {
+        logger.info("database", "Executing schema upgrade to Version 6 (Business Modules)...");
+
+        // 1. Customers CRM (with tiers & wallet points)
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS customers (
+            id TEXT PRIMARY KEY,
+            phone TEXT UNIQUE,
+            name TEXT,
+            email TEXT,
+            points INTEGER DEFAULT 0,
+            walletBalance REAL DEFAULT 0,
+            tier TEXT DEFAULT 'bronze',
+            birthday INTEGER,
+            anniversary INTEGER,
+            notes TEXT,
+            branchId TEXT
+          );
+        `);
+
+        // 2. Customer Delivery Addresses
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS customer_addresses (
+            id TEXT PRIMARY KEY,
+            customerId TEXT,
+            addressLine1 TEXT,
+            addressLine2 TEXT,
+            city TEXT,
+            pincode TEXT,
+            isDefault INTEGER DEFAULT 0,
+            FOREIGN KEY(customerId) REFERENCES customers(id) ON DELETE CASCADE
+          );
+        `);
+
+        // 3. Table Reservations & Auto-Allocation
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS reservations (
+            id TEXT PRIMARY KEY,
+            customerName TEXT,
+            customerPhone TEXT,
+            partySize INTEGER,
+            reservationTime INTEGER,
+            tableId TEXT,
+            status TEXT DEFAULT 'pending',
+            notes TEXT,
+            branchId TEXT
+          );
+        `);
+
+        // 4. Central Audit & Override Log Trail
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS audit_logs (
+            id TEXT PRIMARY KEY,
+            eventType TEXT,
+            details TEXT,
+            userId TEXT,
+            timestamp INTEGER,
+            branchId TEXT
+          );
+        `);
+
+        // 5. Indexes
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_reservations_time ON reservations(reservationTime);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON audit_logs(timestamp);");
+
+        logger.info("database", "Successfully applied Version 6 schema migrations.");
+      }
+    });
   }
 
   /**
