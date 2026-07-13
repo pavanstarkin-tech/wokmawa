@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/paakashala/EmptyState";
 import { VegBadge } from "@/components/paakashala/MenuCard";
 import { CustomerWelcome } from "@/components/paakashala/CustomerWelcome";
 import { useCart, useCustomer, useTable, useOrders, useSettings, useMenu } from "@/lib/paakashala-store";
-import { WHATSAPP_NUMBER } from "@/lib/paakashala-menu";
+import { WHATSAPP_NUMBER, MENU } from "@/lib/paakashala-menu";
 import { useOffers, logPromotionUsage } from "@/lib/promotions";
 import { calculateCartPromotions } from "@/lib/promotions-engine";
 
