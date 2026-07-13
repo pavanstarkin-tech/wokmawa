@@ -26,6 +26,7 @@ import { Route as AdminOffersRouteImport } from './routes/admin/offers'
 import { Route as AdminMenuRouteImport } from './routes/admin/menu'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
 import { Route as AdminKdsRouteImport } from './routes/admin/kds'
+import { Route as AdminDatabaseRouteImport } from './routes/admin/database'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 
 const OrdersRoute = OrdersRouteImport.update({
@@ -113,6 +114,11 @@ const AdminKdsRoute = AdminKdsRouteImport.update({
   path: '/kds',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminDatabaseRoute = AdminDatabaseRouteImport.update({
+  id: '/database',
+  path: '/database',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/database': typeof AdminDatabaseRoute
   '/admin/kds': typeof AdminKdsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/database': typeof AdminDatabaseRoute
   '/admin/kds': typeof AdminKdsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
@@ -168,6 +176,7 @@ export interface FileRoutesById {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/database': typeof AdminDatabaseRoute
   '/admin/kds': typeof AdminKdsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/admin/dashboard'
+    | '/admin/database'
     | '/admin/kds'
     | '/admin/login'
     | '/admin/menu'
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/admin/dashboard'
+    | '/admin/database'
     | '/admin/kds'
     | '/admin/login'
     | '/admin/menu'
@@ -230,6 +241,7 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/admin/dashboard'
+    | '/admin/database'
     | '/admin/kds'
     | '/admin/login'
     | '/admin/menu'
@@ -374,6 +386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminKdsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/database': {
+      id: '/admin/database'
+      path: '/database'
+      fullPath: '/admin/database'
+      preLoaderRoute: typeof AdminDatabaseRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/dashboard'
@@ -386,6 +405,7 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminDatabaseRoute: typeof AdminDatabaseRoute
   AdminKdsRoute: typeof AdminKdsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMenuRoute: typeof AdminMenuRoute
@@ -400,6 +420,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminDatabaseRoute: AdminDatabaseRoute,
   AdminKdsRoute: AdminKdsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMenuRoute: AdminMenuRoute,
