@@ -100,42 +100,102 @@ ipcMain.handle("print-network", async (event, { ip, port = 9100, payload }) => {
   });
 });
 
-// IPC Handler for LAN Scanning (Find open port 9100 printers on the local network)
+function getSubnetPrefix() {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === "IPv4" && !iface.internal) {
+        const parts = iface.address.split(".");
+        if (parts.length === 4) {
+          return `${parts[0]}.${parts[1]}.${parts[2]}`;
+        }
+      }
+    }
+  }
+  return "192.168.1";
+}
+
+// IPC Handler to get the active subnet
+ipcMain.handle("get-active-subnet", async () => {
+  return getSubnetPrefix();
+});
+
+// IPC Handler for LAN Scanning (Find open raw thermal ports on subnet)
 ipcMain.handle("scan-lan", async (event, { subnetPrefix }) => {
-  // e.g. subnetPrefix = "192.168.1"
+  const prefix = subnetPrefix || getSubnetPrefix();
+  const ports = [9100, 9101, 515];
   return new Promise((resolve) => {
     const activePrinters = [];
     const scanPromises = [];
 
-    // Scan IPs from .1 to .254
     for (let i = 1; i <= 254; i++) {
-      const ip = `${subnetPrefix}.${i}`;
-      
-      const p = new Promise((resolveIp) => {
-        const socket = new net.Socket();
-        socket.setTimeout(250); // Fast timeout for responsiveness
+      const ip = `${prefix}.${i}`;
+      ports.forEach((port) => {
+        const p = new Promise((resolveIp) => {
+          const socket = new net.Socket();
+          socket.setTimeout(250); // Fast timeout for responsive scans
 
-        socket.connect(9100, ip, () => {
-          activePrinters.push(ip);
-          socket.destroy();
-          resolveIp();
-        });
+          socket.connect(port, ip, () => {
+            activePrinters.push({ ip, port });
+            socket.destroy();
+            resolveIp();
+          });
 
-        socket.on("error", () => {
-          socket.destroy();
-          resolveIp();
-        });
+          socket.on("error", () => {
+            socket.destroy();
+            resolveIp();
+          });
 
-        socket.on("timeout", () => {
-          socket.destroy();
-          resolveIp();
+          socket.on("timeout", () => {
+            socket.destroy();
+            resolveIp();
+          });
         });
+        scanPromises.push(p);
       });
-      scanPromises.push(p);
     }
 
     Promise.all(scanPromises).then(() => {
       resolve(activePrinters);
     });
   });
+});
+
+// IPC Handler to save logo files with unique names in userData directory
+ipcMain.handle("save-logo-file", async (event, { base64Data, filename }) => {
+  try {
+    const assetsDir = path.join(app.getPath("userData"), "assets");
+    if (!fs.existsSync(assetsDir)) {
+      fs.mkdirSync(assetsDir, { recursive: true });
+    }
+    const cleanFilename = filename.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const filePath = path.join(assetsDir, cleanFilename);
+    const buffer = Buffer.from(base64Data, "base64");
+    fs.writeFileSync(filePath, buffer);
+    return { success: true, logoPath: filePath };
+  } catch (err) {
+    console.error("Failed to save logo file:", err);
+    return { success: false, error: err.message };
+  }
+});
+
+// IPC Handler to export printer diagnostic reports
+ipcMain.handle("export-printer-diagnostics", async (event, { diagnosticsData }) => {
+  try {
+    const { filePath } = await dialog.showSaveDialog(mainWindow, {
+      title: "Export Printer Diagnostics",
+      defaultPath: path.join(app.getPath("downloads"), `printer-diagnostics-${Date.now()}.json`),
+      filters: [{ name: "JSON Files", extensions: ["json"] }]
+    });
+
+    if (!filePath) {
+      return { success: false, error: "Save cancelled" };
+    }
+
+    fs.writeFileSync(filePath, JSON.stringify(diagnosticsData, null, 2), "utf-8");
+    return { success: true, filePath };
+  } catch (err) {
+    console.error("Failed to export diagnostics:", err);
+    return { success: false, error: err.message };
+  }
 });
