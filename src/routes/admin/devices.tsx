@@ -116,6 +116,11 @@ function DevicesPage() {
                 </div>
               </div>
             ))}
+            {devices.length === 0 && (
+              <div className="col-span-2 text-center py-6 bg-card/40 border border-dashed rounded-2xl text-muted-foreground text-[11px] font-medium">
+                No external POS peripherals detected. Configured network routes are listed below.
+              </div>
+            )}
           </div>
 
           {/* Configured printers section */}
