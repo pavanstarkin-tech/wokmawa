@@ -24,6 +24,7 @@ export interface ReceiptBillData {
   upiId?: string;
   gstin?: string;
   logoPath?: string;
+  restaurantName?: string;
 }
 
 export class ReceiptDocument implements DocumentBuilder {
@@ -50,7 +51,7 @@ export class ReceiptDocument implements DocumentBuilder {
       total: it.quantity * it.price
     }));
 
-    const summary = [
+    const summary: Array<{ label: string; value: string; isBold?: boolean }> = [
       { label: "Subtotal", value: `₹${data.subtotal.toFixed(2)}` }
     ];
 
