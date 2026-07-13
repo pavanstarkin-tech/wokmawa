@@ -1,32 +1,20 @@
-import { BaseRepository } from "./BaseRepository";
-import { PrinterConfig, CategoryPrinterMap, DiscoveryCacheEntry } from "@/modules/printer/types/types";
+import localDb from "@/services/database/localDb";
+import { PrinterConfig, DiscoveryCacheEntry } from "@/modules/printer/types/types";
 import { dbEventBus } from "../../../core/database/DatabaseEventBus";
 
-export class PrinterRepository extends BaseRepository {
+export class PrinterRepository {
   /**
-   * Fetch all configured printers. Seeds defaults if table is empty.
+   * Fetch all configured printers.
    */
-  public async getPrinters(): Promise<PrinterConfig[]> {
-    const rows = await this.db.query("SELECT * FROM printers");
-    if (rows.length === 0) {
+  public getPrinters(): PrinterConfig[] {
+    const list = localDb.getTable("printers") || [];
+    if (list.length === 0) {
       return this.seedDefaults();
     }
-    return rows.map(r => ({
-      id: r.id,
-      name: r.name,
-      type: r.type as any,
-      ip: r.ip || undefined,
-      port: r.port || undefined,
-      role: r.role as any,
-      enabled: r.enabled === 1,
-      status: r.status as any,
-      latencyMs: r.latencyMs || undefined,
-      profile: JSON.parse(r.profile),
-      uptimeStats: r.uptimeStats ? JSON.parse(r.uptimeStats) : undefined
-    }));
+    return list;
   }
 
-  private async seedDefaults(): Promise<PrinterConfig[]> {
+  private seedDefaults(): PrinterConfig[] {
     const defaults: PrinterConfig[] = [
       {
         id: "billing_printer_default",
@@ -84,127 +72,72 @@ export class PrinterRepository extends BaseRepository {
       }
     ];
 
-    for (const pr of defaults) {
-      await this.savePrinter(pr);
-    }
+    defaults.forEach(pr => this.savePrinter(pr));
     return defaults;
   }
 
-  public async getPrinter(id: string): Promise<PrinterConfig | null> {
-    const rows = await this.db.query("SELECT * FROM printers WHERE id = ?", [id]);
-    if (rows.length === 0) return null;
-    const r = rows[0];
-    return {
-      id: r.id,
-      name: r.name,
-      type: r.type as any,
-      ip: r.ip || undefined,
-      port: r.port || undefined,
-      role: r.role as any,
-      enabled: r.enabled === 1,
-      status: r.status as any,
-      latencyMs: r.latencyMs || undefined,
-      profile: JSON.parse(r.profile),
-      uptimeStats: r.uptimeStats ? JSON.parse(r.uptimeStats) : undefined
-    };
+  public getPrinter(id: string): PrinterConfig | null {
+    const list = this.getPrinters();
+    return list.find(p => p.id === id) || null;
   }
 
-  public async savePrinter(printer: PrinterConfig): Promise<void> {
-    await this.db.execute(
-      `INSERT OR REPLACE INTO printers (
-        id, name, type, ip, port, role, enabled, profile, status, latencyMs, uptimeStats, branchId
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        printer.id,
-        printer.name,
-        printer.type,
-        printer.ip || null,
-        printer.port || null,
-        printer.role,
-        printer.enabled ? 1 : 0,
-        JSON.stringify(printer.profile),
-        printer.status,
-        printer.latencyMs || null,
-        printer.uptimeStats ? JSON.stringify(printer.uptimeStats) : null,
-        "MAIN_BRANCH"
-      ]
-    );
-
-    // Emit event
+  public savePrinter(printer: PrinterConfig): void {
+    const exists = this.getPrinter(printer.id);
+    if (exists) {
+      localDb.updateRecord("printers", printer.id, printer);
+    } else {
+      localDb.insertRecord("printers", printer);
+    }
     dbEventBus.emit("printer.updated", printer);
   }
 
-  public async deletePrinter(id: string): Promise<boolean> {
-    const res = await this.db.execute("DELETE FROM printers WHERE id = ?", [id]);
-    dbEventBus.emit("printer.deleted", { id });
-    return res.changes > 0;
+  public deletePrinter(id: string): boolean {
+    const deleted = localDb.deleteRecord("printers", id);
+    if (deleted) {
+      dbEventBus.emit("printer.deleted", { id });
+    }
+    return deleted;
   }
 
   /**
    * Category printer mappings.
    */
-  public async getCategoryMappings(): Promise<Record<string, string[]>> {
-    const rows = await this.db.query("SELECT value FROM settings WHERE key = 'printerSettings'");
-    if (rows.length === 0) return {};
-    try {
-      return JSON.parse(rows[0].value);
-    } catch {
-      return {};
-    }
+  public getCategoryMappings(): Record<string, string[]> {
+    const settings = localDb.getSettings();
+    return settings.printerSettings || {};
   }
 
-  public async saveCategoryMappings(mappings: Record<string, string[]>): Promise<void> {
-    await this.db.execute(
-      "INSERT OR REPLACE INTO settings (key, value, branchId) VALUES (?, ?, ?)",
-      ["printerSettings", JSON.stringify(mappings), "MAIN_BRANCH"]
-    );
+  public saveCategoryMappings(mappings: Record<string, string[]>): void {
+    localDb.updateSettings({ printerSettings: mappings });
   }
 
   /**
    * Network discovery cache tables.
    */
-  public async getDiscoveryCache(): Promise<DiscoveryCacheEntry[]> {
-    const rows = await this.db.query("SELECT * FROM discoveryCache");
-    return rows.map(r => ({
-      ip: r.ip,
-      port: r.port,
-      hostname: r.hostname || undefined,
-      lastSeen: r.lastSeen,
-      status: r.status as any,
-      latencyMs: r.latencyMs || undefined
-    }));
+  public getDiscoveryCache(): DiscoveryCacheEntry[] {
+    return localDb.getTable("discoveryCache") || [];
   }
 
-  public async saveDiscoveryCache(entries: DiscoveryCacheEntry[]): Promise<void> {
-    await this.db.execute("DELETE FROM discoveryCache");
-    for (const e of entries) {
-      await this.db.execute(
-        "INSERT INTO discoveryCache (ip, port, hostname, lastSeen, status, latencyMs) VALUES (?, ?, ?, ?, ?, ?)",
-        [e.ip, e.port, e.hostname || null, e.lastSeen, e.status, e.latencyMs || null]
-      );
-    }
+  public saveDiscoveryCache(entries: DiscoveryCacheEntry[]): void {
+    localDb.setTable("discoveryCache", entries);
   }
 
-  public async updateDiscoveryEntry(ip: string, updates: Partial<DiscoveryCacheEntry>): Promise<void> {
+  public updateDiscoveryEntry(ip: string, updates: Partial<DiscoveryCacheEntry>): void {
+    const cache = this.getDiscoveryCache();
+    const entry = cache.find(e => e.ip === ip);
     const now = Date.now();
-    const rows = await this.db.query("SELECT * FROM discoveryCache WHERE ip = ?", [ip]);
-    if (rows.length > 0) {
-      await this.db.execute(
-        "UPDATE discoveryCache SET port = ?, hostname = ?, lastSeen = ?, status = ?, latencyMs = ? WHERE ip = ?",
-        [
-          updates.port || rows[0].port,
-          updates.hostname || rows[0].hostname || null,
-          now,
-          updates.status || rows[0].status,
-          updates.latencyMs !== undefined ? updates.latencyMs : rows[0].latencyMs || null,
-          ip
-        ]
-      );
+
+    if (entry) {
+      localDb.updateRecord("discoveryCache", ip, { ...updates, lastSeen: now });
     } else {
-      await this.db.execute(
-        "INSERT INTO discoveryCache (ip, port, hostname, lastSeen, status, latencyMs) VALUES (?, ?, ?, ?, ?, ?)",
-        [ip, updates.port || 9100, updates.hostname || null, now, updates.status || "online", updates.latencyMs || null]
-      );
+      localDb.insertRecord("discoveryCache", {
+        ip,
+        port: updates.port || 9100,
+        hostname: updates.hostname || null,
+        lastSeen: now,
+        status: updates.status || "online",
+        latencyMs: updates.latencyMs || null
+      });
     }
   }
 }
