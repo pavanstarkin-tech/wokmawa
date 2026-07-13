@@ -22,7 +22,7 @@ export interface Events {
 }
 
 class EventBus {
-  private listeners: { [K in keyof Events]?: Set<EventCallback<Events[K]>> } = {};
+  private listeners: { [K in keyof Events]?: Set<EventCallback<any>> } = {};
 
   /**
    * Subscribe to an event. Returns an unsubscribe function.

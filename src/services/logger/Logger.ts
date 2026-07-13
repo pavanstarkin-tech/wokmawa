@@ -5,7 +5,7 @@ import eventBus from "../event-bus/eventBus";
 export interface LogEntry {
   timestamp: number;
   level: "info" | "warn" | "error";
-  category: "printer" | "payment" | "firebase" | "pos" | "database" | "general";
+  category: "printer" | "payment" | "firebase" | "pos" | "database" | "general" | "sync";
   message: string;
   metadata?: any;
 }
