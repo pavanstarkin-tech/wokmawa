@@ -1307,22 +1307,22 @@ function ErpDashboardPage() {
                 <select
                   required
                   value={wastageForm.recipeItemId}
-                  onChange={async (e) => {
+                  onChange={(e) => {
                     const id = e.target.value;
-                    const r = await this.db.query("SELECT quantity FROM recipe_items WHERE id = ?", [id]);
+                    const match = recipeItems.find(item => item.recipeItemId === id);
                     setWastageForm({
                       recipeItemId: id,
-                      expectedQty: r[0]?.quantity || 0,
-                      actualQty: r[0]?.quantity || 0
+                      expectedQty: match?.quantity || 0,
+                      actualQty: match?.quantity || 0
                     });
                   }}
                   className="w-full px-3 py-2 bg-background border border-border/60 rounded-lg text-sm text-brown-deep focus:outline-none"
                 >
                   <option value="">Select Recipe Ingredient</option>
-                  {recipes.map(rec => (
-                    <optgroup key={rec.id} label={rec.recipeName}>
-                      {ingredients.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
-                    </optgroup>
+                  {recipeItems.map(item => (
+                    <option key={item.recipeItemId} value={item.recipeItemId}>
+                      {item.recipeName} - {item.ingredientName} ({item.quantity} expected)
+                    </option>
                   ))}
                 </select>
               </div>
