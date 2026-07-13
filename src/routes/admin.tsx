@@ -30,6 +30,8 @@ function AdminLayout() {
     { id: 1, text: "Main printer ready.", type: "info" },
     { id: 2, text: "Shift opened successfully.", type: "success" }
   ]);
+  const [newOrderPopup, setNewOrderPopup] = useState<any>(null);
+  const [lastOrderTime, setLastOrderTime] = useState(Date.now());
 
   const isLoginPage = location.pathname === "/admin/login";
   const cashierName = sessionManager.getActiveShift()?.cashierName || "Head Cashier";
