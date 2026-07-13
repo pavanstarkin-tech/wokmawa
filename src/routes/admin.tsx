@@ -83,6 +83,7 @@ function AdminLayout() {
     { label: "Printer Manager", to: "/admin/printers", icon: Printer },
     { label: "Restaurant ERP", to: "/admin/erp", icon: Package },
     { label: "Database Ops", to: "/admin/database", icon: Database },
+    { label: "Device Center", to: "/admin/devices", icon: Laptop },
     { label: "Settings", to: "/admin/settings", icon: Settings },
   ];
 
