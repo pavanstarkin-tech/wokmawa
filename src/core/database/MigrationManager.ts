@@ -953,6 +953,99 @@ export class MigrationManager {
         logger.info("database", "Successfully applied Version 6 schema migrations.");
       }
     });
+
+    // Migration Version 7: Phase 6 - Enterprise & Cloud Platform
+    this.migrations.push({
+      version: 7,
+      up: async (db: DatabaseAdapter) => {
+        logger.info("database", "Executing schema upgrade to Version 7 (Enterprise)...");
+
+        // 1. Region & Branch Profiles
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS branches (
+            id TEXT PRIMARY KEY,
+            name TEXT,
+            region TEXT,
+            address TEXT,
+            phone TEXT,
+            gst TEXT,
+            status TEXT DEFAULT 'active'
+          );
+        `);
+
+        // 2. Branch Settings Overrides
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS branch_settings (
+            branchId TEXT PRIMARY KEY,
+            taxRate REAL DEFAULT 5,
+            allowLocalPrices INTEGER DEFAULT 0,
+            themeConfig TEXT,
+            FOREIGN KEY(branchId) REFERENCES branches(id) ON DELETE CASCADE
+          );
+        `);
+
+        // 3. Branch Inventory Allocation & Stock
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS branch_inventory (
+            branchId TEXT,
+            ingredientId TEXT,
+            stockQty REAL DEFAULT 0,
+            minStock REAL DEFAULT 10,
+            PRIMARY KEY (branchId, ingredientId),
+            FOREIGN KEY(branchId) REFERENCES branches(id),
+            FOREIGN KEY(ingredientId) REFERENCES ingredients(id)
+          );
+        `);
+
+        // 4. Branch Stock Transfers (Outlays & Deliveries)
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS branch_transfers (
+            id TEXT PRIMARY KEY,
+            sourceBranchId TEXT,
+            destBranchId TEXT,
+            status TEXT DEFAULT 'pending',
+            shippedDate INTEGER,
+            receivedDate INTEGER,
+            notes TEXT,
+            FOREIGN KEY(sourceBranchId) REFERENCES branches(id),
+            FOREIGN KEY(destBranchId) REFERENCES branches(id)
+          );
+        `);
+
+        // 5. Transfer Line Items
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS branch_transfer_items (
+            id TEXT PRIMARY KEY,
+            transferId TEXT,
+            ingredientId TEXT,
+            shippedQty REAL,
+            receivedQty REAL DEFAULT 0,
+            FOREIGN KEY(transferId) REFERENCES branch_transfers(id) ON DELETE CASCADE,
+            FOREIGN KEY(ingredientId) REFERENCES ingredients(id)
+          );
+        `);
+
+        // 6. Central Audit & Override Security logs
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS branch_audit_logs (
+            id TEXT PRIMARY KEY,
+            branchId TEXT,
+            eventType TEXT,
+            details TEXT,
+            userId TEXT,
+            timestamp INTEGER,
+            FOREIGN KEY(branchId) REFERENCES branches(id)
+          );
+        `);
+
+        // 7. Indexes
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_branch_inventory_ing ON branch_inventory(ingredientId);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_branch_transfers_src ON branch_transfers(sourceBranchId);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_branch_transfers_dst ON branch_transfers(destBranchId);");
+
+        logger.info("database", "Successfully applied Version 7 schema migrations.");
+      }
+    });
   }
 
   /**
