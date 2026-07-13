@@ -21,6 +21,7 @@ import { Route as AdminTablesRouteImport } from './routes/admin/tables'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
 import { Route as AdminPrintersRouteImport } from './routes/admin/printers'
 import { Route as AdminPosBillingRouteImport } from './routes/admin/pos-billing'
+import { Route as AdminOwnerRouteImport } from './routes/admin/owner'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
 import { Route as AdminOffersRouteImport } from './routes/admin/offers'
 import { Route as AdminMenuRouteImport } from './routes/admin/menu'
@@ -91,6 +92,11 @@ const AdminPosBillingRoute = AdminPosBillingRouteImport.update({
   path: '/pos-billing',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOwnerRoute = AdminOwnerRouteImport.update({
+  id: '/owner',
+  path: '/owner',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminOrdersRoute = AdminOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/admin/menu': typeof AdminMenuRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/owner': typeof AdminOwnerRoute
   '/admin/pos-billing': typeof AdminPosBillingRoute
   '/admin/printers': typeof AdminPrintersRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/admin/menu': typeof AdminMenuRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/owner': typeof AdminOwnerRoute
   '/admin/pos-billing': typeof AdminPosBillingRoute
   '/admin/printers': typeof AdminPrintersRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/admin/menu': typeof AdminMenuRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/owner': typeof AdminOwnerRoute
   '/admin/pos-billing': typeof AdminPosBillingRoute
   '/admin/printers': typeof AdminPrintersRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/admin/menu'
     | '/admin/offers'
     | '/admin/orders'
+    | '/admin/owner'
     | '/admin/pos-billing'
     | '/admin/printers'
     | '/admin/settings'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/admin/menu'
     | '/admin/offers'
     | '/admin/orders'
+    | '/admin/owner'
     | '/admin/pos-billing'
     | '/admin/printers'
     | '/admin/settings'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/admin/menu'
     | '/admin/offers'
     | '/admin/orders'
+    | '/admin/owner'
     | '/admin/pos-billing'
     | '/admin/printers'
     | '/admin/settings'
@@ -375,6 +387,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPosBillingRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/owner': {
+      id: '/admin/owner'
+      path: '/owner'
+      fullPath: '/admin/owner'
+      preLoaderRoute: typeof AdminOwnerRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/orders': {
       id: '/admin/orders'
       path: '/orders'
@@ -451,6 +470,7 @@ interface AdminRouteChildren {
   AdminMenuRoute: typeof AdminMenuRoute
   AdminOffersRoute: typeof AdminOffersRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
+  AdminOwnerRoute: typeof AdminOwnerRoute
   AdminPosBillingRoute: typeof AdminPosBillingRoute
   AdminPrintersRoute: typeof AdminPrintersRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
@@ -468,6 +488,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminMenuRoute: AdminMenuRoute,
   AdminOffersRoute: AdminOffersRoute,
   AdminOrdersRoute: AdminOrdersRoute,
+  AdminOwnerRoute: AdminOwnerRoute,
   AdminPosBillingRoute: AdminPosBillingRoute,
   AdminPrintersRoute: AdminPrintersRoute,
   AdminSettingsRoute: AdminSettingsRoute,
