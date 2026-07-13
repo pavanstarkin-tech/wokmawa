@@ -94,7 +94,6 @@ function UnifiedSettingsPage() {
         {activeTab === "taxes" && <TaxesTab setStatusMsg={setStatusMsg} />}
         {activeTab === "categories" && <CategoriesTab setStatusMsg={setStatusMsg} />}
         {activeTab === "customers" && <CustomersTab />}
-        {activeTab === "inventory" && <InventoryTab setStatusMsg={setStatusMsg} />}
         {activeTab === "reports" && <ReportsTab setStatusMsg={setStatusMsg} />}
         {activeTab === "shifts" && <ShiftsTab setStatusMsg={setStatusMsg} />}
         {activeTab === "staff" && <StaffTab setStatusMsg={setStatusMsg} />}
