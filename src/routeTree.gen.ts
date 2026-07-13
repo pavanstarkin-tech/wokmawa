@@ -19,10 +19,12 @@ import { Route as TTableIdRouteImport } from './routes/t.$tableId'
 import { Route as AdminUpdatesRouteImport } from './routes/admin/updates'
 import { Route as AdminTablesRouteImport } from './routes/admin/tables'
 import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
+import { Route as AdminPosBillingRouteImport } from './routes/admin/pos-billing'
 import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
 import { Route as AdminOffersRouteImport } from './routes/admin/offers'
 import { Route as AdminMenuRouteImport } from './routes/admin/menu'
 import { Route as AdminLoginRouteImport } from './routes/admin/login'
+import { Route as AdminKdsRouteImport } from './routes/admin/kds'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
 
 const OrdersRoute = OrdersRouteImport.update({
@@ -75,6 +77,11 @@ const AdminSettingsRoute = AdminSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminPosBillingRoute = AdminPosBillingRouteImport.update({
+  id: '/pos-billing',
+  path: '/pos-billing',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminOrdersRoute = AdminOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -95,6 +102,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminKdsRoute = AdminKdsRouteImport.update({
+  id: '/kds',
+  path: '/kds',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -109,10 +121,12 @@ export interface FileRoutesByFullPath {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/kds': typeof AdminKdsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/pos-billing': typeof AdminPosBillingRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tables': typeof AdminTablesRoute
   '/admin/updates': typeof AdminUpdatesRoute
@@ -126,10 +140,12 @@ export interface FileRoutesByTo {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/kds': typeof AdminKdsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/pos-billing': typeof AdminPosBillingRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tables': typeof AdminTablesRoute
   '/admin/updates': typeof AdminUpdatesRoute
@@ -144,10 +160,12 @@ export interface FileRoutesById {
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/kds': typeof AdminKdsRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/menu': typeof AdminMenuRoute
   '/admin/offers': typeof AdminOffersRoute
   '/admin/orders': typeof AdminOrdersRoute
+  '/admin/pos-billing': typeof AdminPosBillingRoute
   '/admin/settings': typeof AdminSettingsRoute
   '/admin/tables': typeof AdminTablesRoute
   '/admin/updates': typeof AdminUpdatesRoute
@@ -163,10 +181,12 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/admin/dashboard'
+    | '/admin/kds'
     | '/admin/login'
     | '/admin/menu'
     | '/admin/offers'
     | '/admin/orders'
+    | '/admin/pos-billing'
     | '/admin/settings'
     | '/admin/tables'
     | '/admin/updates'
@@ -180,10 +200,12 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/admin/dashboard'
+    | '/admin/kds'
     | '/admin/login'
     | '/admin/menu'
     | '/admin/offers'
     | '/admin/orders'
+    | '/admin/pos-billing'
     | '/admin/settings'
     | '/admin/tables'
     | '/admin/updates'
@@ -197,10 +219,12 @@ export interface FileRouteTypes {
     | '/menu'
     | '/orders'
     | '/admin/dashboard'
+    | '/admin/kds'
     | '/admin/login'
     | '/admin/menu'
     | '/admin/offers'
     | '/admin/orders'
+    | '/admin/pos-billing'
     | '/admin/settings'
     | '/admin/tables'
     | '/admin/updates'
@@ -289,6 +313,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSettingsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/pos-billing': {
+      id: '/admin/pos-billing'
+      path: '/pos-billing'
+      fullPath: '/admin/pos-billing'
+      preLoaderRoute: typeof AdminPosBillingRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/orders': {
       id: '/admin/orders'
       path: '/orders'
@@ -317,6 +348,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/kds': {
+      id: '/admin/kds'
+      path: '/kds'
+      fullPath: '/admin/kds'
+      preLoaderRoute: typeof AdminKdsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/dashboard'
@@ -329,10 +367,12 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminKdsRoute: typeof AdminKdsRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminMenuRoute: typeof AdminMenuRoute
   AdminOffersRoute: typeof AdminOffersRoute
   AdminOrdersRoute: typeof AdminOrdersRoute
+  AdminPosBillingRoute: typeof AdminPosBillingRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
   AdminTablesRoute: typeof AdminTablesRoute
   AdminUpdatesRoute: typeof AdminUpdatesRoute
@@ -340,10 +380,12 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminKdsRoute: AdminKdsRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminMenuRoute: AdminMenuRoute,
   AdminOffersRoute: AdminOffersRoute,
   AdminOrdersRoute: AdminOrdersRoute,
+  AdminPosBillingRoute: AdminPosBillingRoute,
   AdminSettingsRoute: AdminSettingsRoute,
   AdminTablesRoute: AdminTablesRoute,
   AdminUpdatesRoute: AdminUpdatesRoute,
