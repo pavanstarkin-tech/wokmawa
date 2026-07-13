@@ -724,3 +724,224 @@ function ReleaseValidationTab() {
     </div>
   );
 }
+
+// ==========================================
+// 11. Printers Config Tab
+// ==========================================
+function PrintersConfigTab({ setStatusMsg }: any) {
+  const [printers, setPrinters] = useState<PrinterRegistry[]>([]);
+  const [form, setForm] = useState({
+    id: "",
+    name: "",
+    printerType: "kitchen" as "kitchen" | "counter",
+    connectionType: "lan" as "usb" | "lan" | "bluetooth",
+    ipAddress: "",
+    port: 9100,
+    usbDevice: "",
+    paperWidth: 80,
+    isDefault: 0
+  });
+
+  const loadPrinters = async () => {
+    const list = await printerRepository.getPrinters();
+    setPrinters(list);
+  };
+
+  useEffect(() => {
+    loadPrinters();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.id || !form.name) return;
+    try {
+      await printerRepository.savePrinter({
+        ...form,
+        status: "online"
+      });
+      setStatusMsg({ type: "success", text: `Printer ${form.name} saved successfully.` });
+      setForm({
+        id: "",
+        name: "",
+        printerType: "kitchen",
+        connectionType: "lan",
+        ipAddress: "",
+        port: 9100,
+        usbDevice: "",
+        paperWidth: 80,
+        isDefault: 0
+      });
+      await loadPrinters();
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: err.message });
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await printerRepository.deletePrinter(id);
+      setStatusMsg({ type: "success", text: "Printer configurations deleted." });
+      await loadPrinters();
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: err.message });
+    }
+  };
+
+  return (
+    <div className="space-y-6 text-xs font-semibold text-brown-deep">
+      <div>
+        <h3 className="text-base font-bold text-brown-deep">Printers Dual Routing Setup</h3>
+        <p className="text-muted-foreground text-[11px] font-medium mt-1">Configure Counter and Kitchen printers with custom connection types and paper widths.</p>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-3">
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="md:col-span-1 space-y-3 bg-background border p-4 rounded-2xl">
+          <div className="space-y-1">
+            <label className="font-bold">Printer ID *</label>
+            <input
+              type="text"
+              required
+              value={form.id}
+              onChange={e => setForm({ ...form, id: e.target.value })}
+              placeholder="e.g. kitchen-kot"
+              className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label className="font-bold">Name *</label>
+            <input
+              type="text"
+              required
+              value={form.name}
+              onChange={e => setForm({ ...form, name: e.target.value })}
+              placeholder="e.g. Kitchen KOT Printer"
+              className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <label className="font-bold">Printer Type</label>
+              <select
+                value={form.printerType}
+                onChange={e => setForm({ ...form, printerType: e.target.value as any })}
+                className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
+              >
+                <option value="counter">Counter Printer</option>
+                <option value="kitchen">Kitchen Printer</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="font-bold">Connection</label>
+              <select
+                value={form.connectionType}
+                onChange={e => setForm({ ...form, connectionType: e.target.value as any })}
+                className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
+              >
+                <option value="usb">USB Device</option>
+                <option value="lan">LAN Network</option>
+                <option value="bluetooth">Bluetooth</option>
+              </select>
+            </div>
+          </div>
+
+          {form.connectionType === "lan" && (
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-2 space-y-1">
+                <label className="font-bold">IP Address</label>
+                <input
+                  type="text"
+                  value={form.ipAddress}
+                  onChange={e => setForm({ ...form, ipAddress: e.target.value })}
+                  placeholder="192.168.1.100"
+                  className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
+                />
+              </div>
+              <div className="col-span-1 space-y-1">
+                <label className="font-bold">Port</label>
+                <input
+                  type="number"
+                  value={form.port}
+                  onChange={e => setForm({ ...form, port: Number(e.target.value) })}
+                  className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
+                />
+              </div>
+            </div>
+          )}
+
+          {form.connectionType === "usb" && (
+            <div className="space-y-1">
+              <label className="font-bold">USB Device ID</label>
+              <input
+                type="text"
+                value={form.usbDevice}
+                onChange={e => setForm({ ...form, usbDevice: e.target.value })}
+                placeholder="USB001"
+                className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
+              />
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <label className="font-bold">Paper Width</label>
+              <select
+                value={form.paperWidth}
+                onChange={e => setForm({ ...form, paperWidth: Number(e.target.value) })}
+                className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
+              >
+                <option value={80}>80 mm</option>
+                <option value={58}>58 mm</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="font-bold">Set Default</label>
+              <select
+                value={form.isDefault}
+                onChange={e => setForm({ ...form, isDefault: Number(e.target.value) })}
+                className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
+              >
+                <option value={0}>No</option>
+                <option value={1}>Yes</option>
+              </select>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-2 bg-brown-deep text-gold font-bold rounded-xl uppercase"
+          >
+            Save Printer
+          </button>
+        </form>
+
+        {/* List */}
+        <div className="md:col-span-2 space-y-3">
+          <h4 className="font-bold">Configured Hardware</h4>
+          <div className="space-y-2">
+            {printers.length === 0 ? (
+              <p className="text-muted-foreground text-center py-6 bg-background border rounded-2xl">No printers configured.</p>
+            ) : (
+              printers.map(p => (
+                <div key={p.id} className="p-3 bg-background border rounded-xl flex justify-between items-center">
+                  <div>
+                    <div className="font-bold">{p.name}</div>
+                    <div className="text-[10px] text-muted-foreground">Type: <span className="uppercase font-bold text-gold">{p.printerType}</span> | Connection: <span className="uppercase">{p.connectionType}</span></div>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(p.id)}
+                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg border"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
