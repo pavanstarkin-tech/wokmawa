@@ -3,7 +3,7 @@ import { useState, useEffect, useMemo } from "react";
 import { 
   Plus, Trash2, Printer, RefreshCw, AlertCircle, Wifi, 
   Cpu, Settings, Receipt, Landmark, Users, Package, 
-  FileText, History, ShieldAlert, BadgeInfo
+  FileText, History, ShieldAlert, BadgeInfo, CheckCircle2
 } from "lucide-react";
 import printerManager from "@/modules/printer/services/PrinterManager";
 import { PrinterConfig, ConnectionType, PaperWidth, PrinterRole } from "@/modules/printer/types/types";
@@ -14,6 +14,16 @@ import { CATEGORIES } from "@/lib/paakashala-menu";
 import { healthMonitor, SystemMetric } from "@/modules/health/HealthMonitor";
 import { backupWizard } from "@/modules/backup/BackupWizard";
 import { performanceBenchmark } from "@/modules/testing/PerformanceBenchmark";
+import { ValidationReport, TestResult } from "@/modules/validation/ValidationReport";
+import { HardwareCertification } from "@/modules/validation/HardwareCertification";
+import { PaymentValidation } from "@/modules/validation/PaymentValidation";
+import { RecoveryValidation } from "@/modules/validation/RecoveryValidation";
+import { MigrationValidation } from "@/modules/validation/MigrationValidation";
+import { PrinterCertification } from "@/modules/validation/PrinterCertification";
+import { BackupValidation } from "@/modules/validation/BackupValidation";
+import { SecurityValidation } from "@/modules/validation/SecurityValidation";
+import { PerformanceValidation } from "@/modules/validation/PerformanceValidation";
+import { InstallerValidation } from "@/modules/validation/InstallerValidation";
 
 export const Route = createFileRoute("/admin/settings")({
   component: UnifiedSettingsPage,
