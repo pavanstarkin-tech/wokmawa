@@ -62,6 +62,7 @@ function AdminLayout() {
     return () => {
       window.removeEventListener("online", handleStatus);
       window.removeEventListener("offline", handleStatus);
+    };
   }, []);
 
   // Listen to new orders for popup notifications
