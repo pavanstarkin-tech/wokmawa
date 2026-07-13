@@ -7,11 +7,7 @@ export class PrinterRepository {
    * Fetch all configured printers.
    */
   public getPrinters(): PrinterConfig[] {
-    const list = localDb.getTable("printers") || [];
-    if (list.length === 0) {
-      return this.seedDefaults();
-    }
-    return list;
+    return localDb.getTable("printers") || [];
   }
 
   private seedDefaults(): PrinterConfig[] {
