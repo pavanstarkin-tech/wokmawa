@@ -11,6 +11,9 @@ import sessionManager, { CashShift } from "@/services/session/SessionManager";
 import localDb from "@/services/database/localDb";
 import logger, { LogEntry } from "@/services/logger/Logger";
 import { CATEGORIES } from "@/lib/paakashala-menu";
+import { healthMonitor, SystemMetric } from "@/modules/health/HealthMonitor";
+import { backupWizard } from "@/modules/backup/BackupWizard";
+import { performanceBenchmark } from "@/modules/testing/PerformanceBenchmark";
 
 export const Route = createFileRoute("/admin/settings")({
   component: UnifiedSettingsPage,
