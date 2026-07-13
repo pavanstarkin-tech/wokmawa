@@ -15,6 +15,7 @@ export type CartItem = {
   name: string;
   category: string;
   price: number | null;
+  mrp?: number | null;
   quantity: number;
   image: string;
   type: "veg" | "non-veg";

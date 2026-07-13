@@ -1,10 +1,11 @@
+// @ts-ignore
 import { createAPIFileRoute } from "@tanstack/react-start/api";
 
 const KEY_ID = "rzp_live_StBUehIpeULYuL";
 const KEY_SECRET = "M76UWnmNsVE7hU5QrkriZuor";
 
 export const APIRoute = createAPIFileRoute("/api/create-order")({
-  POST: async ({ request }) => {
+  POST: async ({ request }: any) => {
     try {
       const body = await request.json();
       const amount = parseInt(body.amount);
