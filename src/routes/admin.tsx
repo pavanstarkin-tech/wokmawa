@@ -254,6 +254,60 @@ function AdminLayout() {
           <Outlet />
         </main>
       </div>
+
+      {newOrderPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-card rounded-3xl border border-border/60 shadow-2xl w-full max-w-md p-6 space-y-4 animate-in zoom-in-95 duration-200 text-brown-deep">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div>
+                <span className="text-[9px] font-black uppercase text-gold tracking-widest bg-gold/10 px-2 py-0.5 rounded">New Incoming Order</span>
+                <h3 className="text-base font-black text-brown-deep mt-1">Table {newOrderPopup.tableId || "Dine-in"}</h3>
+              </div>
+              <button 
+                onClick={() => setNewOrderPopup(null)}
+                className="px-2.5 py-1 bg-muted hover:bg-muted/80 rounded-lg border text-muted-foreground text-[10px] font-bold"
+              >
+                Dismiss
+              </button>
+            </div>
+
+            <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+              {newOrderPopup.items?.map((it: any, idx: number) => (
+                <div key={idx} className="flex items-center justify-between gap-3 border-b border-dashed border-border/30 pb-2 last:border-0">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-muted overflow-hidden border border-border shrink-0">
+                      {it.image ? (
+                        <img src={it.image} alt={it.name} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="h-full w-full flex items-center justify-center text-[10px] font-black text-gold bg-gold/10">PK</div>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-brown-deep text-[11px] leading-tight">{it.name}</h4>
+                      {it.notes && <span className="text-[9px] italic text-red-500 font-bold block mt-0.5">* {it.notes}</span>}
+                    </div>
+                  </div>
+                  <span className="bg-gold/10 text-gold font-bold text-[11px] px-2 py-0.5 rounded shadow-sm shrink-0">
+                    x{it.quantity}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t pt-3 flex justify-between items-center text-[10px] font-bold text-muted-foreground">
+              <span>Total items: {newOrderPopup.items?.reduce((sum: number, i: any) => sum + (i.quantity || 1), 0)}</span>
+              <span>Amount: ₹{newOrderPopup.grandTotal || newOrderPopup.total}</span>
+            </div>
+            
+            <button
+              onClick={() => setNewOrderPopup(null)}
+              className="w-full py-2.5 bg-brown-deep text-gold rounded-xl font-bold uppercase tracking-wider text-[10px] shadow-md hover:opacity-95"
+            >
+              Confirm / Dismiss Notification
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
