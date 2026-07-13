@@ -1,4 +1,4 @@
-import logger from "../../../services/logger/Logger";
+import logger from "@/services/logger/Logger";
 
 export class BackupService {
   private backups: Array<{ id: string; filename: string; timestamp: number }> = [];
