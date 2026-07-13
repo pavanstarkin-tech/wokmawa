@@ -6,7 +6,7 @@ import {
   FileText, History, ShieldAlert, BadgeInfo
 } from "lucide-react";
 import printerManager from "@/modules/printer/services/PrinterManager";
-import { PrinterConfig, ConnectionType, PaperWidth, PrinterRole } from "@/modules/printer/types";
+import { PrinterConfig, ConnectionType, PaperWidth, PrinterRole } from "@/modules/printer/types/types";
 import sessionManager, { CashShift } from "@/services/session/SessionManager";
 import localDb from "@/services/database/localDb";
 import logger, { LogEntry } from "@/services/logger/Logger";

@@ -1,191 +1,208 @@
-import localDb from "@/services/database/localDb";
+import { printerRepository } from "../repository/PrinterRepository";
+import { printerQueue } from "./PrinterQueue";
+import { printerMonitor } from "./PrinterMonitor";
+import { receiptRenderer } from "./ReceiptRenderer";
+import { ReceiptValidator } from "./ReceiptValidator";
+import { receiptDocument, ReceiptBillData } from "../templates/ReceiptDocument";
+import { kotDocument, KOTData } from "../templates/KOTDocument";
+import { dailyClosingDocument, DailyClosingData } from "../templates/DailyClosingDocument";
+import { testDocument } from "../templates/TestDocument";
+import { PrinterConfig } from "../types/types";
 import logger from "@/services/logger/Logger";
-import { PrinterConfig, PrintJob } from "../types";
-import { PrinterDriver } from "../drivers/PrinterDriver";
-import { NetworkPrinter } from "../drivers/NetworkPrinter";
-import { USBPrinter } from "../drivers/USBPrinter";
-import { BluetoothPrinter } from "../drivers/BluetoothPrinter";
-import { MockPrinter } from "../drivers/MockPrinter";
-
-import { ReceiptTemplate, ReceiptData } from "@/templates/Receipt";
-import { KOTTemplate, KOTData } from "@/templates/KOT";
-import { DailyClosingTemplate, DailyClosingData } from "@/templates/DailyClosing";
-import { TestReceiptTemplate } from "@/templates/TestReceipt";
 
 class PrinterManager {
-  private printers: PrinterConfig[] = [];
-
-  constructor() {
-    this.loadPrinters();
-  }
-
-  public loadPrinters() {
-    try {
-      this.printers = localDb.getTable("printers") || [];
-      if (this.printers.length === 0) {
-        // Seed a default mock printer and network billing printer
-        const defaultPrinters: PrinterConfig[] = [
-          {
-            id: "billing_printer_default",
-            name: "Main Billing Printer",
-            type: "mock",
-            role: "billing",
-            paperWidth: "80mm",
-            autoCut: true,
-            branchId: "MAIN_BRANCH"
-          },
-          {
-            id: "kitchen_printer_default",
-            name: "Kitchen KOT Printer",
-            type: "lan",
-            ip: "192.168.1.200",
-            port: 9100,
-            role: "kitchen",
-            paperWidth: "80mm",
-            autoCut: true,
-            branchId: "MAIN_BRANCH"
-          }
-        ];
-        localDb.setTable("printers", defaultPrinters);
-        this.printers = defaultPrinters;
-      }
-    } catch (e) {
-      logger.error("printer", "Failed to load printers from local database", e);
-      this.printers = [];
-    }
-  }
-
+  /**
+   * Retrieves all printers from the repository.
+   */
   public getPrinters(): PrinterConfig[] {
-    this.loadPrinters();
-    return this.printers;
+    return printerRepository.getPrinters();
   }
 
-  public addPrinter(printer: Omit<PrinterConfig, "id">): PrinterConfig {
-    const saved = localDb.insertRecord("printers", printer) as PrinterConfig;
-    this.loadPrinters();
-    return saved;
+  public addPrinter(config: Omit<PrinterConfig, "id">): void {
+    const printer: PrinterConfig = {
+      ...config,
+      id: `pr_${Date.now()}`
+    } as any;
+    printerRepository.savePrinter(printer);
   }
 
-  public updatePrinter(id: string, updates: Partial<PrinterConfig>) {
-    localDb.updateRecord("printers", id, updates);
-    this.loadPrinters();
+  public deletePrinter(id: string): void {
+    printerRepository.deletePrinter(id);
   }
 
-  public deletePrinter(id: string) {
-    localDb.deleteRecord("printers", id);
-    this.loadPrinters();
-  }
-
-  private getDriver(config: PrinterConfig): PrinterDriver {
-    switch (config.type) {
-      case "lan":
-        return new NetworkPrinter(config.name, config.ip || "127.0.0.1", config.port || 9100);
-      case "usb":
-        return new USBPrinter(config.name);
-      case "bluetooth":
-        return new BluetoothPrinter(config.name);
-      case "mock":
-      default:
-        return new MockPrinter(config.name);
-    }
-  }
-
-  // --- Print Operations ---
-
-  public async printReceipt(receiptData: ReceiptData): Promise<boolean> {
-    this.loadPrinters();
-    const billingPrinters = this.printers.filter((p) => p.role === "billing");
+  /**
+   * High-fidelity checkout receipt printing flow.
+   * Compiles the receipt model, runs validation, renders it, and queues it.
+   */
+  public async printReceipt(data: any): Promise<boolean> {
+    logger.info("printer", `Receipt print request initiated for bill: ${data.billNumber}`);
     
-    if (billingPrinters.length === 0) {
-      logger.warn("printer", "No billing printers configured. Printing to mock console.");
-      const mockDriver = new MockPrinter("System Fallback");
-      const bytes = ReceiptTemplate(receiptData, "80mm").getBytes();
-      await mockDriver.send(bytes);
-      return true;
-    }
-
-    let success = true;
-    for (const pr of billingPrinters) {
-      try {
-        const driver = this.getDriver(pr);
-        const bytes = ReceiptTemplate(receiptData, pr.paperWidth).getBytes();
-        const res = await driver.send(bytes);
-        if (!res.success) {
-          success = false;
-          logger.error("printer", `Failed printing receipt to: ${pr.name} - ${res.error}`);
-        }
-      } catch (err: any) {
-        success = false;
-        logger.error("printer", `Crash during receipt printing to: ${pr.name}`, err);
-      }
-    }
-    return success;
-  }
-
-  public async printKOT(kotData: KOTData): Promise<boolean> {
-    this.loadPrinters();
-    const kitchenPrinters = this.printers.filter((p) => p.role === "kitchen");
-
-    if (kitchenPrinters.length === 0) {
-      logger.warn("printer", "No kitchen KOT printers configured. Printing to mock console.");
-      const mockDriver = new MockPrinter("Kitchen Fallback");
-      const bytes = KOTTemplate(kotData, "80mm").getBytes();
-      await mockDriver.send(bytes);
-      return true;
-    }
-
-    let success = true;
-    for (const pr of kitchenPrinters) {
-      try {
-        const driver = this.getDriver(pr);
-        const bytes = KOTTemplate(kotData, pr.paperWidth).getBytes();
-        const res = await driver.send(bytes);
-        if (!res.success) {
-          success = false;
-          logger.error("printer", `Failed printing KOT to: ${pr.name} - ${res.error}`);
-        }
-      } catch (err: any) {
-        success = false;
-        logger.error("printer", `Crash during KOT printing to: ${pr.name}`, err);
-      }
-    }
-    return success;
-  }
-
-  public async printDailyClosing(closingData: DailyClosingData): Promise<boolean> {
-    this.loadPrinters();
-    const billingPrinters = this.printers.filter((p) => p.role === "billing");
-    const target = billingPrinters.length > 0 ? billingPrinters[0] : null;
-
-    if (!target) {
-      const mockDriver = new MockPrinter("Closing Fallback");
-      const bytes = DailyClosingTemplate(closingData, "80mm").getBytes();
-      await mockDriver.send(bytes);
-      return true;
-    }
-
-    try {
-      const driver = this.getDriver(target);
-      const bytes = DailyClosingTemplate(closingData, target.paperWidth).getBytes();
-      const res = await driver.send(bytes);
-      return res.success;
-    } catch (err: any) {
-      logger.error("printer", `Failed daily closing print to ${target.name}`, err);
+    // Find active billing printers
+    const printers = printerRepository.getPrinters().filter(p => p.enabled && p.role === "billing");
+    if (printers.length === 0) {
+      logger.warn("printer", "No billing printers configured or enabled. Print job aborted.");
       return false;
     }
+
+    let success = true;
+    for (const pr of printers) {
+      try {
+        // Compile intermediate model
+        const logoPath = pr.profile.logoEnabled ? pr.profile.logoPath : undefined;
+        const documentData: ReceiptBillData = {
+          ...data,
+          logoPath,
+          gstin: data.gstin || "29AAAAA0000A1Z5", // Default Indian GSTIN format
+          restaurantName: "PAAKASHALA"
+        };
+        
+        const docModel = receiptDocument.build(documentData, pr.profile.logoPath ? 2 : 1);
+
+        // Run validation
+        const valRes = ReceiptValidator.validate(docModel);
+        if (!valRes.valid) {
+          logger.error("printer", `Receipt validation failed: ${valRes.errors?.join(", ")}`);
+          success = false;
+          continue;
+        }
+
+        // Render ESC/POS binary payload
+        const bytes = await receiptRenderer.render(docModel, pr.profile);
+
+        // Enqueue job with Priority 1 (Billing)
+        const jobId = await printerQueue.enqueueJob(pr.id, "receipt", bytes, 1);
+        if (jobId === "skipped") {
+          logger.info("printer", `Receipt job skipped due to idempotency verification.`);
+        }
+      } catch (err: any) {
+        logger.error("printer", `Crash during receipt compilation for printer ${pr.name}`, err);
+        success = false;
+      }
+    }
+
+    return success;
   }
 
+  /**
+   * Kitchen KOT printing flow.
+   * Routes the print job to printers mapped to the ordered items' categories.
+   */
+  public async printKOT(data: any): Promise<boolean> {
+    logger.info("printer", `KOT print request initiated for Table ${data.tableId}`);
+    
+    // Determine target printers based on category mappings
+    const mappings = printerRepository.getCategoryMappings();
+    const targetPrinterIds = new Set<string>();
+
+    const items = data.items || [];
+    items.forEach((item: any) => {
+      // Find printer mapping for this category
+      const mappedPrinters = mappings[item.category] || [];
+      mappedPrinters.forEach(id => targetPrinterIds.add(id));
+    });
+
+    // If no category-specific printers are mapped, fall back to KOT/Kitchen printers
+    if (targetPrinterIds.size === 0) {
+      const kitchenPrinters = printerRepository.getPrinters().filter(p => p.enabled && p.role === "kitchen");
+      kitchenPrinters.forEach(p => targetPrinterIds.add(p.id));
+    }
+
+    if (targetPrinterIds.size === 0) {
+      logger.warn("printer", "No target printers discovered for KOT routing. Printing to default mock console.");
+      // Fallback mock
+      const mockPrinters = printerRepository.getPrinters().filter(p => p.type === "mock");
+      if (mockPrinters.length > 0) {
+        targetPrinterIds.add(mockPrinters[0].id);
+      } else {
+        return false;
+      }
+    }
+
+    let success = true;
+    for (const printerId of targetPrinterIds) {
+      const pr = printerRepository.getPrinter(printerId);
+      if (!pr || !pr.enabled) continue;
+
+      try {
+        const kotData: KOTData = {
+          kotNumber: data.kotNumber || `KOT-${Date.now().toString().slice(-4)}`,
+          tableId: data.tableId || "T0",
+          orderType: data.orderType || "dine-in",
+          cashierName: data.cashierName || "Waiter",
+          items: items.map((i: any) => ({ name: i.name, quantity: i.quantity })),
+          instructions: data.instructions
+        };
+
+        const docModel = kotDocument.build(kotData);
+        const bytes = await receiptRenderer.render(docModel, pr.profile);
+
+        // Enqueue KOT job with Priority 2 (Kitchen)
+        const jobId = await printerQueue.enqueueJob(pr.id, "kot", bytes, 2);
+        if (jobId === "skipped") {
+          logger.info("printer", `KOT job skipped due to idempotency verification.`);
+        }
+      } catch (err: any) {
+        logger.error("printer", `Crash during KOT compilation for printer ${pr.name}`, err);
+        success = false;
+      }
+    }
+
+    return success;
+  }
+
+  /**
+   * Daily Closing shift report printing flow.
+   */
+  public async printDailyClosing(data: DailyClosingData): Promise<boolean> {
+    logger.info("printer", `Daily Closing print request initiated for shift: ${data.shiftId}`);
+    
+    // Find active billing printers to print reports
+    const printers = printerRepository.getPrinters().filter(p => p.enabled && p.role === "billing");
+    if (printers.length === 0) {
+      logger.warn("printer", "No billing/report printers configured. closing print aborted.");
+      return false;
+    }
+
+    let success = true;
+    for (const pr of printers) {
+      try {
+        const docModel = dailyClosingDocument.build(data);
+        const bytes = await receiptRenderer.render(docModel, pr.profile);
+        
+        // Enqueue report with Priority 3 (Reports)
+        await printerQueue.enqueueJob(pr.id, "closing", bytes, 3);
+      } catch (err: any) {
+        logger.error("printer", `Crash during Closing print for printer ${pr.name}`, err);
+        success = false;
+      }
+    }
+
+    return success;
+  }
+
+  /**
+   * Test printing flow for checking connections.
+   */
   public async printTest(printerId: string): Promise<{ success: boolean; error?: string }> {
-    this.loadPrinters();
-    const pr = this.printers.find((p) => p.id === printerId);
+    const pr = printerRepository.getPrinter(printerId);
     if (!pr) {
       return { success: false, error: "Printer config not found" };
     }
 
     try {
-      const driver = this.getDriver(pr);
-      const bytes = TestReceiptTemplate(pr.paperWidth).getBytes();
-      return await driver.send(bytes);
+      const docModel = testDocument.build({
+        printerName: pr.name,
+        connectionType: pr.type,
+        ipAddress: pr.ip,
+        port: pr.port,
+        capabilities: pr.profile.capabilities
+      });
+
+      const bytes = await receiptRenderer.render(docModel, pr.profile);
+      
+      // Enqueue diagnostics test print with Priority 4 (Diagnostics)
+      const jobId = await printerQueue.enqueueJob(pr.id, "test", bytes, 4);
+      return { success: jobId !== "skipped" };
     } catch (err: any) {
       return { success: false, error: err.message };
     }
