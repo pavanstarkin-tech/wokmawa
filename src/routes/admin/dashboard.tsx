@@ -214,7 +214,7 @@ function AdminDashboard() {
         <div className="rounded-3xl border border-border/60 bg-card p-6 shadow-sm flex flex-col h-[350px] justify-between">
           <div>
             <h3 className="text-sm font-bold text-brown-deep mb-4 uppercase tracking-wider">Top-Selling Dishes</h3>
-            <ul className="space-y-3.5">
+             <ul className="space-y-3.5">
               {topItems.map((item, idx) => (
                 <li key={idx} className="flex justify-between items-center text-xs">
                   <span className="font-semibold text-brown-deep/80">{item.name}</span>
@@ -223,12 +223,17 @@ function AdminDashboard() {
                   </span>
                 </li>
               ))}
+              {topItems.length === 0 && (
+                <p className="text-muted-foreground text-center py-10 font-normal italic text-[11px]">
+                  No sales recorded today yet.
+                </p>
+              )}
             </ul>
           </div>
           
           <div className="border-t border-border/40 pt-4 flex items-center justify-between text-xs font-semibold">
-            <span className="text-muted-foreground">Kitchen Staff Active:</span>
-            <span className="text-brown-deep">4 chefs online</span>
+            <span className="text-muted-foreground">Kitchen Staff Status:</span>
+            <span className="text-green-600 font-bold">Active</span>
           </div>
         </div>
       </div>
