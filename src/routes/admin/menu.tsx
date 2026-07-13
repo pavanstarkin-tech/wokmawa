@@ -122,6 +122,7 @@ function AdminMenu() {
       name: product.name,
       price: String(product.price),
       mrp: product.mrp ? String(product.mrp) : "",
+      quantity: product.quantity !== undefined ? String(product.quantity) : "",
       image: product.image || "",
       type,
       categoryName,
