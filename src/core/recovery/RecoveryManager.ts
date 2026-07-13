@@ -3,7 +3,7 @@ import SchemaManager from "../database/SchemaManager";
 import { syncEngine } from "../sync/SyncEngine";
 import { printerQueue } from "@/modules/printer/services/PrinterQueue";
 import sessionManager from "@/services/session/SessionManager";
-import logger from "@/services/logger/Logger";
+import { consumptionEngine } from "../../modules/recipes/services/ConsumptionEngine";
 
 export class RecoveryManager {
   private recovered = false;
