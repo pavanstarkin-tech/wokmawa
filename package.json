@@ -9,7 +9,9 @@
     "build:dev": "vite build --mode development && node scripts/build-hostinger.js && node scripts/generate-index.js",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "electron:dev": "electron . --dev",
+    "electron:start": "electron ."
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
