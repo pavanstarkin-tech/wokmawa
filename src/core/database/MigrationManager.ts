@@ -702,6 +702,184 @@ export class MigrationManager {
         logger.info("database", "Successfully applied Version 4 schema migrations.");
       }
     });
+
+    // Migration Version 5: Phase 4 Sprint 4 - Operations Engine
+    this.migrations.push({
+      version: 5,
+      up: async (db: DatabaseAdapter) => {
+        logger.info("database", "Executing schema upgrade to Version 5 (Operations)...");
+
+        // 1. Rename old v1 legacy tables to prevent data collision conflicts
+        // Wrap in try-catch in case table renaming isn't required (e.g. fresh installation)
+        try {
+          await db.execute("ALTER TABLE expenses RENAME TO expenses_v1;");
+        } catch { /* Table may not exist or already renamed */ }
+        try {
+          await db.execute("ALTER TABLE cashSessions RENAME TO cashSessions_v1;");
+        } catch { /* Table may not exist or already renamed */ }
+        try {
+          await db.execute("ALTER TABLE cashMovements RENAME TO cashMovements_v1;");
+        } catch { /* Table may not exist or already renamed */ }
+
+        // 2. Staff Attendance Header
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS attendance (
+            id TEXT PRIMARY KEY,
+            staffId TEXT,
+            shiftId TEXT,
+            checkIn INTEGER,
+            checkOut INTEGER,
+            attendanceStatus TEXT,
+            lateMinutes INTEGER DEFAULT 0,
+            overtimeMinutes INTEGER DEFAULT 0,
+            notes TEXT,
+            branchId TEXT,
+            FOREIGN KEY(staffId) REFERENCES staff(id)
+          );
+        `);
+
+        // 3. Attendance Session Events
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS attendance_events (
+            id TEXT PRIMARY KEY,
+            attendanceId TEXT,
+            type TEXT,
+            timestamp INTEGER,
+            FOREIGN KEY(attendanceId) REFERENCES attendance(id) ON DELETE CASCADE
+          );
+        `);
+
+        // 4. Shift Sessions
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS shifts (
+            id TEXT PRIMARY KEY,
+            shiftName TEXT,
+            openedBy TEXT,
+            closedBy TEXT,
+            openingTime INTEGER,
+            closingTime INTEGER,
+            openingFloat REAL,
+            expectedClosing REAL,
+            actualClosing REAL,
+            variance REAL,
+            status TEXT,
+            managerId TEXT,
+            terminalId TEXT,
+            openingNotes TEXT,
+            closingNotes TEXT,
+            branchId TEXT
+          );
+        `);
+
+        // 5. Cash Drawer Movements
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS cash_movements (
+            id TEXT PRIMARY KEY,
+            shiftId TEXT,
+            movementType TEXT,
+            amount REAL,
+            reason TEXT,
+            referenceType TEXT,
+            referenceId TEXT,
+            performedBy TEXT,
+            timestamp INTEGER,
+            branchId TEXT,
+            FOREIGN KEY(shiftId) REFERENCES shifts(id) ON DELETE CASCADE
+          );
+        `);
+
+        // 6. Expenses Category
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS expense_categories (
+            id TEXT PRIMARY KEY,
+            name TEXT UNIQUE,
+            budget REAL,
+            branchId TEXT
+          );
+        `);
+
+        // 7. Expenses Ledger
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS expenses (
+            id TEXT PRIMARY KEY,
+            category TEXT,
+            description TEXT,
+            amount REAL,
+            paymentMode TEXT,
+            vendorId TEXT,
+            shiftId TEXT,
+            status TEXT DEFAULT 'approved',
+            approvedBy TEXT,
+            receiptFile TEXT,
+            timestamp INTEGER,
+            branchId TEXT,
+            FOREIGN KEY(shiftId) REFERENCES shifts(id),
+            FOREIGN KEY(vendorId) REFERENCES vendors(id)
+          );
+        `);
+
+        // 8. Cash Denominations Audit Count
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS cash_denominations (
+            id TEXT PRIMARY KEY,
+            shiftId TEXT,
+            denomination INTEGER,
+            expectedQuantity INTEGER DEFAULT 0,
+            actualQuantity INTEGER DEFAULT 0,
+            variance INTEGER DEFAULT 0,
+            total REAL,
+            FOREIGN KEY(shiftId) REFERENCES shifts(id) ON DELETE CASCADE
+          );
+        `);
+
+        // 9. Actionable Notifications
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS notifications (
+            id TEXT PRIMARY KEY,
+            type TEXT,
+            priority TEXT,
+            title TEXT,
+            message TEXT,
+            status TEXT DEFAULT 'unread',
+            entityType TEXT,
+            entityId TEXT,
+            actionUrl TEXT,
+            createdAt INTEGER,
+            acknowledgedBy TEXT
+          );
+        `);
+
+        // 10. Daily Closing Reports
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS daily_closing (
+            id TEXT PRIMARY KEY,
+            shiftId TEXT UNIQUE,
+            grossSales REAL,
+            cashSales REAL,
+            cardSales REAL,
+            upiSales REAL,
+            expenses REAL,
+            refunds REAL,
+            vendorPayments REAL,
+            expectedCash REAL,
+            actualCash REAL,
+            variance REAL,
+            summaryJson TEXT,
+            generatedAt INTEGER,
+            generatedBy TEXT,
+            FOREIGN KEY(shiftId) REFERENCES shifts(id)
+          );
+        `);
+
+        // 11. Indexes
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_attendance_staff ON attendance(staffId);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_attendance_events_hdr ON attendance_events(attendanceId);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_cash_movements_shift ON cash_movements(shiftId);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_expenses_shift ON expenses(shiftId);");
+
+        logger.info("database", "Successfully applied Version 5 schema migrations.");
+      }
+    });
   }
 
   /**
