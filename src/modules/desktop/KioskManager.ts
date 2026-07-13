@@ -1,4 +1,4 @@
-import logger from "../../../services/logger/Logger";
+import logger from "@/services/logger/Logger";
 
 export class KioskManager {
   private isKioskActive = false;
