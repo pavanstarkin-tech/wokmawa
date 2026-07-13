@@ -82,7 +82,8 @@ export class PrinterRepository {
   }
 
   public savePrinter(printer: PrinterConfig): void {
-    const exists = this.getPrinter(printer.id);
+    const list = localDb.getTable("printers") || [];
+    const exists = list.some(p => p.id === printer.id);
     if (exists) {
       localDb.updateRecord("printers", printer.id, printer);
     } else {
