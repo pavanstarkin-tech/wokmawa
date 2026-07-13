@@ -319,7 +319,7 @@ function ErpDashboardPage() {
         variance
       );
       // Deduct variance from stock adjustments
-      const rItems = await this.db.query("SELECT ingredientId FROM recipe_items WHERE id = ?", [wastageForm.recipeItemId]);
+      const rItems = await dbService.getAdapter().query("SELECT ingredientId FROM recipe_items WHERE id = ?", [wastageForm.recipeItemId]);
       if (rItems.length > 0) {
         await inventoryEngine.adjustStock(
           rItems[0].ingredientId,
