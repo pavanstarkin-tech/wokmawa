@@ -6,6 +6,10 @@ export interface DatabaseTables {
   printers: any[];
   syncQueue: any[];
   inventory: any[];
+  printJobs: any[];
+  printHistory: any[];
+  printerLogs: any[];
+  discoveryCache: any[];
   settings: any;
 }
 
@@ -15,8 +19,12 @@ const FALLBACK_DB: DatabaseTables = {
   printers: [],
   syncQueue: [],
   inventory: [],
+  printJobs: [],
+  printHistory: [],
+  printerLogs: [],
+  discoveryCache: [],
   settings: {
-    version: 2,
+    version: 3,
     branchId: "MAIN_BRANCH",
     restaurant: { name: "Paakashala", address: "Bengaluru", phone: "918639122823" },
     taxes: { gstRate: 5, serviceCharge: 2.5 },
