@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { deviceManager, HardwareDevice } from "@/modules/desktop/DeviceManager";
 import { crashReporter } from "@/modules/desktop/CrashReporter";
+import dbService from "@/core/database/DatabaseService";
 import { 
   Cpu, RefreshCw, Smartphone, Laptop, AlertOctagon, HelpCircle 
 } from "lucide-react";
