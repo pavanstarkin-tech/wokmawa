@@ -84,6 +84,7 @@ function AdminLayout() {
     { label: "Restaurant ERP", to: "/admin/erp", icon: Package },
     { label: "Database Ops", to: "/admin/database", icon: Database },
     { label: "Device Center", to: "/admin/devices", icon: Laptop },
+    { label: "Owner Dashboard", to: "/admin/owner", icon: Building2 },
     { label: "Settings", to: "/admin/settings", icon: Settings },
   ];
 
