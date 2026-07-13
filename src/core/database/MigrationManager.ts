@@ -1046,6 +1046,55 @@ export class MigrationManager {
         logger.info("database", "Successfully applied Version 7 schema migrations.");
       }
     });
+
+    // Migration Version 8: Phase 7 - Production Readiness & Release Engineering
+    this.migrations.push({
+      version: 8,
+      up: async (db: DatabaseAdapter) => {
+        logger.info("database", "Executing schema upgrade to Version 8 (Production Readiness)...");
+
+        // 1. Detailed Audit Override Trails
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS global_audit_logs (
+            id TEXT PRIMARY KEY,
+            actionType TEXT NOT NULL,
+            tableName TEXT,
+            recordId TEXT,
+            oldValues TEXT,
+            newValues TEXT,
+            userId TEXT,
+            terminalId TEXT,
+            timestamp INTEGER
+          );
+        `);
+
+        // 2. User Roles & Permission Overrides
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS user_roles (
+            userId TEXT PRIMARY KEY,
+            roleName TEXT NOT NULL,
+            permissionsList TEXT
+          );
+        `);
+
+        // 3. System Logs Store
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS system_logs (
+            id TEXT PRIMARY KEY,
+            category TEXT,
+            level TEXT,
+            message TEXT,
+            timestamp INTEGER
+          );
+        `);
+
+        // 4. Indexes
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_global_audit_action ON global_audit_logs(actionType);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_system_logs_cat ON system_logs(category);");
+
+        logger.info("database", "Successfully applied Version 8 schema migrations.");
+      }
+    });
   }
 
   /**
