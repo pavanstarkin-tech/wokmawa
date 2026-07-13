@@ -81,6 +81,7 @@ function AdminLayout() {
     { label: "Menu CRUD", to: "/admin/menu", icon: FolderKanban },
     { label: "Offers", to: "/admin/offers", icon: Gift },
     { label: "Printer Manager", to: "/admin/printers", icon: Printer },
+    { label: "Restaurant ERP", to: "/admin/erp", icon: Package },
     { label: "Database Ops", to: "/admin/database", icon: Database },
     { label: "Settings", to: "/admin/settings", icon: Settings },
   ];
