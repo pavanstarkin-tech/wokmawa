@@ -30,7 +30,7 @@ export const Route = createFileRoute("/admin/settings")({
   component: UnifiedSettingsPage,
 });
 
-type TabId = "taxes" | "categories" | "customers" | "inventory" | "reports" | "shifts" | "staff" | "system" | "release_validation" | "printers";
+type TabId = "taxes" | "categories" | "customers" | "reports" | "shifts" | "staff" | "system" | "release_validation" | "printers";
 
 function UnifiedSettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("taxes");
@@ -42,7 +42,6 @@ function UnifiedSettingsPage() {
     { id: "taxes", label: "Taxes & Store", icon: Landmark },
     { id: "categories", label: "Categories", icon: Settings },
     { id: "customers", label: "CRM & Customers", icon: Users },
-    { id: "inventory", label: "Inventory Stock", icon: Package },
     { id: "reports", label: "Reports Hub", icon: FileText },
     { id: "shifts", label: "Shift Drawer", icon: History },
     { id: "staff", label: "Staff & Roles", icon: Users },
