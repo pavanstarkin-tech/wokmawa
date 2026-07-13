@@ -58,7 +58,7 @@ export class ConnectivityMonitor {
   };
 
   private async verifyInternetAccess() {
-    if (!navigator.onLine) {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
       this.updateStatus(false);
       return;
     }

@@ -45,6 +45,7 @@ class LocalDb {
 
   private async init() {
     if (this.initialized) return;
+    this.initialized = true;
     try {
       // 1. Initial load from LocalStorage for immediate synchronous UI render
       if (typeof window !== "undefined") {
@@ -56,7 +57,6 @@ class LocalDb {
           this.save();
         }
       }
-      this.initialized = true;
 
       // 2. Load from SQLite in background if running inside Electron or Sql.js WebAssembly
       setTimeout(async () => {
