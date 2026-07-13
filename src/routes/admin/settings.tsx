@@ -98,6 +98,7 @@ function UnifiedSettingsPage() {
         {activeTab === "shifts" && <ShiftsTab setStatusMsg={setStatusMsg} />}
         {activeTab === "staff" && <StaffTab setStatusMsg={setStatusMsg} />}
         {activeTab === "system" && <SystemTab />}
+        {activeTab === "release_validation" && <ReleaseValidationTab />}
       </div>
     </div>
   );
