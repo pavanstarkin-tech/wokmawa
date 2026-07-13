@@ -62,6 +62,11 @@ export interface Offer {
   usageCount: number;
   createdBy: string;
   createdAt: number;
+  startDate?: string;
+  endDate?: string;
+  startTime?: string;
+  endTime?: string;
+  weekdays?: string[];
 }
 
 export interface PopupCampaign {
