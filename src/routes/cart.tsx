@@ -313,7 +313,7 @@ function CartPage() {
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-xs font-semibold text-muted-foreground/75">Qty: {it.quantity}</span>
                     <div className="text-sm font-extrabold text-green-600">
-                      ₹0 <span className="text-[10px] line-through text-muted-foreground/50 font-normal">₹{MENU.find(m => m.id === it.id)?.price || 99}</span>
+                      ₹0 <span className="text-[10px] line-through text-muted-foreground/50 font-normal">₹{MENU.find((m: any) => m.id === it.id)?.price || 99}</span>
                     </div>
                   </div>
                 </div>
