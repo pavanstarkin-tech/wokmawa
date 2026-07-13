@@ -16,16 +16,15 @@ export const Route = createFileRoute("/admin/settings")({
   component: UnifiedSettingsPage,
 });
 
-type TabId = "printers" | "taxes" | "categories" | "customers" | "inventory" | "reports" | "shifts" | "staff" | "system";
+type TabId = "taxes" | "categories" | "customers" | "inventory" | "reports" | "shifts" | "staff" | "system";
 
 function UnifiedSettingsPage() {
-  const [activeTab, setActiveTab] = useState<TabId>("printers");
+  const [activeTab, setActiveTab] = useState<TabId>("taxes");
   
   // Shared status message
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const tabs: Array<{ id: TabId; label: string; icon: any }> = [
-    { id: "printers", label: "Printers & LAN", icon: Printer },
     { id: "taxes", label: "Taxes & Store", icon: Landmark },
     { id: "categories", label: "Categories", icon: Settings },
     { id: "customers", label: "CRM & Customers", icon: Users },
@@ -77,7 +76,6 @@ function UnifiedSettingsPage() {
           </div>
         )}
 
-        {activeTab === "printers" && <PrintersTab setStatusMsg={setStatusMsg} />}
         {activeTab === "taxes" && <TaxesTab setStatusMsg={setStatusMsg} />}
         {activeTab === "categories" && <CategoriesTab setStatusMsg={setStatusMsg} />}
         {activeTab === "customers" && <CustomersTab />}
