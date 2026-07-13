@@ -258,6 +258,7 @@ export function useCart() {
           name: item.name,
           category: item.category,
           price: item.price,
+          mrp: item.mrp,
           quantity: 1,
           image: item.image,
           type: item.type,
