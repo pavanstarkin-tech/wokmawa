@@ -78,9 +78,10 @@ function AdminLayout() {
     { label: "Live Orders", to: "/admin/orders", icon: ListOrdered },
     { label: "Kitchen Display (KDS)", to: "/admin/kds", icon: ChefHat },
     { label: "Tables & QRs", to: "/admin/tables", icon: FolderKanban },
-    { label: "Menu CRUD", to: "/admin/menu", icon: Settings },
+    { label: "Menu CRUD", to: "/admin/menu", icon: FolderKanban },
     { label: "Offers", to: "/admin/offers", icon: Gift },
-    { label: "Settings", to: "/admin/settings", icon: Printer },
+    { label: "Printer Manager", to: "/admin/printers", icon: Printer },
+    { label: "Settings", to: "/admin/settings", icon: Settings },
   ];
 
   return (
