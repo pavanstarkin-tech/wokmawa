@@ -69,7 +69,7 @@ function ImagePicker() {
       <div className="sticky top-0 z-50 bg-card border-b border-border shadow-sm px-6 py-4 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-brown-deep">Image Selector</h1>
-          <p className="text-xs text-muted-foreground">{Object.keys(selections).length} / {MENU.length} selected</p>
+          <p className="text-xs text-muted-foreground">{Object.keys(selections).length} / {fullMenu.length} selected</p>
         </div>
         <div className="flex gap-2">
           <button 
