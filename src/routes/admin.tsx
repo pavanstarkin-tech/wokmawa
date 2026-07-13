@@ -1,7 +1,8 @@
 import { createFileRoute, Outlet, useNavigate, useLocation, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { ref, onValue, query, limitToLast } from "firebase/database";
 import { 
   LayoutDashboard, ShoppingCart, ListOrdered, ChefHat, 
   Settings, FolderKanban, Users, Gift, Package, 
