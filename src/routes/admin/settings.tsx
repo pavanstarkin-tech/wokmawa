@@ -29,7 +29,7 @@ export const Route = createFileRoute("/admin/settings")({
   component: UnifiedSettingsPage,
 });
 
-type TabId = "taxes" | "categories" | "customers" | "inventory" | "reports" | "shifts" | "staff" | "system";
+type TabId = "taxes" | "categories" | "customers" | "inventory" | "reports" | "shifts" | "staff" | "system" | "release_validation";
 
 function UnifiedSettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("taxes");
@@ -46,6 +46,7 @@ function UnifiedSettingsPage() {
     { id: "shifts", label: "Shift Drawer", icon: History },
     { id: "staff", label: "Staff & Roles", icon: Users },
     { id: "system", label: "System Diagnostics", icon: ShieldAlert },
+    { id: "release_validation", label: "Release Validation", icon: CheckCircle2 },
   ];
 
   return (
