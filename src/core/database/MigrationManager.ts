@@ -415,6 +415,109 @@ export class MigrationManager {
         logger.info("database", "Successfully applied Version 2 schema migrations.");
       }
     });
+
+    // Migration Version 3: Phase 4 Sprint 2 - Recipe & Costing Engine
+    this.migrations.push({
+      version: 3,
+      up: async (db: DatabaseAdapter) => {
+        logger.info("database", "Executing schema upgrade to Version 3 (Recipe & Costing Engine)...");
+
+        // 1. Create Tables
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS recipes (
+            id TEXT PRIMARY KEY,
+            menuItemId TEXT,
+            variantId TEXT,
+            recipeName TEXT,
+            yieldQuantity REAL DEFAULT 1,
+            yieldUnitId TEXT,
+            yieldPercent REAL DEFAULT 100,
+            costPrice REAL DEFAULT 0,
+            packagingCost REAL DEFAULT 0,
+            labourCost REAL DEFAULT 0,
+            overheadCost REAL DEFAULT 0,
+            totalCost REAL DEFAULT 0,
+            status TEXT DEFAULT 'active',
+            version INTEGER DEFAULT 1,
+            approvedBy TEXT,
+            approvedAt INTEGER,
+            createdAt INTEGER,
+            updatedAt INTEGER,
+            branchId TEXT,
+            FOREIGN KEY(menuItemId) REFERENCES menu(id) ON DELETE CASCADE,
+            FOREIGN KEY(yieldUnitId) REFERENCES units(id),
+            UNIQUE(menuItemId, variantId)
+          );
+        `);
+
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS recipe_items (
+            id TEXT PRIMARY KEY,
+            recipeId TEXT,
+            ingredientId TEXT,
+            quantity REAL,
+            wastagePercent REAL DEFAULT 0,
+            sortOrder INTEGER,
+            FOREIGN KEY(recipeId) REFERENCES recipes(id) ON DELETE CASCADE,
+            FOREIGN KEY(ingredientId) REFERENCES ingredients(id) ON DELETE CASCADE
+          );
+        `);
+
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS recipe_item_alternatives (
+            id TEXT PRIMARY KEY,
+            recipeItemId TEXT,
+            ingredientId TEXT,
+            priority INTEGER DEFAULT 1,
+            FOREIGN KEY(recipeItemId) REFERENCES recipe_items(id) ON DELETE CASCADE,
+            FOREIGN KEY(ingredientId) REFERENCES ingredients(id) ON DELETE CASCADE
+          );
+        `);
+
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS recipe_history (
+            id TEXT PRIMARY KEY,
+            recipeId TEXT,
+            version INTEGER,
+            snapshot TEXT,
+            createdAt INTEGER
+          );
+        `);
+
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS recipe_wastage (
+            id TEXT PRIMARY KEY,
+            recipeItemId TEXT,
+            expectedQty REAL,
+            actualQty REAL,
+            variance REAL,
+            timestamp INTEGER,
+            branchId TEXT,
+            FOREIGN KEY(recipeItemId) REFERENCES recipe_items(id) ON DELETE CASCADE
+          );
+        `);
+
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS consumption_ledger (
+            id TEXT PRIMARY KEY,
+            billId TEXT,
+            recipeId TEXT,
+            ingredientId TEXT,
+            quantity REAL,
+            timestamp INTEGER,
+            branchId TEXT,
+            FOREIGN KEY(ingredientId) REFERENCES ingredients(id)
+          );
+        `);
+
+        // 2. Indexes
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_recipes_menu_variant ON recipes(menuItemId, variantId);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_recipe_items_recipe ON recipe_items(recipeId);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_consumption_bill ON consumption_ledger(billId);");
+
+        logger.info("database", "Successfully applied Version 3 schema migrations.");
+      }
+    });
   }
 
   /**
