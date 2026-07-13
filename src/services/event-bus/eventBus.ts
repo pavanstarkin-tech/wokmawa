@@ -19,6 +19,15 @@ export interface Events {
   "drawer.changed": { type: "open" | "close" | "payout" | "payin"; amount: number };
   "network.status": { online: boolean };
   "log.added": { level: "info" | "warn" | "error"; message: string };
+  "printer.connected": { printerId: string; latencyMs: number };
+  "printer.disconnected": { printerId: string; error?: string };
+  "printer.job.started": { jobId: string; printerId: string };
+  "printer.job.completed": { jobId: string; printerId: string; printTimeMs: number };
+  "printer.job.failed": { jobId: string; printerId: string; error: string };
+  "printer.queue.empty": { printerId: string };
+  "printer.queue.paused": { printerId: string };
+  "printer.queue.resumed": { printerId: string };
+  "printer.health.changed": { printerId: string; status: "online" | "offline" | "connecting"; latencyMs?: number };
 }
 
 class EventBus {
