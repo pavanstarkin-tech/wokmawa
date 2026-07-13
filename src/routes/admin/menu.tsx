@@ -288,11 +288,11 @@ function AdminMenu() {
 
                   {/* Name & Price */}
                   <h3 className="font-bold text-brown-deep text-[10px] leading-tight line-clamp-2 w-full">{product.name}</h3>
-                  <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                    {product.mrp && product.mrp > product.price && (
-                      <span className="text-[9px] line-through text-muted-foreground">₹{product.mrp}</span>
+                  <div className="flex items-center justify-between w-full text-[9px] font-bold px-1">
+                    <span className="text-gold font-bold">₹{product.price}</span>
+                    {product.quantity !== undefined && (
+                      <span className="bg-gold/10 text-gold px-1 rounded">Qty: {product.quantity}</span>
                     )}
-                    <span className="text-gold font-bold text-[10px]">₹{product.price}</span>
                   </div>
 
                   {/* Toggle */}
