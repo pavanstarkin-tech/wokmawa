@@ -1,6 +1,8 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
 const net = require("net");
+const fs = require("fs");
+const os = require("os");
 
 let mainWindow = null;
 
