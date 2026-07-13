@@ -588,3 +588,136 @@ function SystemTab() {
     </div>
   );
 }
+
+// ==========================================
+// 10. Release Validation Tab
+// ==========================================
+function ReleaseValidationTab() {
+  const [results, setResults] = useState<TestResult[]>([]);
+  const [running, setRunning] = useState(false);
+
+  const loadResults = () => {
+    setResults(ValidationReport.getResults());
+  };
+
+  useEffect(() => {
+    loadResults();
+  }, []);
+
+  const runAllChecks = async () => {
+    setRunning(true);
+    try {
+      await HardwareCertification.runTest();
+      await PaymentValidation.runTest();
+      await RecoveryValidation.runTest();
+      await MigrationValidation.runTest();
+      await PrinterCertification.runTest();
+      await BackupValidation.runTest();
+      await SecurityValidation.runTest();
+      await PerformanceValidation.runTest();
+      await InstallerValidation.runTest();
+      loadResults();
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const runSingleCheck = async (name: string) => {
+    switch (name) {
+      case "Hardware Certification":
+        await HardwareCertification.runTest();
+        break;
+      case "Payment Validation":
+        await PaymentValidation.runTest();
+        break;
+      case "Recovery Validation":
+        await RecoveryValidation.runTest();
+        break;
+      case "Migration Validation":
+        await MigrationValidation.runTest();
+        break;
+      case "Printer Certification":
+        await PrinterCertification.runTest();
+        break;
+      case "Backup Validation":
+        await BackupValidation.runTest();
+        break;
+      case "Security Validation":
+        await SecurityValidation.runTest();
+        break;
+      case "Performance Validation":
+        await PerformanceValidation.runTest();
+        break;
+      case "Installer Validation":
+        await InstallerValidation.runTest();
+        break;
+    }
+    loadResults();
+  };
+
+  const list = [
+    { name: "Hardware Certification", desc: "Validates connected USB, LAN, and Bluetooth terminals." },
+    { name: "Payment Validation", desc: "Assesses cash, UPI QR payouts, and split proportions." },
+    { name: "Recovery Validation", desc: "Checks queue restoration during simulated outages." },
+    { name: "Migration Validation", desc: "Verifies SQLite integrity from Version 1 schema up to Version 8." },
+    { name: "Printer Certification", desc: "Tests ticket formatting and receipt cutter triggers." },
+    { name: "Backup Validation", desc: "Ensures ZIP backups consistency and checksum checks." },
+    { name: "Security Validation", desc: "Checks role privileges and manager PIN overrides." },
+    { name: "Performance Validation", desc: "Simulates database latency limits under scaling stress." },
+    { name: "Installer Validation", desc: "Verifies auto-startup configurations and update registries." }
+  ];
+
+  return (
+    <div className="space-y-6 text-xs font-semibold text-brown-deep">
+      <div className="flex justify-between items-center border-b pb-4">
+        <div>
+          <h3 className="text-base font-bold text-brown-deep">Release Candidate Validation Suite</h3>
+          <p className="text-muted-foreground text-[11px] font-medium mt-1">Verify POS hardware connectivity, sync recovery paths, and schema upgrades for commercial rollout.</p>
+        </div>
+        <button
+          onClick={runAllChecks}
+          disabled={running}
+          className="px-4 py-2 bg-brown-deep text-gold rounded-xl font-bold hover:opacity-95 disabled:opacity-50"
+        >
+          {running ? "Running Checks..." : "Run All Checks"}
+        </button>
+      </div>
+
+      <div className="space-y-3">
+        {list.map((item, idx) => {
+          const res = results.find(r => r.name === item.name);
+          return (
+            <div key={idx} className="p-4 bg-background border rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+              <div className="space-y-1">
+                <h4 className="font-bold text-brown-deep">{item.name}</h4>
+                <p className="text-[10px] text-muted-foreground font-normal">{item.desc}</p>
+                {res && (
+                  <p className="text-[9px] text-muted-foreground font-mono">
+                    Last Run: {new Date(res.lastRun).toLocaleTimeString()} | Duration: {res.durationMs}ms
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                {res ? (
+                  <span className={`px-2.5 py-0.5 text-[9px] font-black uppercase rounded ${
+                    res.status === "Pass" ? "bg-green-50 text-green-700 border" : "bg-destructive/10 text-destructive border"
+                  }`}>
+                    {res.status}
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-0.5 text-[9px] font-black uppercase rounded bg-muted text-muted-foreground">Pending</span>
+                )}
+                <button
+                  onClick={() => runSingleCheck(item.name)}
+                  className="px-3 py-1 bg-gold/10 hover:bg-gold/20 text-brown-deep rounded-lg border font-bold text-[10px]"
+                >
+                  Run Test
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
