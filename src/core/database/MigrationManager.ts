@@ -518,6 +518,190 @@ export class MigrationManager {
         logger.info("database", "Successfully applied Version 3 schema migrations.");
       }
     });
+
+    // Migration Version 4: Phase 4 Sprint 3 - Procurement Engine
+    this.migrations.push({
+      version: 4,
+      up: async (db: DatabaseAdapter) => {
+        logger.info("database", "Executing schema upgrade to Version 4 (Procurement)...");
+
+        // 1. Vendors
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS vendors (
+            id TEXT PRIMARY KEY,
+            vendorCode TEXT UNIQUE,
+            name TEXT,
+            phone TEXT,
+            email TEXT,
+            gst TEXT,
+            pan TEXT,
+            address TEXT,
+            paymentTerms INTEGER,
+            status TEXT DEFAULT 'active',
+            branchId TEXT,
+            createdAt INTEGER,
+            updatedAt INTEGER
+          );
+        `);
+
+        // 2. Purchase Orders
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS purchase_orders (
+            id TEXT PRIMARY KEY,
+            poNumber TEXT UNIQUE,
+            vendorId TEXT,
+            status TEXT,
+            orderDate INTEGER,
+            expectedDate INTEGER,
+            subtotal REAL,
+            cgst REAL DEFAULT 0,
+            sgst REAL DEFAULT 0,
+            igst REAL DEFAULT 0,
+            cess REAL DEFAULT 0,
+            discount REAL DEFAULT 0,
+            grandTotal REAL,
+            notes TEXT,
+            branchId TEXT,
+            invoiceNumber TEXT,
+            invoiceDate INTEGER,
+            invoiceImage TEXT,
+            FOREIGN KEY(vendorId) REFERENCES vendors(id)
+          );
+        `);
+
+        // 3. PO Line Items
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS purchase_order_items (
+            id TEXT PRIMARY KEY,
+            purchaseOrderId TEXT,
+            ingredientId TEXT,
+            quantity REAL,
+            receivedQty REAL DEFAULT 0,
+            unitPrice REAL,
+            tax REAL DEFAULT 0,
+            total REAL,
+            FOREIGN KEY(purchaseOrderId) REFERENCES purchase_orders(id) ON DELETE CASCADE,
+            FOREIGN KEY(ingredientId) REFERENCES ingredients(id)
+          );
+        `);
+
+        // 4. Goods Receipt Notes
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS goods_receipts (
+            id TEXT PRIMARY KEY,
+            grnNumber TEXT UNIQUE,
+            purchaseOrderId TEXT,
+            receivedDate INTEGER,
+            status TEXT,
+            total REAL,
+            branchId TEXT,
+            FOREIGN KEY(purchaseOrderId) REFERENCES purchase_orders(id)
+          );
+        `);
+
+        // 5. GRN Line Items
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS goods_receipt_items (
+            id TEXT PRIMARY KEY,
+            goodsReceiptId TEXT,
+            ingredientId TEXT,
+            acceptedQty REAL,
+            rejectedQty REAL DEFAULT 0,
+            damagedQty REAL DEFAULT 0,
+            returnedQty REAL DEFAULT 0,
+            remarks TEXT,
+            expiryDate INTEGER,
+            batchNumber TEXT,
+            unitCost REAL,
+            FOREIGN KEY(goodsReceiptId) REFERENCES goods_receipts(id) ON DELETE CASCADE,
+            FOREIGN KEY(ingredientId) REFERENCES ingredients(id)
+          );
+        `);
+
+        // 6. Inventory Batches (FIFO tracking)
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS inventory_batches (
+            id TEXT PRIMARY KEY,
+            ingredientId TEXT,
+            batchNumber TEXT,
+            expiryDate INTEGER,
+            receivedQty REAL,
+            availableQty REAL,
+            unitCost REAL,
+            grnId TEXT,
+            branchId TEXT,
+            FOREIGN KEY(ingredientId) REFERENCES ingredients(id) ON DELETE CASCADE,
+            FOREIGN KEY(grnId) REFERENCES goods_receipts(id) ON DELETE SET NULL
+          );
+        `);
+
+        // 7. Purchase Returns
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS purchase_returns (
+            id TEXT PRIMARY KEY,
+            returnNumber TEXT UNIQUE,
+            vendorId TEXT,
+            returnDate INTEGER,
+            totalRefund REAL,
+            notes TEXT,
+            branchId TEXT,
+            FOREIGN KEY(vendorId) REFERENCES vendors(id)
+          );
+        `);
+
+        // 8. Purchase Return Line Items
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS purchase_return_items (
+            id TEXT PRIMARY KEY,
+            returnId TEXT,
+            ingredientId TEXT,
+            batchId TEXT,
+            quantity REAL,
+            unitCost REAL,
+            FOREIGN KEY(returnId) REFERENCES purchase_returns(id) ON DELETE CASCADE,
+            FOREIGN KEY(ingredientId) REFERENCES ingredients(id),
+            FOREIGN KEY(batchId) REFERENCES inventory_batches(id)
+          );
+        `);
+
+        // 9. Vendor Ledger
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS vendor_ledger (
+            id TEXT PRIMARY KEY,
+            vendorId TEXT,
+            referenceType TEXT,
+            referenceId TEXT,
+            debit REAL DEFAULT 0,
+            credit REAL DEFAULT 0,
+            balance REAL,
+            timestamp INTEGER,
+            FOREIGN KEY(vendorId) REFERENCES vendors(id) ON DELETE CASCADE
+          );
+        `);
+
+        // 10. Vendor Payments
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS vendor_payments (
+            id TEXT PRIMARY KEY,
+            vendorId TEXT,
+            amount REAL,
+            paymentMode TEXT,
+            transactionNumber TEXT,
+            paymentDate INTEGER,
+            notes TEXT,
+            FOREIGN KEY(vendorId) REFERENCES vendors(id)
+          );
+        `);
+
+        // 11. Indexes
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_purchase_orders_vendor ON purchase_orders(vendorId);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_goods_receipts_po ON goods_receipts(purchaseOrderId);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_vendor_ledger_vendor ON vendor_ledger(vendorId);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_inventory_batches_ing ON inventory_batches(ingredientId);");
+
+        logger.info("database", "Successfully applied Version 4 schema migrations.");
+      }
+    });
   }
 
   /**
