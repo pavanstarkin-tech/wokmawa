@@ -11,6 +11,10 @@ export interface DatabaseTables {
   printHistory: any[];
   printerLogs: any[];
   discoveryCache: any[];
+  staff: any[];
+  attendance: any[];
+  staffLeaves: any[];
+  staffPayouts: any[];
   settings: any;
 }
 
@@ -24,6 +28,10 @@ const FALLBACK_DB: DatabaseTables = {
   printHistory: [],
   printerLogs: [],
   discoveryCache: [],
+  staff: [],
+  attendance: [],
+  staffLeaves: [],
+  staffPayouts: [],
   settings: {
     version: 3,
     branchId: "MAIN_BRANCH",
@@ -99,7 +107,11 @@ class LocalDb {
         printJobs: "printJobs",
         printHistory: "printHistory",
         printerLogs: "printerLogs",
-        discoveryCache: "discoveryCache"
+        discoveryCache: "discoveryCache",
+        staff: "staff",
+        attendance: "attendance",
+        staffLeaves: "staff_leaves",
+        staffPayouts: "staff_payouts"
       };
 
       for (const [cacheKey, sqlTable] of Object.entries(tablesMap)) {
@@ -204,6 +216,34 @@ class LocalDb {
             id, entity, operation, entityId, status, retryCount, createdAt
           ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [record.id, record.entity, record.operation, record.entityId, record.status || 'pending', record.retryCount || 0, record.createdAt]
+        );
+      } else if (table === "staff") {
+        await db.execute(
+          `INSERT OR REPLACE INTO staff (
+            id, name, role, pin, enabled, phone, email, salary, salaryType, photo, joiningDate, syncStatus
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [record.id, record.name, record.role, record.pin || null, record.enabled ? 1 : 0, record.phone || null, record.email || null, record.salary || 0, record.salaryType || 'monthly', record.photo || null, record.joiningDate || null, record.syncStatus || 'pending']
+        );
+      } else if (table === "attendance") {
+        await db.execute(
+          `INSERT OR REPLACE INTO attendance (
+            id, staffId, shiftId, checkIn, checkOut, attendanceStatus, lateMinutes, overtimeMinutes, notes, date, branchId
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [record.id, record.staffId, record.shiftId || null, record.checkIn || null, record.checkOut || null, record.attendanceStatus, record.lateMinutes || 0, record.overtimeMinutes || 0, record.notes || null, record.date, record.branchId || 'MAIN_BRANCH']
+        );
+      } else if (table === "staffLeaves") {
+        await db.execute(
+          `INSERT OR REPLACE INTO staff_leaves (
+            id, staffId, startDate, endDate, reason, status, approvedBy, createdAt
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [record.id, record.staffId, record.startDate, record.endDate, record.reason || null, record.status, record.approvedBy || null, record.createdAt]
+        );
+      } else if (table === "staffPayouts") {
+        await db.execute(
+          `INSERT OR REPLACE INTO staff_payouts (
+            id, staffId, month, baseSalary, deductions, netSalary, paymentStatus, paymentMode, paidAt, notes
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [record.id, record.staffId, record.month, record.baseSalary, record.deductions || 0, record.netSalary, record.paymentStatus, record.paymentMode || null, record.paidAt || null, record.notes || null]
         );
       }
     } catch (err) {
