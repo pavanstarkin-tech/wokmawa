@@ -584,7 +584,7 @@ function StaffManagementPage() {
       </div>
 
       {/* VIEW TABS BAR */}
-      <div className="flex border-b border-border/40 pb-px gap-2 overflow-x-auto no-scrollbar">
+      <div className="flex w-full border-b border-border/40 pb-px gap-2 overflow-x-auto no-scrollbar">
         {[
           { id: "overview", label: "Dashboard Metrics", icon: Award },
           { id: "directory", label: "Staff Directory", icon: Users },
@@ -597,7 +597,7 @@ function StaffManagementPage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-3 border-b-2 text-xs font-bold transition-all whitespace-nowrap ${
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 border-b-2 text-xs font-bold transition-all whitespace-nowrap ${
                 activeTab === tab.id 
                   ? "border-gold text-gold" 
                   : "border-transparent text-muted-foreground hover:text-brown-deep"

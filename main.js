@@ -60,7 +60,7 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   } else {
     // Load built static assets via our custom protocol, directing straight to the admin portal
-    mainWindow.loadURL("app://admin/login").catch((err) => {
+    mainWindow.loadURL("app://app/admin/login").catch((err) => {
       console.error("Failed to load production index.html:", err);
     });
     mainWindow.webContents.openDevTools();
