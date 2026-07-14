@@ -22,10 +22,26 @@ function createWindow() {
 
   // Check if we are running in dev mode
   const isDev = process.argv.includes("--dev") || process.env.NODE_ENV === "development";
+  const devPort = process.env.VITE_PORT || 8081;
 
   if (isDev) {
-    // Load local dev server
-    mainWindow.loadURL("http://localhost:3000");
+    // Retry loading the Vite dev server — it may take a moment to start
+    const devUrl = `http://localhost:${devPort}`;
+    const tryLoad = (retriesLeft) => {
+      mainWindow.loadURL(devUrl).catch((err) => {
+        if (retriesLeft > 0) {
+          console.log(`[Electron] Vite not ready yet, retrying in 1s... (${retriesLeft} retries left)`);
+          setTimeout(() => tryLoad(retriesLeft - 1), 1000);
+        } else {
+          console.error("[Electron] Could not connect to Vite dev server at", devUrl, err.message);
+          dialog.showErrorBox(
+            "Dev Server Not Running",
+            `Could not connect to Vite at ${devUrl}.\n\nMake sure "npm run dev" is running in another terminal first, then retry.`
+          );
+        }
+      });
+    };
+    tryLoad(10);
     mainWindow.webContents.openDevTools();
   } else {
     // Load built static assets
