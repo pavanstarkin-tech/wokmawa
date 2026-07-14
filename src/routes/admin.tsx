@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import syncManager from "@/services/sync/SyncManager";
 import sessionManager from "@/services/session/SessionManager";
+import printerManager from "@/modules/printer/services/PrinterManager";
 
 export const Route = createFileRoute("/admin")({
   component: AdminLayout,
