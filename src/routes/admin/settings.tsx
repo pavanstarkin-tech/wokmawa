@@ -25,6 +25,7 @@ import { SecurityValidation } from "@/modules/validation/SecurityValidation";
 import { PerformanceValidation } from "@/modules/validation/PerformanceValidation";
 import { InstallerValidation } from "@/modules/validation/InstallerValidation";
 import { printerRepository, PrinterRegistry } from "@/modules/printing/repositories/PrinterRepository";
+import dbService from "@/core/database/DatabaseService";
 
 export const Route = createFileRoute("/admin/settings")({
   component: UnifiedSettingsPage,
@@ -785,8 +786,13 @@ function PrintersConfigTab({ setStatusMsg }: any) {
   });
 
   const loadPrinters = async () => {
-    const list = await printerRepository.getPrinters();
-    setPrinters(list);
+    try {
+      await dbService.initialize();
+      const list = await printerRepository.getPrinters();
+      setPrinters(list);
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: err.message });
+    }
   };
 
   useEffect(() => {
