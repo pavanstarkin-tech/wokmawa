@@ -250,16 +250,6 @@ function PrinterManagementPage() {
             <RefreshCw className={`h-4 w-4 ${isSyncingHealth ? "animate-spin" : ""}`} />
             {isSyncingHealth ? "Checking status..." : "Ping Devices"}
           </button>
-          
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleHealthCheckAll}
-            disabled={isSyncingHealth}
-            className="flex items-center gap-1.5 bg-cream border border-gold/40 text-brown-deep hover:text-gold px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider active:scale-95 transition-all cursor-pointer shadow-sm disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${isSyncingHealth ? "animate-spin" : ""}`} />
-            {isSyncingHealth ? "Checking status..." : "Ping Devices"}
-          </button>
         </div>
       </div>
 
