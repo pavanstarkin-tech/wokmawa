@@ -803,6 +803,7 @@ function PrintersConfigTab({ setStatusMsg }: any) {
     e.preventDefault();
     if (!form.id || !form.name) return;
     try {
+      await dbService.initialize();
       await printerRepository.savePrinter({
         ...form,
         status: "online"
@@ -827,6 +828,7 @@ function PrintersConfigTab({ setStatusMsg }: any) {
 
   const handleDelete = async (id: string) => {
     try {
+      await dbService.initialize();
       await printerRepository.deletePrinter(id);
       setStatusMsg({ type: "success", text: "Printer configurations deleted." });
       await loadPrinters();
