@@ -2,6 +2,7 @@
   "name": "tanstack_start_ts",
   "private": true,
   "sideEffects": false,
+  "main": "main.js",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
@@ -10,8 +11,8 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "electron:dev": "electron . --dev",
-    "electron:start": "electron ."
+    "electron:dev": "electron main.js --dev",
+    "electron:start": "electron main.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
