@@ -134,10 +134,10 @@ function PrinterManagementPage() {
         id: config.id,
         name: config.name,
         printerType: config.role === "billing" ? "counter" : "kitchen",
-        connectionType: config.type,
+        connectionType: config.type as any,
         ipAddress: config.ip,
         port: config.port,
-        usbDevice: config.usbDevice,
+        usbDevice: (config as any).usbDevice,
         paperWidth: config.profile.paperWidth === "58mm" ? 58 : 80,
         isDefault: !config.enabled ? 1 : 0,
         status: config.status
