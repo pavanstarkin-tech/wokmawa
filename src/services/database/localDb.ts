@@ -59,18 +59,18 @@ class LocalDb {
       }
 
       // 2. Load from SQLite in background if running inside Electron or Sql.js WebAssembly
-      setTimeout(async () => {
+      (async () => {
         try {
-          const db = dbService.getAdapter();
+          const db = await dbService.initialize();
           if (db) {
             this.usingSqlite = true;
             await this.loadFromSqlite(db);
             logger.info("database", "localDb synced memory-cache with local SQLite database.");
           }
         } catch (e) {
-          logger.warn("database", "SQLite connection not initialized yet (WASM loading or browser mode). Keeping LocalStorage cache.");
+          logger.warn("database", "SQLite connection could not be initialized. Keeping LocalStorage cache.");
         }
-      }, 500);
+      })();
     } catch (err: any) {
       logger.error("database", "Failed to initialize local database", err);
       this.dbCache = { ...FALLBACK_DB };
