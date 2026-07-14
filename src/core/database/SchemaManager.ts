@@ -58,21 +58,6 @@ export class SchemaManager {
       }
     }
 
-    // Seed default staff if empty
-    const staffCount = await db.query("SELECT COUNT(*) AS count FROM staff");
-    if (staffCount[0]?.count === 0) {
-      logger.info("database", "Seeding initial cashier profiles...");
-      const defaultStaff = [
-        { id: "staff_admin", name: "Ramesh Kumar", role: "admin", pin: "1234", enabled: 1 },
-        { id: "staff_cashier1", name: "Suresh P.", role: "cashier", pin: "0000", enabled: 1 }
-      ];
-      for (const s of defaultStaff) {
-        await db.execute(
-          "INSERT OR REPLACE INTO staff (id, name, role, pin, enabled, branchId) VALUES (?, ?, ?, ?, ?, ?)",
-          [s.id, s.name, s.role, s.pin, s.enabled, "MAIN_BRANCH"]
-        );
-      }
-    }
   }
 }
 
