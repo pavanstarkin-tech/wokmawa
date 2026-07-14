@@ -251,11 +251,14 @@ function PrinterManagementPage() {
             {isSyncingHealth ? "Checking status..." : "Ping Devices"}
           </button>
           
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setShowWizard(true)}
-            className="flex items-center gap-1.5 bg-brown-gradient text-cream px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-md hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
+            onClick={handleHealthCheckAll}
+            disabled={isSyncingHealth}
+            className="flex items-center gap-1.5 bg-cream border border-gold/40 text-brown-deep hover:text-gold px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider active:scale-95 transition-all cursor-pointer shadow-sm disabled:opacity-50"
           >
-            <Plus className="h-4.5 w-4.5 text-gold" /> Add Printer
+            <RefreshCw className={`h-4 w-4 ${isSyncingHealth ? "animate-spin" : ""}`} />
+            {isSyncingHealth ? "Checking status..." : "Ping Devices"}
           </button>
         </div>
       </div>
@@ -280,87 +283,55 @@ function PrinterManagementPage() {
           {/* Active Hardware Registry */}
           <div className="bg-card border border-border/60 p-6 rounded-3xl shadow-sm space-y-4">
             <h3 className="text-sm font-black text-brown-deep flex items-center gap-2">
-              <Printer className="h-5 w-5 text-gold" /> Configured Print Hardware
+              <Printer className="h-5 w-5 text-gold" /> Device Dashboard
             </h3>
 
             {printers.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground text-xs">No print hardware configured. Open Wizard to configure.</div>
+              <div className="py-8 text-center text-muted-foreground text-xs">No active printers configured. Go to Settings &rarr; Printers to configure them.</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {printers.map((pr) => {
                   const isOnline = pr.status === "online";
+                  const pendingCount = activeQueue.filter(j => j.printerId === pr.id).length;
                   return (
                     <div 
                       key={pr.id} 
-                      className={`border rounded-2xl p-4 flex flex-col justify-between min-h-[160px] transition-all ${
-                        pr.enabled ? "bg-background border-border/80" : "bg-muted/10 border-border/30 opacity-70"
-                      }`}
+                      className="border border-border/60 bg-background rounded-2xl p-5 flex flex-col justify-between min-h-[160px] shadow-sm hover:border-gold/30 transition-all"
                     >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-brown-deep text-sm">{pr.name}</span>
-                            <span className="text-[9px] uppercase font-bold bg-muted px-2 py-0.5 rounded text-muted-foreground border border-border/40 font-sans">
-                              {pr.type}
-                            </span>
-                          </div>
-                          <span className="text-[10px] text-muted-foreground block mt-1 uppercase font-bold">Role: {pr.role}</span>
-                          {pr.type === "lan" && (
-                            <span className="font-mono text-[10px] text-muted-foreground block mt-0.5">{pr.ip}:{pr.port || 9100}</span>
-                          )}
-                        </div>
-
-                        {/* Connection Latency status badge */}
-                        <div className="flex flex-col items-end gap-1">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase flex items-center gap-1 border ${
+                      <div>
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-xs font-black uppercase text-gold tracking-wider">
+                            {pr.role === "billing" ? "Counter Printer" : "Kitchen Printer"}
+                          </span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase flex items-center gap-1 border ${
                             isOnline 
                               ? "bg-green-50 border-green-200/50 text-green-700" 
                               : "bg-red-50 border-red-200/50 text-red-600"
                           }`}>
                             <span className={`h-1.5 w-1.5 rounded-full ${isOnline ? "bg-green-500 animate-pulse" : "bg-red-500"}`}></span>
-                            {isOnline ? `Online (${pr.latencyMs || 0}ms)` : "Offline"}
+                            {isOnline ? "Online" : "Offline"}
                           </span>
-                          
-                          {pr.profile?.capabilities?.supportsCut && (
-                            <span className="text-[8px] bg-slate-50 border px-1.5 py-0.5 rounded text-slate-500 font-black">CUT</span>
-                          )}
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <div className="text-xs font-black text-brown-deep">
+                            <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider mb-0.5">Name</span>
+                            {pr.name}
+                          </div>
+                          <div className="text-xs font-bold text-brown-deep">
+                            <span className="text-muted-foreground font-medium block text-[10px] uppercase tracking-wider mb-0.5">Queue</span>
+                            {pendingCount} Pending
+                          </div>
                         </div>
                       </div>
 
-                      {/* Fallback Backup Printer description */}
-                      {pr.backupPrinterId && (
-                        <div className="bg-muted/30 border border-border/30 px-3 py-1.5 rounded-xl text-[10px] mt-3">
-                          <span className="text-muted-foreground">Backup Router:</span>{" "}
-                          <strong className="text-brown-deep">
-                            {printers.find(p => p.id === pr.backupPrinterId)?.name || "Unknown"}
-                          </strong>
-                        </div>
-                      )}
-
-                      {/* Footer stats and controls */}
                       <div className="border-t border-border/40 pt-3 mt-4 flex items-center justify-between text-[10px]">
-                        <span className="text-muted-foreground font-semibold">
-                          Uptime: <strong className="text-brown-deep font-bold">{pr.uptimeStats?.uptimePercentage || 100}%</strong>
+                        <span className="text-muted-foreground font-bold">
+                          Last Seen
                         </span>
-                        
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleTogglePrinter(pr)}
-                            className={`px-2.5 py-1 rounded-lg font-bold border transition-colors cursor-pointer ${
-                              pr.enabled ? "bg-white border-red-200 text-red-500 hover:bg-red-50" : "bg-white border-green-200 text-green-600 hover:bg-green-50"
-                            }`}
-                          >
-                            {pr.enabled ? "Disable" : "Enable"}
-                          </button>
-                          
-                          <button
-                            onClick={() => handleDeletePrinter(pr.id)}
-                            className="p-1 text-muted-foreground hover:text-destructive hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
-                            title="Remove Printer"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
+                        <strong className="text-green-700 bg-green-50 border border-green-200/30 px-2 py-0.5 rounded font-black uppercase tracking-wider text-[9px]">
+                          Just Now
+                        </strong>
                       </div>
                     </div>
                   );

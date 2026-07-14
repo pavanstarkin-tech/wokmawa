@@ -142,7 +142,7 @@ function AdminLayout() {
     { label: "Tables & QRs", to: "/admin/tables", icon: FolderKanban },
     { label: "Menu CRUD", to: "/admin/menu", icon: FolderKanban },
     { label: "Offers", to: "/admin/offers", icon: Gift },
-    { label: "Printer Manager", to: "/admin/printers", icon: Printer },
+    { label: "Devices", to: "/admin/printers", icon: Printer },
     { label: "Settings", to: "/admin/settings", icon: Settings },
   ];
 
