@@ -1174,14 +1174,7 @@ export class MigrationManager {
           );
         `);
 
-        // 6. Indexes
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_print_jobs_status ON print_jobs(status);");
-        await db.execute("CREATE INDEX IF NOT EXISTS idx_printer_routes_cat ON printer_routes(categoryId);");
 
-        logger.info("database", "Successfully applied Version 9 schema migrations.");
-      }
-    });
-  }
 
   /**
    * Run all pending migrations
