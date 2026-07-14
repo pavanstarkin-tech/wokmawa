@@ -99,30 +99,66 @@ function PrinterManagementPage() {
     }
   };
 
-  const handleDeletePrinter = (id: string) => {
+  const handleDeletePrinter = async (id: string) => {
     setStatusMsg(null);
     try {
+      await dbService.initialize();
+      await sqlitePrinterRepo.deletePrinter(id);
       printerRepository.deletePrinter(id);
       loadPrintersData();
       setStatusMsg({ type: "success", text: "Printer configuration removed." });
-    } catch {
-      setStatusMsg({ type: "error", text: "Failed deleting printer config." });
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: `Failed deleting printer config: ${err.message}` });
     }
   };
 
-  const handleTogglePrinter = (config: PrinterConfig) => {
-    printerRepository.savePrinter({
-      ...config,
-      enabled: !config.enabled
-    });
-    loadPrintersData();
+  const handleTogglePrinter = async (config: PrinterConfig) => {
+    try {
+      await dbService.initialize();
+      await sqlitePrinterRepo.savePrinter({
+        id: config.id,
+        name: config.name,
+        printerType: config.role === "billing" ? "counter" : "kitchen",
+        connectionType: config.type,
+        ipAddress: config.ip,
+        port: config.port,
+        usbDevice: config.usbDevice,
+        paperWidth: config.profile.paperWidth === "58mm" ? 58 : 80,
+        isDefault: !config.enabled ? 1 : 0,
+        status: config.status
+      });
+      printerRepository.savePrinter({
+        ...config,
+        enabled: !config.enabled
+      });
+      loadPrintersData();
+    } catch (err: any) {
+      console.error("Failed syncing toggle to SQLite:", err);
+    }
   };
 
-  const handleSaveWizard = (config: PrinterConfig) => {
-    printerRepository.savePrinter(config);
-    setShowWizard(false);
-    loadPrintersData();
-    setStatusMsg({ type: "success", text: `Printer "${config.name}" configured and saved.` });
+  const handleSaveWizard = async (config: PrinterConfig) => {
+    try {
+      await dbService.initialize();
+      await sqlitePrinterRepo.savePrinter({
+        id: config.id,
+        name: config.name,
+        printerType: config.role === "billing" ? "counter" : "kitchen",
+        connectionType: config.type,
+        ipAddress: config.ip,
+        port: config.port,
+        usbDevice: config.usbDevice,
+        paperWidth: config.profile.paperWidth === "58mm" ? 58 : 80,
+        isDefault: config.enabled ? 1 : 0,
+        status: config.status
+      });
+      printerRepository.savePrinter(config);
+      setShowWizard(false);
+      loadPrintersData();
+      setStatusMsg({ type: "success", text: `Printer "${config.name}" configured and saved.` });
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: `Failed syncing printer wizard config to SQLite: ${err.message}` });
+    }
   };
 
   const handleCategoryPrinterToggle = (category: string, printerId: string) => {
