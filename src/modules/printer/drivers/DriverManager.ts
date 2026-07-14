@@ -4,6 +4,7 @@ import { NetworkPrinter } from "./NetworkPrinter";
 import { USBPrinter } from "./USBPrinter";
 import { BluetoothPrinter } from "./BluetoothPrinter";
 import { MockPrinter } from "./MockPrinter";
+import { OSPrinter } from "./OSPrinter";
 
 class DriverManager {
   private driverCache: Record<string, { driver: PrinterDriver; ip?: string; port?: number; type: string }> = {};
@@ -28,6 +29,9 @@ class DriverManager {
     let driver: PrinterDriver;
 
     switch (config.type) {
+      case "os":
+        driver = new OSPrinter(config.name, config.name); // Using printer config name as Windows printer name
+        break;
       case "lan":
         driver = new NetworkPrinter(config.name, config.ip || "127.0.0.1", config.port || 9100);
         break;
