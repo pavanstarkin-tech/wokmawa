@@ -30,11 +30,17 @@ class DatabaseService {
         } else if ((window as any).databaseAPI) {
           logger.info("database", "Electron environment detected. Loading IPCDatabaseAdapter (better-sqlite3).");
           this.adapter = new IPCDatabaseAdapter();
+          // Run database migrations and schema checks prior to resolving the adapter
+          const SchemaManager = (await import("./SchemaManager")).default;
+          await SchemaManager.initialize(this.adapter);
         } else {
           logger.warn("database", "Web browser environment detected. Loading SqlJsAdapter (sql.js WebAssembly fallback).");
           const wasmAdapter = new SqlJsAdapter();
           await wasmAdapter.initialize();
           this.adapter = wasmAdapter;
+          // Run database migrations and schema checks prior to resolving the adapter
+          const SchemaManager = (await import("./SchemaManager")).default;
+          await SchemaManager.initialize(this.adapter);
         }
         return this.adapter;
       } catch (err: any) {
