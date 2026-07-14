@@ -1306,6 +1306,18 @@ export class MigrationManager {
         logger.info("database", "Successfully applied Version 12 schema migrations.");
       }
     });
+
+    // Migration Version 13: Guarantee mock seed staff cleanup in case of startup race conditions
+    this.migrations.push({
+      version: 13,
+      up: async (db: DatabaseAdapter) => {
+        logger.info("database", "Executing schema upgrade to Version 13 (Mock Staff Hard Purge)...");
+        await db.execute(`
+          DELETE FROM staff WHERE id IN ('staff_admin', 'staff_cashier1');
+        `);
+        logger.info("database", "Successfully applied Version 13 schema migrations.");
+      }
+    });
   }
 
   /**
