@@ -1231,7 +1231,31 @@ export class MigrationManager {
           );
         `);
 
-        // 5. Create Indexes
+        // 5. Re-create cashSessions if missing (fixes database migration anomaly where it was renamed but still queried by CashRepository)
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS cashSessions (
+            id TEXT PRIMARY KEY,
+            shiftId TEXT,
+            cashierName TEXT,
+            openedAt INTEGER,
+            closedAt INTEGER,
+            openingBalance REAL,
+            expectedBalance REAL,
+            actualBalance REAL,
+            discrepancy REAL,
+            status TEXT,
+            salesCash REAL DEFAULT 0,
+            salesCard REAL DEFAULT 0,
+            salesUpi REAL DEFAULT 0,
+            salesRazorpay REAL DEFAULT 0,
+            syncStatus TEXT DEFAULT 'pending',
+            branchId TEXT,
+            createdBy TEXT,
+            updatedBy TEXT
+          );
+        `);
+
+        // 6. Create Indexes
         await db.execute("CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(date);");
         await db.execute("CREATE INDEX IF NOT EXISTS idx_staff_leaves_staff ON staff_leaves(staffId);");
         await db.execute("CREATE INDEX IF NOT EXISTS idx_staff_payouts_staff ON staff_payouts(staffId);");
