@@ -149,11 +149,13 @@ function AdminAnalysis() {
 
     filteredOrders.filter(o => o.status === "paid").forEach(o => {
       o.items?.forEach(item => {
-        if (!counts[item.name]) {
-          counts[item.name] = { name: item.name, quantity: 0, revenue: 0 };
+        if (item && item.name) {
+          if (!counts[item.name]) {
+            counts[item.name] = { name: item.name, quantity: 0, revenue: 0 };
+          }
+          counts[item.name].quantity += item.quantity || 1;
+          counts[item.name].revenue += (item.quantity || 1) * (item.price || 0);
         }
-        counts[item.name].quantity += item.quantity || 1;
-        counts[item.name].revenue += (item.quantity || 1) * (item.price || 0);
       });
     });
 
@@ -191,8 +193,10 @@ function AdminAnalysis() {
     const itemTotals: Record<string, number> = {};
     matchingDayOrders.forEach(o => {
       o.items?.forEach(item => {
-        if (!itemTotals[item.name]) itemTotals[item.name] = 0;
-        itemTotals[item.name] += item.quantity || 1;
+        if (item && item.name) {
+          if (!itemTotals[item.name]) itemTotals[item.name] = 0;
+          itemTotals[item.name] += item.quantity || 1;
+        }
       });
     });
 
