@@ -224,6 +224,50 @@ function PosBillingPage() {
         items: [...bill.items, ...bill.freeItems]
       });
 
+      // 2.5 Deduct stock quantities in Firebase
+      try {
+        const menuSnap = await get(ref(db, "restaurant/menu"));
+        const menuData = menuSnap.val();
+        if (menuData) {
+          const deductions: Record<string, number> = {};
+          bill.items.forEach((item) => {
+            deductions[item.id] = (deductions[item.id] || 0) + item.quantity;
+          });
+          if (bill.freeItems) {
+            bill.freeItems.forEach((item) => {
+              deductions[item.id] = (deductions[item.id] || 0) + item.quantity;
+            });
+          }
+
+          for (const type of ["veg", "nonVeg"]) {
+            if (menuData[type]) {
+              for (const catName of Object.keys(menuData[type])) {
+                const productsStr = menuData[type][catName]?.productsJson;
+                if (productsStr) {
+                  const products = JSON.parse(productsStr);
+                  let changed = false;
+                  const updatedProducts = products.map((p: any) => {
+                    if (deductions[p.id] !== undefined && p.quantity !== undefined) {
+                      changed = true;
+                      const nextQty = Math.max(0, p.quantity - deductions[p.id]);
+                      return { ...p, quantity: nextQty };
+                    }
+                    return p;
+                  });
+                  if (changed) {
+                    await update(ref(db, `restaurant/menu/${type}/${catName}`), {
+                      productsJson: JSON.stringify(updatedProducts)
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        logger.error("pos", "Failed to deduct item stock quantities", err);
+      }
+
       // 3. Update session shifts expected cash drawer balance
       if (paymentType === "cash") {
         sessionManager.recordTransaction(bill.grandTotal);
