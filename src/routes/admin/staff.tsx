@@ -475,7 +475,7 @@ function StaffManagementPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-4 md:p-6 animate-fade-in text-brown-deep selection:bg-gold/30">
+    <div className="space-y-6 w-full px-0 py-4 md:py-6 animate-fade-in text-brown-deep selection:bg-gold/30">
       
       {/* HEADER SECTION */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 gap-4">
