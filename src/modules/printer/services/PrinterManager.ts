@@ -48,12 +48,12 @@ class PrinterManager {
     for (const pr of printers) {
       try {
         // Compile intermediate model
-        const logoPath = pr.profile.logoEnabled ? pr.profile.logoPath : undefined;
+        const logoPath = pr.profile.logoEnabled ? (pr.profile.logoPath || data.logoPath) : data.logoPath;
         const documentData: ReceiptBillData = {
           ...data,
           logoPath,
           gstin: data.gstin || "29AAAAA0000A1Z5", // Default Indian GSTIN format
-          restaurantName: "PAAKASHALA"
+          restaurantName: data.branchName || "PAAKASHALA"
         };
         
         const docModel = receiptDocument.build(documentData, pr.profile.logoPath ? 2 : 1);
