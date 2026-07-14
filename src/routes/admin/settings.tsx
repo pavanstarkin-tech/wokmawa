@@ -111,22 +111,51 @@ function UnifiedSettingsPage() {
 function TaxesTab({ setStatusMsg }: any) {
   const [branchId, setBranchId] = useState("");
   const [name, setName] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
   const [gstRate, setGstRate] = useState(5);
   const [serviceCharge, setServiceCharge] = useState(2.5);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const s = localDb.getSettings();
     setBranchId(s.branchId || "MAIN_BRANCH");
     setName(s.restaurant?.name || "Paakashala");
+    setLogoUrl(s.restaurant?.logoUrl || "");
     setGstRate(s.taxes?.gstRate ?? 5);
     setServiceCharge(s.taxes?.serviceCharge ?? 2.5);
   }, []);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("key", "271837f4240842ef12577a95dbae3e88");
+      const res = await fetch("https://api.imgbb.com/1/upload", {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        setLogoUrl(data.data.url);
+      } else {
+        alert("Upload failed: " + (data.error?.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Failed uploading image logo.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     localDb.updateSettings({
       branchId,
-      restaurant: { name, address: "Bengaluru" },
+      restaurant: { name, address: "Bengaluru", logoUrl },
       taxes: { gstRate, serviceCharge }
     });
     setStatusMsg({ type: "success", text: "Store and Tax configurations saved successfully." });
@@ -136,7 +165,7 @@ function TaxesTab({ setStatusMsg }: any) {
     <form onSubmit={handleSave} className="space-y-4 max-w-sm text-xs font-semibold">
       <div>
         <h3 className="text-base font-bold text-brown-deep">Store & Taxes Configuration</h3>
-        <p className="text-muted-foreground text-[11px] font-medium mt-1">Manage localized taxing metrics and branch IDs.</p>
+        <p className="text-muted-foreground text-[11px] font-medium mt-1">Manage localized taxing metrics, branch IDs, and store logo.</p>
       </div>
       <div>
         <label className="block text-[10px] uppercase font-black text-muted-foreground mb-1">Branch ID</label>
@@ -145,6 +174,21 @@ function TaxesTab({ setStatusMsg }: any) {
       <div>
         <label className="block text-[10px] uppercase font-black text-muted-foreground mb-1">Restaurant Name</label>
         <input type="text" value={name} onChange={e => setName(e.target.value)} className="w-full rounded-xl border border-border bg-background p-2.5" />
+      </div>
+      <div>
+        <label className="block text-[10px] uppercase font-black text-muted-foreground mb-1">Store Logo URL</label>
+        <div className="flex gap-2 mb-2">
+          <input type="text" value={logoUrl} onChange={e => setLogoUrl(e.target.value)} placeholder="Store logo URL..." className="flex-1 rounded-xl border border-border bg-background p-2.5" />
+        </div>
+        <div className="relative">
+          <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+          <div className="w-full rounded-xl border border-dashed border-border/80 bg-muted/20 py-2.5 text-center text-muted-foreground hover:bg-muted/40 transition-colors text-[10px]">
+            {uploading ? "Uploading logo..." : "Tap to upload new logo"}
+          </div>
+        </div>
+        {logoUrl && (
+          <img src={logoUrl} alt="Store logo preview" className="h-14 w-auto object-contain rounded border border-border mt-2" />
+        )}
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
