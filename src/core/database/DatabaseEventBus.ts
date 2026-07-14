@@ -14,6 +14,12 @@ class DatabaseEventBus {
     };
   }
 
+  public off(event: string, callback: DatabaseEventCallback): void {
+    if (this.listeners[event]) {
+      this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+    }
+  }
+
   public emit(event: string, payload: any): void {
     const callbacks = this.listeners[event] || [];
     callbacks.forEach(cb => {
