@@ -28,9 +28,32 @@ function PosBillingPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>(CATEGORIES[0]);
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedTable, setSelectedTable] = useState("T1");
+  const [selectedTable, setSelectedTable] = useState("");
+  const [tables, setTables] = useState<any[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+
+  useEffect(() => {
+    const tablesRef = ref(db, "restaurant/tables");
+    const unsub = onValue(tablesRef, (snapshot) => {
+      const fetched: any[] = [];
+      snapshot.forEach((child) => {
+        const val = child.val();
+        if (val && val.active !== false) {
+          fetched.push({ id: child.key, ...val });
+        }
+      });
+      fetched.sort((a, b) => a.createdAt - b.createdAt);
+      setTables(fetched);
+      if (fetched.length > 0) {
+        setSelectedTable(prev => {
+          if (fetched.some(t => t.id === prev)) return prev;
+          return fetched[0].id;
+        });
+      }
+    });
+    return () => unsub();
+  }, []);
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState("");
   const [tipAmount, setTipAmount] = useState(0);
