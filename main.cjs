@@ -63,6 +63,7 @@ function createWindow() {
     mainWindow.loadURL("app://admin/login").catch((err) => {
       console.error("Failed to load production index.html:", err);
     });
+    mainWindow.webContents.openDevTools();
   }
 
   mainWindow.on("closed", () => {
