@@ -6,6 +6,7 @@ import { Clock, CheckCircle2, ChefHat, Receipt, ArrowRight, XCircle, Printer } f
 import { formatDistanceToNow } from "date-fns";
 import printerManager from "@/modules/printer/services/PrinterManager";
 import logger from "@/services/logger/Logger";
+import localDb from "@/services/database/localDb";
 
 export const Route = createFileRoute("/admin/orders")({
   component: AdminOrders,
