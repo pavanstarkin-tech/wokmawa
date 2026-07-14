@@ -1,8 +1,22 @@
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, protocol, net: electronNet } = require("electron");
 const path = require("path");
 const net = require("net");
 const fs = require("fs");
 const os = require("os");
+const { pathToFileURL } = require("url");
+
+// Register custom privileged scheme
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "app",
+    privileges: {
+      standard: true,
+      secure: true,
+      supportFetchAPI: true,
+      bypassCSP: true
+    }
+  }
+]);
 
 let mainWindow = null;
 
@@ -44,13 +58,9 @@ function createWindow() {
     tryLoad(10);
     mainWindow.webContents.openDevTools();
   } else {
-    // Load built static assets
-    mainWindow.loadFile(path.join(__dirname, "public_html", "index.html")).catch((err) => {
+    // Load built static assets via our custom protocol
+    mainWindow.loadURL("app://index.html").catch((err) => {
       console.error("Failed to load production index.html:", err);
-      // Fallback: try loading from .output/public
-      mainWindow.loadFile(path.join(__dirname, ".output", "public", "index.html")).catch((e) => {
-        console.error("Double fallback failed:", e);
-      });
     });
   }
 
@@ -60,6 +70,28 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Handle custom 'app' protocol to serve build directory
+  protocol.handle("app", (request) => {
+    try {
+      const urlObj = new URL(request.url);
+      let filePath = decodeURIComponent(urlObj.pathname);
+      
+      // Resolve path within public_html
+      let absolutePath = path.join(__dirname, "public_html", filePath);
+      
+      // If file doesn't exist, fall back to index.html for SPA routing
+      if (!fs.existsSync(absolutePath) || fs.statSync(absolutePath).isDirectory()) {
+        absolutePath = path.join(__dirname, "public_html", "index.html");
+      }
+      
+      return electronNet.fetch(pathToFileURL(absolutePath).toString());
+    } catch (err) {
+      console.error("Custom protocol error:", err);
+      const indexFallback = path.join(__dirname, "public_html", "index.html");
+      return electronNet.fetch(pathToFileURL(indexFallback).toString());
+    }
+  });
+
   createWindow();
 
   app.on("activate", () => {
