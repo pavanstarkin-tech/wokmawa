@@ -61,6 +61,7 @@ function AdminOrders() {
 
   const handlePrintReceipt = async (order: Order) => {
     try {
+      const settings = localDb.getSettings();
       const receiptData = {
         billNumber: `PK-REPRINT-${order.id.substring(0,6).toUpperCase()}`,
         tableId: order.tableId,
@@ -72,9 +73,10 @@ function AdminOrders() {
         tax: order.tax || 0,
         grandTotal: order.total,
         cashierName: "Admin Station",
-        branchName: "Paakashala Main",
-        branchAddress: "Jayanagar 4th Block, Bengaluru",
-        branchPhone: "918639122823"
+        branchName: settings.restaurant?.name || "Paakashala Main",
+        branchAddress: settings.restaurant?.address || "Jayanagar 4th Block, Bengaluru",
+        branchPhone: settings.restaurant?.phone || "918639122823",
+        logoPath: settings.restaurant?.logoUrl || undefined
       };
       
       const success = await printerManager.printReceipt(receiptData);
