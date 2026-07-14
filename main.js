@@ -239,3 +239,115 @@ ipcMain.handle("db-vacuum", async () => {
 ipcMain.handle("db-health", async () => {
   return dbAdapter.healthCheck();
 });
+
+const { exec } = require("child_process");
+
+ipcMain.handle("get-system-printers", async () => {
+  if (!mainWindow) return [];
+  try {
+    return await mainWindow.webContents.getPrintersAsync();
+  } catch (err) {
+    console.error("Failed to get system printers:", err);
+    return [];
+  }
+});
+
+ipcMain.handle("print-raw", async (event, { printerName, payload }) => {
+  return new Promise((resolve) => {
+    try {
+      const tempFile = path.join(os.tmpdir(), `print_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.bin`);
+      const buffer = Buffer.from(payload);
+      fs.writeFileSync(tempFile, buffer);
+
+      // PowerShell script to send raw bytes to a named printer using Win32 API
+      const psScript = `
+$printerName = "${printerName}"
+$filePath = "${tempFile.replace(/\\/g, '\\\\')}"
+
+$code = @"
+using System;
+using System.Runtime.InteropServices;
+
+public class RawPrinterHelper {
+    [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)]
+    public class DOCINFOA {
+        [MarshalAs(UnmanagedType.LPStr)] public string pDocName;
+        [MarshalAs(UnmanagedType.LPStr)] public string pOutputFile;
+        [MarshalAs(UnmanagedType.LPStr)] public string pDataType;
+    }
+    [DllImport("winspool.Drv", EntryPoint="OpenPrinterA", SetLastError=true, CharSet=CharSet.Ansi, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+    public static extern bool OpenPrinter([MarshalAs(UnmanagedType.LPStr)] string szPrinter, out IntPtr hPrinter, IntPtr pd);
+
+    [DllImport("winspool.Drv", EntryPoint="ClosePrinter", SetLastError=true, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+    public static extern bool ClosePrinter(IntPtr hPrinter);
+
+    [DllImport("winspool.Drv", EntryPoint="StartDocPrinterA", SetLastError=true, SetLastError=true, CharSet=CharSet.Ansi, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+    public static extern bool StartDocPrinter(IntPtr hPrinter, Int32 level, [In, MarshalAs(UnmanagedType.LPStruct)] DOCINFOA di);
+
+    [DllImport("winspool.Drv", EntryPoint="EndDocPrinter", SetLastError=true, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+    public static extern bool EndDocPrinter(IntPtr hPrinter);
+
+    [DllImport("winspool.Drv", EntryPoint="StartPagePrinter", SetLastError=true, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+    public static extern bool StartPagePrinter(IntPtr hPrinter);
+
+    [DllImport("winspool.Drv", EntryPoint="EndPagePrinter", SetLastError=true, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+    public static extern bool EndPagePrinter(IntPtr hPrinter);
+
+    [DllImport("winspool.Drv", EntryPoint="WritePrinter", SetLastError=true, ExactSpelling=true, CallingConvention=CallingConvention.StdCall)]
+    public static extern bool WritePrinter(IntPtr hPrinter, IntPtr pBytes, Int32 dwCount, out Int32 dwWritten);
+
+    public static bool SendBytesToPrinter(string szPrinterName, byte[] bytes) {
+        IntPtr hPrinter = new IntPtr(0);
+        DOCINFOA di = new DOCINFOA();
+        bool bSuccess = false;
+        di.pDocName = "Paakashala Receipt";
+        di.pDataType = "RAW";
+
+        if (OpenPrinter(szPrinterName, out hPrinter, IntPtr.Zero)) {
+            if (StartDocPrinter(hPrinter, 1, di)) {
+                if (StartPagePrinter(hPrinter)) {
+                    IntPtr pUnmanagedBytes = Marshal.AllocCoTaskMem(bytes.Length);
+                    Marshal.Copy(bytes, 0, pUnmanagedBytes, bytes.Length);
+                    Int32 dwWritten = 0;
+                    bSuccess = WritePrinter(hPrinter, pUnmanagedBytes, bytes.Length, out dwWritten);
+                    Marshal.FreeCoTaskMem(pUnmanagedBytes);
+                    EndPagePrinter(hPrinter);
+                }
+                EndDocPrinter(hPrinter);
+            }
+            ClosePrinter(hPrinter);
+        }
+        return bSuccess;
+    }
+}
+"@
+
+# Check if type is already added in this session to prevent compilation errors
+if (-not ([System.Management.Automation.PSTypeName]"RawPrinterHelper").Type) {
+    Add-Type -TypeDefinition $code -ErrorAction SilentlyContinue
+}
+
+$bytes = [System.IO.File]::ReadAllBytes($filePath)
+$result = [RawPrinterHelper]::SendBytesToPrinter($printerName, $bytes)
+Write-Output $result
+`;
+
+      const command = `powershell -NoProfile -ExecutionPolicy Bypass -Command "${psScript.replace(/"/g, '\\"').replace(/\n/g, ' ')}"`;
+      
+      exec(command, (error, stdout, stderr) => {
+        // Clean up temp file
+        try { fs.unlinkSync(tempFile); } catch(e){}
+
+        if (error) {
+          console.error("Print raw error:", error, stderr);
+          resolve({ success: false, error: error.message });
+        } else {
+          const success = stdout.trim() === "True";
+          resolve({ success, error: success ? undefined : "Failed to send bytes to printer spooler. Is the printer name correct?" });
+        }
+      });
+    } catch (err) {
+      resolve({ success: false, error: err.message });
+    }
+  });
+});
