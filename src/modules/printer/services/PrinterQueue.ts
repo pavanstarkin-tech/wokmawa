@@ -159,7 +159,37 @@ class PrinterQueue {
   }
 
   private async executeJob(job: PrintJob): Promise<boolean> {
-    const printer = printerRepository.getPrinter(job.printerId);
+    let printer = printerRepository.getPrinter(job.printerId);
+    if (!printer && job.printerId === "__escpos_emulator__") {
+      printer = {
+        id: "__escpos_emulator__",
+        name: "ESC/POS Emulator (127.0.0.1:9100)",
+        type: "lan",
+        ip: "127.0.0.1",
+        port: 9100,
+        enabled: true,
+        role: "billing",
+        profile: {
+          paperWidth: "80mm",
+          charactersPerLine: 48,
+          font: "A",
+          density: 8,
+          cutType: "full",
+          logoEnabled: false,
+          marginTop: 0,
+          marginBottom: 0,
+          capabilities: {
+            supportsQR: true,
+            supportsImage: true,
+            supportsBarcode: true,
+            supportsCut: true,
+            supportsCashDrawer: true
+          }
+        },
+        uptimeStats: { totalJobs: 0, failedJobs: 0, uptimePercentage: 100 }
+      } as any;
+    }
+
     if (!printer || !printer.enabled) {
       logger.error("printer", `Job execution failed: Printer ${job.printerId} not found or disabled.`);
       this.updateJobStatus(job.id, "failed", "Printer not configured or disabled");
