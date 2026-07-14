@@ -25,6 +25,7 @@ import { SecurityValidation } from "@/modules/validation/SecurityValidation";
 import { PerformanceValidation } from "@/modules/validation/PerformanceValidation";
 import { InstallerValidation } from "@/modules/validation/InstallerValidation";
 import { printerRepository, PrinterRegistry } from "@/modules/printing/repositories/PrinterRepository";
+import { printerRepository as localPrinterRepo } from "@/modules/printer/repository/PrinterRepository";
 import dbService from "@/core/database/DatabaseService";
 
 export const Route = createFileRoute("/admin/settings")({
