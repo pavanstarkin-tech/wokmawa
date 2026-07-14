@@ -217,42 +217,52 @@ ipcMain.handle("export-printer-diagnostics", async (event, { diagnosticsData }) 
 });
 
 // --- Phase 3 SQLite database operations ---
-const dbAdapter = require("./BetterSQLiteAdapter.cjs");
-
+let dbAdapter = null;
 try {
+  dbAdapter = require("./BetterSQLiteAdapter.cjs");
   dbAdapter.initialize();
   dbAdapter.healthCheck().then((res) => {
     console.log(`[MAIN] Database health integrity check: ${res.healthy ? "OK" : "CORRUPT: " + res.details}`);
   });
 } catch (err) {
-  console.error("[MAIN] Database load error:", err.message);
+  console.error("[MAIN] Database adapter failed to load (better-sqlite3 may need rebuild):", err.message);
+  console.error("[MAIN] Run: ./node_modules/.bin/electron-rebuild -f -w better-sqlite3");
 }
 
+const dbNotAvailable = { error: "SQLite not available. Run: npm run rebuild-sqlite" };
+
 ipcMain.handle("db-execute", async (event, { sql, params }) => {
+  if (!dbAdapter) return dbNotAvailable;
   return dbAdapter.execute(sql, params);
 });
 
 ipcMain.handle("db-query", async (event, { sql, params }) => {
+  if (!dbAdapter) return [];
   return dbAdapter.query(sql, params);
 });
 
 ipcMain.handle("db-transaction", async (event, { queries }) => {
+  if (!dbAdapter) return dbNotAvailable;
   return dbAdapter.transaction(queries);
 });
 
 ipcMain.handle("db-backup", async () => {
+  if (!dbAdapter) return dbNotAvailable;
   return dbAdapter.backup();
 });
 
 ipcMain.handle("db-restore", async (event, { backupPath }) => {
+  if (!dbAdapter) return dbNotAvailable;
   return dbAdapter.restore(backupPath);
 });
 
 ipcMain.handle("db-vacuum", async () => {
+  if (!dbAdapter) return dbNotAvailable;
   return dbAdapter.vacuum();
 });
 
 ipcMain.handle("db-health", async () => {
+  if (!dbAdapter) return { healthy: false, details: "SQLite adapter not loaded" };
   return dbAdapter.healthCheck();
 });
 
