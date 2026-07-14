@@ -365,28 +365,72 @@ export function PrinterWizard({ onSave, onClose }: PrinterWizardProps) {
           {/* STEP 2: SCAN SUBNET (LAN only) */}
           {step === 2 && connection === "lan" && (
             <div className="space-y-4">
-              <h3 className="text-sm font-bold flex items-center gap-2"><Cpu className="h-5 w-5 text-gold" /> Step 2: Auto Subnet Scan</h3>
+              <h3 className="text-sm font-bold flex items-center gap-2"><Cpu className="h-5 w-5 text-gold" /> Step 2: Set Printer IP & Port</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Scan your local network for active thermal print sockets on raw data ports (9100, 9101, 515).
+                Enter the printer IP manually, or scan your subnet to auto-detect ESC/POS sockets on ports 9100, 9101, 515.
               </p>
-              
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={subnet}
-                  onChange={e => setSubnet(e.target.value)}
-                  placeholder="e.g. 192.168.1"
-                  className="rounded-xl border border-border bg-background px-3 py-2.5 w-44"
-                />
+
+              {/* Manual IP entry */}
+              <div className="bg-background border border-border/60 rounded-2xl p-4 space-y-3">
+                <span className="text-[10px] uppercase font-black text-muted-foreground tracking-wider block">Manual IP Configuration</span>
+                <div className="flex gap-2 items-center">
+                  <div className="flex-1">
+                    <label className="text-[9px] uppercase font-black text-muted-foreground mb-1 block">IP Address</label>
+                    <input
+                      type="text"
+                      value={selectedIp}
+                      onChange={e => setSelectedIp(e.target.value)}
+                      placeholder="e.g. 127.0.0.1"
+                      className="w-full rounded-xl border border-border bg-muted/20 px-3 py-2 text-xs font-mono font-bold"
+                    />
+                  </div>
+                  <div className="w-24">
+                    <label className="text-[9px] uppercase font-black text-muted-foreground mb-1 block">Port</label>
+                    <input
+                      type="number"
+                      value={selectedPort}
+                      onChange={e => setSelectedPort(Number(e.target.value))}
+                      className="w-full rounded-xl border border-border bg-muted/20 px-3 py-2 text-xs font-mono font-bold"
+                    />
+                  </div>
+                </div>
+
+                {/* Emulator quick-set */}
                 <button
                   type="button"
-                  onClick={handleScanSubnet}
-                  disabled={scanning}
-                  className="bg-brown-gradient text-cream px-5 py-2.5 rounded-xl font-bold uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-all disabled:opacity-50"
+                  onClick={() => { setSelectedIp("127.0.0.1"); setSelectedPort(9100); }}
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border transition-all text-xs font-bold cursor-pointer ${
+                    selectedIp === "127.0.0.1" && selectedPort === 9100
+                      ? "border-gold bg-gold/10 text-gold"
+                      : "border-amber-300/60 bg-amber-50/40 hover:bg-amber-50 text-amber-800"
+                  }`}
                 >
-                  <RefreshCw className={`h-4 w-4 ${scanning ? "animate-spin" : ""}`} />
-                  {scanning ? "Sweeping Subnet..." : "Scan Subnet"}
+                  <span>⚡ Use Local ESC/POS Emulator</span>
+                  <span className="font-mono text-[10px] bg-amber-100 px-2 py-0.5 rounded">127.0.0.1 : 9100</span>
                 </button>
+              </div>
+
+              {/* Subnet scanner */}
+              <div className="space-y-2">
+                <span className="text-[10px] uppercase font-black text-muted-foreground tracking-wider block">Auto Subnet Scan</span>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={subnet}
+                    onChange={e => setSubnet(e.target.value)}
+                    placeholder="e.g. 192.168.1"
+                    className="rounded-xl border border-border bg-background px-3 py-2.5 w-44"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleScanSubnet}
+                    disabled={scanning}
+                    className="bg-brown-gradient text-cream px-5 py-2.5 rounded-xl font-bold uppercase tracking-wider flex items-center gap-1.5 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${scanning ? "animate-spin" : ""}`} />
+                    {scanning ? "Sweeping Subnet..." : "Scan Subnet"}
+                  </button>
+                </div>
               </div>
 
               {discovered.length > 0 && (
