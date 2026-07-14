@@ -14,7 +14,7 @@ function createWindow() {
     minHeight: 768,
     title: "Paakashala Restaurant OS",
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
       nodeIntegration: false,
     },
