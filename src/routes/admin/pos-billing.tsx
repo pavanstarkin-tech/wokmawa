@@ -26,7 +26,7 @@ function PosBillingPage() {
   // State
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedTable, setSelectedTable] = useState("");
@@ -79,10 +79,10 @@ function PosBillingPage() {
 
       setMenuItems(itemsList);
       const sortedCats = Array.from(catsSet).sort();
-      setCategories(sortedCats);
+      setCategories(["All", ...sortedCats]);
       setSelectedCategory((prev) => {
-        if (sortedCats.includes(prev)) return prev;
-        return sortedCats[0] || "";
+        if (prev === "All" || sortedCats.includes(prev)) return prev;
+        return "All";
       });
     });
 
@@ -122,7 +122,7 @@ function PosBillingPage() {
   // Filter menu items by selected category and search string
   const filteredItems = useMemo(() => {
     return menuItems.filter((item) => {
-      const matchCat = item.category === selectedCategory;
+      const matchCat = selectedCategory === "All" || item.category === selectedCategory;
       const matchSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchCat && matchSearch;
     });
