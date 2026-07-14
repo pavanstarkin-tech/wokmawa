@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld("printerAPI", {
   getActiveSubnet: () => ipcRenderer.invoke("get-active-subnet"),
   saveLogoFile: (base64Data, filename) => ipcRenderer.invoke("save-logo-file", { base64Data, filename }),
   exportDiagnostics: (diagnosticsData) => ipcRenderer.invoke("export-printer-diagnostics", { diagnosticsData }),
+  getSystemPrinters: () => ipcRenderer.invoke("get-system-printers"),
+  printRaw: (printerName, payload) => ipcRenderer.invoke("print-raw", { printerName, payload }),
 });
 
 contextBridge.exposeInMainWorld("databaseAPI", {
