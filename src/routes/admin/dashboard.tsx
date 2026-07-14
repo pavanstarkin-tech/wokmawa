@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { signOut } from "firebase/auth";
 import { ref, onValue, query, orderByChild, startAt } from "firebase/database";
 import { auth, db } from "@/lib/firebase";
