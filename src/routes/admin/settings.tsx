@@ -791,24 +791,21 @@ function PrintersConfigTab({ setStatusMsg }: any) {
     setStatusMsg(null);
     try {
       const printerAPI = (window as any).printerAPI;
+      const isElectron = !!(window as any).systemAPI?.isElectron?.();
       if (printerAPI && typeof printerAPI.getSystemPrinters === "function") {
         const list = await printerAPI.getSystemPrinters();
         const names = (list || []).map((p: any) => (typeof p === "string" ? p : p.name || p.displayName || String(p)));
         setSystemPrinters(names);
         setStatusMsg({ type: "success", text: `Found ${names.length} Windows-installed printer${names.length !== 1 ? "s" : ""}.` });
       } else {
-        // Browser fallback mockup list (dev mode only)
-        setTimeout(() => {
-          setSystemPrinters([
-            "RP3230 Counter",
-            "RP3230 Kitchen",
-            "Microsoft Print to PDF",
-            "OneNote",
-            "XPS Document Writer"
-          ]);
-          setScanning(false);
-          setStatusMsg({ type: "success", text: "[BROWSER MOCK] Simulated Windows printers scanned successfully." });
-        }, 800);
+        // Not running inside Electron — show clear warning
+        setScanning(false);
+        setStatusMsg({
+          type: "error",
+          text: isElectron
+            ? "Printer API not available. Restart the Electron app."
+            : "⚠️ Open via Electron (npm run electron:dev) to scan real Windows printers. This is a browser tab — no printer access."
+        });
         return;
       }
     } catch (err: any) {
