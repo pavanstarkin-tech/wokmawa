@@ -37,7 +37,7 @@ export const Route = createFileRoute("/admin/settings")({
   component: UnifiedSettingsPage,
 });
 
-type TabId = "taxes" | "categories" | "customers" | "reports" | "shifts" | "staff" | "system" | "release_validation" | "printers";
+type TabId = "taxes" | "categories" | "printers";
 
 function UnifiedSettingsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("taxes");
@@ -48,13 +48,7 @@ function UnifiedSettingsPage() {
   const tabs: Array<{ id: TabId; label: string; icon: any }> = [
     { id: "taxes", label: "Taxes & Store", icon: Landmark },
     { id: "categories", label: "Categories", icon: Settings },
-    { id: "customers", label: "CRM & Customers", icon: Users },
-    { id: "reports", label: "Reports Hub", icon: FileText },
-    { id: "shifts", label: "Shift Drawer", icon: History },
-    { id: "staff", label: "Staff & Roles", icon: Users },
     { id: "printers", label: "Printers config", icon: Printer },
-    { id: "system", label: "System Diagnostics", icon: ShieldAlert },
-    { id: "release_validation", label: "Release Validation", icon: CheckCircle2 },
   ];
 
   return (
@@ -100,13 +94,7 @@ function UnifiedSettingsPage() {
 
         {activeTab === "taxes" && <TaxesTab setStatusMsg={setStatusMsg} />}
         {activeTab === "categories" && <CategoriesTab setStatusMsg={setStatusMsg} />}
-        {activeTab === "customers" && <CustomersTab />}
-        {activeTab === "reports" && <ReportsTab setStatusMsg={setStatusMsg} />}
-        {activeTab === "shifts" && <ShiftsTab setStatusMsg={setStatusMsg} />}
-        {activeTab === "staff" && <StaffTab setStatusMsg={setStatusMsg} />}
-        {activeTab === "system" && <SystemTab />}
         {activeTab === "printers" && <PrintersConfigTab setStatusMsg={setStatusMsg} />}
-        {activeTab === "release_validation" && <ReleaseValidationTab />}
       </div>
     </div>
   );
