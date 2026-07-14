@@ -144,6 +144,7 @@ function AdminLayout() {
     { label: "Offers", to: "/admin/offers", icon: Gift },
     { label: "Analysis Hub", to: "/admin/analysis", icon: BarChart3 },
     { label: "Devices", to: "/admin/printers", icon: Printer },
+    { label: "Staff Control", to: "/admin/staff", icon: Users },
     { label: "Settings", to: "/admin/settings", icon: Settings },
   ];
 
