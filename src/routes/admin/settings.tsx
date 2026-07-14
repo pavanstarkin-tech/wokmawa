@@ -792,7 +792,22 @@ function PrintersConfigTab({ setStatusMsg }: any) {
       const list = await printerRepository.getPrinters();
       setPrinters(list);
     } catch (err: any) {
-      setStatusMsg({ type: "error", text: err.message });
+      console.warn("Failed fetching printers from SQLite, falling back to localDb:", err.message);
+      // Fallback to local storage printer registry
+      const localList = localPrinterRepo.getPrinters();
+      const mappedList: PrinterRegistry[] = localList.map(p => ({
+        id: p.id,
+        name: p.name,
+        printerType: p.role === "billing" ? "counter" : "kitchen",
+        connectionType: p.type as any,
+        ipAddress: p.ip,
+        port: p.port,
+        usbDevice: p.usbDevice,
+        paperWidth: p.profile.paperWidth === "58mm" ? 58 : 80,
+        isDefault: p.enabled ? 1 : 0,
+        status: p.status
+      }));
+      setPrinters(mappedList);
     }
   };
 
@@ -803,14 +818,9 @@ function PrintersConfigTab({ setStatusMsg }: any) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.id || !form.name) return;
-    try {
-      await dbService.initialize();
-      await printerRepository.savePrinter({
-        ...form,
-        status: "online"
-      });
 
-      // Sync to localDb repository (used by POS billing, live orders, KOT routing)
+    // 1. Sync to localDb repository (guaranteed to succeed synchronously)
+    try {
       localPrinterRepo.savePrinter({
         id: form.id,
         name: form.name,
@@ -839,38 +849,54 @@ function PrintersConfigTab({ setStatusMsg }: any) {
         },
         uptimeStats: { totalJobs: 0, failedJobs: 0, uptimePercentage: 100 }
       });
-
       setStatusMsg({ type: "success", text: `Printer ${form.name} saved successfully.` });
-      setForm({
-        id: "",
-        name: "",
-        printerType: "kitchen",
-        connectionType: "lan",
-        ipAddress: "",
-        port: 9100,
-        usbDevice: "",
-        paperWidth: 80,
-        isDefault: 0
-      });
-      await loadPrinters();
     } catch (err: any) {
-      setStatusMsg({ type: "error", text: err.message });
+      console.warn("Failed saving to local storage repo:", err);
     }
+
+    // 2. Sync to SQLite database (optional fallback/offline-resilient)
+    try {
+      await dbService.initialize();
+      await printerRepository.savePrinter({
+        ...form,
+        status: "online"
+      });
+    } catch (err: any) {
+      console.warn("SQLite database sync failed (WASM loading or offline):", err.message);
+    }
+
+    setForm({
+      id: "",
+      name: "",
+      printerType: "kitchen",
+      connectionType: "lan",
+      ipAddress: "",
+      port: 9100,
+      usbDevice: "",
+      paperWidth: 80,
+      isDefault: 0
+    });
+    await loadPrinters();
   };
 
   const handleDelete = async (id: string) => {
+    // 1. Delete from local storage
+    try {
+      localPrinterRepo.deletePrinter(id);
+      setStatusMsg({ type: "success", text: "Printer configurations deleted." });
+    } catch (err: any) {
+      console.warn("Failed deleting from local storage:", err);
+    }
+
+    // 2. Delete from SQLite
     try {
       await dbService.initialize();
       await printerRepository.deletePrinter(id);
-      
-      // Sync deletion to localDb repository
-      localPrinterRepo.deletePrinter(id);
-
-      setStatusMsg({ type: "success", text: "Printer configurations deleted." });
-      await loadPrinters();
     } catch (err: any) {
-      setStatusMsg({ type: "error", text: err.message });
+      console.warn("Failed deleting from SQLite:", err);
     }
+
+    await loadPrinters();
   };
 
   return (
