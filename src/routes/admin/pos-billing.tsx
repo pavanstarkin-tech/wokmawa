@@ -324,11 +324,14 @@ function PosBillingPage() {
               onChange={(e) => setSelectedTable(e.target.value)}
               className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs focus:border-gold focus:outline-none"
             >
-              {Array.from({ length: 20 }).map((_, i) => (
-                <option key={i} value={`T${i + 1}`}>
-                  Table T{i + 1}
+              {tables.map((table) => (
+                <option key={table.id} value={table.id}>
+                  Table {table.name}
                 </option>
               ))}
+              {tables.length === 0 && (
+                <option value="">No Active Tables</option>
+              )}
             </select>
           </div>
           
