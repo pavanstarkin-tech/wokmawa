@@ -35,6 +35,9 @@ function createWindow() {
     },
   });
 
+  // Automatically maximize window to full screen on start
+  mainWindow.maximize();
+
   // Check if we are running in dev mode
   const isDev = process.argv.includes("--dev") || process.env.NODE_ENV === "development";
   const devPort = process.env.VITE_PORT || 8081;
