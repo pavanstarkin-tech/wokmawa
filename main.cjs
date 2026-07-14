@@ -26,7 +26,7 @@ function createWindow() {
 
   if (isDev) {
     // Retry loading the Vite dev server — it may take a moment to start
-    const devUrl = `http://localhost:${devPort}`;
+    const devUrl = `http://localhost:${devPort}/admin/login`;
     const tryLoad = (retriesLeft) => {
       mainWindow.loadURL(devUrl).catch((err) => {
         if (retriesLeft > 0) {
