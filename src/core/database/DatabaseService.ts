@@ -3,6 +3,17 @@ import { IPCDatabaseAdapter } from "./IPCDatabaseAdapter";
 import { SqlJsAdapter } from "./SqlJsAdapter";
 import logger from "@/services/logger/Logger";
 
+class ServerMockAdapter implements DatabaseAdapter {
+  async execute() { return { changes: 0, lastInsertRowid: 0 }; }
+  async query() { return []; }
+  async transaction() {}
+  async backup() { return { success: false, error: "Not supported in SSR" }; }
+  async restore() { return { success: false, error: "Not supported in SSR" }; }
+  async vacuum() {}
+  async close() {}
+  async healthCheck() { return { healthy: true, details: "SSR Mock Adapter" }; }
+}
+
 class DatabaseService {
   private adapter: DatabaseAdapter | null = null;
   private initializingPromise: Promise<DatabaseAdapter> | null = null;
@@ -13,7 +24,10 @@ class DatabaseService {
 
     this.initializingPromise = (async () => {
       try {
-        if (typeof window !== "undefined" && (window as any).databaseAPI) {
+        if (typeof window === "undefined") {
+          logger.info("database", "Server-side rendering (SSR) environment detected. Loading ServerMockAdapter.");
+          this.adapter = new ServerMockAdapter();
+        } else if ((window as any).databaseAPI) {
           logger.info("database", "Electron environment detected. Loading IPCDatabaseAdapter (better-sqlite3).");
           this.adapter = new IPCDatabaseAdapter();
         } else {
