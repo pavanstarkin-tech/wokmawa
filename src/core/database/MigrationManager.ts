@@ -1294,6 +1294,18 @@ export class MigrationManager {
         logger.info("database", "Successfully applied Version 11 schema migrations.");
       }
     });
+
+    // Migration Version 12: Clear default seed staff profiles to avoid mock data
+    this.migrations.push({
+      version: 12,
+      up: async (db: DatabaseAdapter) => {
+        logger.info("database", "Executing schema upgrade to Version 12 (Mock Staff Cleanup)...");
+        await db.execute(`
+          DELETE FROM staff WHERE id IN ('staff_admin', 'staff_cashier1');
+        `);
+        logger.info("database", "Successfully applied Version 12 schema migrations.");
+      }
+    });
   }
 
   /**
