@@ -786,14 +786,6 @@ function PrintersConfigTab({ setStatusMsg }: any) {
   const [testingCounter, setTestingCounter] = useState(false);
   const [testingKitchen, setTestingKitchen] = useState(false);
 
-  // Load existing configuration from localDb settings cache
-  useEffect(() => {
-    const s = localDb.getSettings();
-    setCounterPrinter(s.counterPrinter || "");
-    setKitchenPrinter(s.kitchenPrinter || "");
-    handleScanInstalledPrinters();
-  }, []);
-
   const handleScanInstalledPrinters = async () => {
     setScanning(true);
     setStatusMsg(null);
@@ -801,11 +793,11 @@ function PrintersConfigTab({ setStatusMsg }: any) {
       const printerAPI = (window as any).printerAPI;
       if (printerAPI && typeof printerAPI.getSystemPrinters === "function") {
         const list = await printerAPI.getSystemPrinters();
-        const names = list.map((p: any) => p.name);
+        const names = (list || []).map((p: any) => (typeof p === "string" ? p : p.name || p.displayName || String(p)));
         setSystemPrinters(names);
-        setStatusMsg({ type: "success", text: `Retrieved ${names.length} Windows-installed printers.` });
+        setStatusMsg({ type: "success", text: `Found ${names.length} Windows-installed printer${names.length !== 1 ? "s" : ""}.` });
       } else {
-        // Browser fallback mockup list
+        // Browser fallback mockup list (dev mode only)
         setTimeout(() => {
           setSystemPrinters([
             "RP3230 Counter",
@@ -825,6 +817,15 @@ function PrintersConfigTab({ setStatusMsg }: any) {
       setScanning(false);
     }
   };
+
+  // Load existing configuration from localDb settings cache
+  useEffect(() => {
+    const s = localDb.getSettings();
+    setCounterPrinter(s.counterPrinter || "");
+    setKitchenPrinter(s.kitchenPrinter || "");
+    // Small delay to let Electron's contextBridge finish injecting window.printerAPI
+    setTimeout(() => handleScanInstalledPrinters(), 300);
+  }, []);
 
   const handleSaveConfiguration = async () => {
     setSaving(true);
