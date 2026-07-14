@@ -313,7 +313,7 @@ function PosBillingPage() {
         {/* Category Scrollbar */}
         <div className="overflow-x-auto no-scrollbar mb-6 pb-2 border-b border-border/40">
           <div className="flex gap-2.5 w-max">
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
