@@ -778,66 +778,254 @@ function ReleaseValidationTab() {
 // 11. Printers Config Tab
 // ==========================================
 function PrintersConfigTab({ setStatusMsg }: any) {
-  const [printers, setPrinters] = useState<PrinterRegistry[]>([]);
-  const [form, setForm] = useState({
-    id: "",
-    name: "",
-    printerType: "kitchen" as "kitchen" | "counter",
-    connectionType: "lan" as "usb" | "lan" | "bluetooth",
-    ipAddress: "",
-    port: 9100,
-    usbDevice: "",
-    paperWidth: 80,
-    isDefault: 0
-  });
+  const [counterPrinter, setCounterPrinter] = useState("");
+  const [kitchenPrinter, setKitchenPrinter] = useState("");
+  const [systemPrinters, setSystemPrinters] = useState<string[]>([]);
+  const [scanning, setScanning] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [testingCounter, setTestingCounter] = useState(false);
+  const [testingKitchen, setTestingKitchen] = useState(false);
 
-  const loadPrinters = async () => {
+  // Load existing configuration from localDb settings cache
+  useEffect(() => {
+    const s = localDb.getSettings();
+    setCounterPrinter(s.counterPrinter || "");
+    setKitchenPrinter(s.kitchenPrinter || "");
+    handleScanInstalledPrinters();
+  }, []);
+
+  const handleScanInstalledPrinters = async () => {
+    setScanning(true);
+    setStatusMsg(null);
     try {
-      await dbService.initialize();
-      const list = await printerRepository.getPrinters();
-      setPrinters(list);
+      const printerAPI = (window as any).printerAPI;
+      if (printerAPI && typeof printerAPI.getSystemPrinters === "function") {
+        const list = await printerAPI.getSystemPrinters();
+        const names = list.map((p: any) => p.name);
+        setSystemPrinters(names);
+        setStatusMsg({ type: "success", text: `Retrieved ${names.length} Windows-installed printers.` });
+      } else {
+        // Browser fallback mockup list
+        setTimeout(() => {
+          setSystemPrinters([
+            "RP3230 Counter",
+            "RP3230 Kitchen",
+            "Microsoft Print to PDF",
+            "OneNote",
+            "XPS Document Writer"
+          ]);
+          setScanning(false);
+          setStatusMsg({ type: "success", text: "[BROWSER MOCK] Simulated Windows printers scanned successfully." });
+        }, 800);
+        return;
+      }
     } catch (err: any) {
-      console.warn("Failed fetching printers from SQLite, falling back to localDb:", err.message);
-      // Fallback to local storage printer registry
-      const localList = localPrinterRepo.getPrinters();
-      const mappedList: PrinterRegistry[] = localList.map(p => ({
-        id: p.id,
-        name: p.name,
-        printerType: p.role === "billing" ? "counter" : "kitchen",
-        connectionType: p.type as any,
-        ipAddress: p.ip,
-        port: p.port,
-        usbDevice: p.usbDevice,
-        paperWidth: p.profile.paperWidth === "58mm" ? 58 : 80,
-        isDefault: p.enabled ? 1 : 0,
-        status: p.status
-      }));
-      setPrinters(mappedList);
+      setStatusMsg({ type: "error", text: `Failed scanning printers: ${err.message}` });
+    } finally {
+      setScanning(false);
     }
   };
 
-  useEffect(() => {
-    loadPrinters();
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.id || !form.name) return;
-
-    // 1. Sync to localDb repository (guaranteed to succeed synchronously)
+  const handleSaveConfiguration = async () => {
+    setSaving(true);
+    setStatusMsg(null);
     try {
+      // 1. Save synchronously to localDb settings cache
+      localDb.updateSettings({
+        counterPrinter,
+        kitchenPrinter
+      });
+
+      // 2. Save to SQLite settings table (optional fallback)
+      try {
+        await dbService.initialize();
+        await settingsRepository.saveSetting("counterPrinter", counterPrinter);
+        await settingsRepository.saveSetting("kitchenPrinter", kitchenPrinter);
+      } catch (sqliteErr: any) {
+        console.warn("SQLite settings save warning:", sqliteErr.message);
+      }
+
+      // Also trigger a refresh in the local storage printer registry cache
+      // by saving these virtual printer definitions. This ensures KDS/POS flows update instantly.
+      if (counterPrinter) {
+        localPrinterRepo.savePrinter({
+          id: "counter-printer-id",
+          name: counterPrinter,
+          type: "os" as any,
+          role: "billing",
+          enabled: true,
+          status: "online",
+          profile: {
+            paperWidth: "80mm",
+            charactersPerLine: 48,
+            font: "A",
+            density: 8,
+            cutType: "full",
+            logoEnabled: true,
+            marginTop: 0,
+            marginBottom: 0,
+            capabilities: {
+              supportsQR: true,
+              supportsImage: true,
+              supportsBarcode: true,
+              supportsCut: true,
+              supportsCashDrawer: true
+            }
+          },
+          uptimeStats: { totalJobs: 0, failedJobs: 0, uptimePercentage: 100 }
+        });
+      } else {
+        localPrinterRepo.deletePrinter("counter-printer-id");
+      }
+
+      if (kitchenPrinter) {
+        localPrinterRepo.savePrinter({
+          id: "kitchen-printer-id",
+          name: kitchenPrinter,
+          type: "os" as any,
+          role: "kitchen",
+          enabled: true,
+          status: "online",
+          profile: {
+            paperWidth: "80mm",
+            charactersPerLine: 48,
+            font: "A",
+            density: 8,
+            cutType: "full",
+            logoEnabled: false,
+            marginTop: 0,
+            marginBottom: 0,
+            capabilities: {
+              supportsQR: false,
+              supportsImage: false,
+              supportsBarcode: false,
+              supportsCut: true,
+              supportsCashDrawer: false
+            }
+          },
+          uptimeStats: { totalJobs: 0, failedJobs: 0, uptimePercentage: 100 }
+        });
+      } else {
+        localPrinterRepo.deletePrinter("kitchen-printer-id");
+      }
+
+      setStatusMsg({ type: "success", text: "Printer configurations saved successfully." });
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: `Failed saving configuration: ${err.message}` });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTestCounterPrinter = async () => {
+    if (!counterPrinter) {
+      setStatusMsg({ type: "error", text: "Please select a Counter Printer first." });
+      return;
+    }
+    setTestingCounter(true);
+    setStatusMsg(null);
+    try {
+      const docModel = testDocument.build({
+        printerName: counterPrinter,
+        connectionType: "Windows Spooler",
+        capabilities: {
+          supportsBarcode: true,
+          supportsCut: true,
+          supportsImage: true,
+          supportsQR: true,
+          supportsCashDrawer: true
+        }
+      });
+      const bytes = await receiptRenderer.render(docModel, {
+        paperWidth: "80mm",
+        charactersPerLine: 48,
+        font: "A",
+        density: 8,
+        cutType: "full",
+        logoEnabled: true,
+        marginTop: 0,
+        marginBottom: 0
+      } as any);
+
+      // Create a temporary Counter Printer instance to queue the test print
       localPrinterRepo.savePrinter({
-        id: form.id,
-        name: form.name,
-        type: form.connectionType,
-        ip: form.ipAddress || undefined,
-        port: form.port || undefined,
-        role: form.printerType,
+        id: "counter-printer-id",
+        name: counterPrinter,
+        type: "os" as any,
+        role: "billing",
         enabled: true,
         status: "online",
         profile: {
-          paperWidth: `${form.paperWidth}mm`,
-          charactersPerLine: form.paperWidth === 58 ? 32 : 48,
+          paperWidth: "80mm",
+          charactersPerLine: 48,
+          font: "A",
+          density: 8,
+          cutType: "full",
+          logoEnabled: true,
+          marginTop: 0,
+          marginBottom: 0,
+          capabilities: {
+            supportsQR: true,
+            supportsImage: true,
+            supportsBarcode: true,
+            supportsCut: true,
+            supportsCashDrawer: true
+          }
+        },
+        uptimeStats: { totalJobs: 0, failedJobs: 0, uptimePercentage: 100 }
+      });
+
+      await printerQueue.enqueueJob("counter-printer-id", "receipt", bytes, 1);
+      setStatusMsg({ type: "success", text: `Test page sent to: "${counterPrinter}"` });
+    } catch (err: any) {
+      setStatusMsg({ type: "error", text: `Counter test failed: ${err.message}` });
+    } finally {
+      setTestingCounter(false);
+    }
+  };
+
+  const handleTestKitchenPrinter = async () => {
+    if (!kitchenPrinter) {
+      setStatusMsg({ type: "error", text: "Please select a Kitchen Printer first." });
+      return;
+    }
+    setTestingKitchen(true);
+    setStatusMsg(null);
+    try {
+      const kotData = {
+        kotNumber: "KOT-TEST",
+        tableId: "TEST",
+        orderType: "dine-in" as const,
+        cashierName: "System Admin",
+        items: [
+          { name: "Paneer Butter Masala", quantity: 1 },
+          { name: "Butter Naan", quantity: 2 }
+        ],
+        instructions: "Make naans soft and hot"
+      };
+      const docModel = kotDocument.build(kotData);
+      const bytes = await receiptRenderer.render(docModel, {
+        paperWidth: "80mm",
+        charactersPerLine: 48,
+        font: "A",
+        density: 8,
+        cutType: "full",
+        logoEnabled: false,
+        marginTop: 0,
+        marginBottom: 0
+      } as any);
+
+      // Create a temporary Kitchen Printer instance to queue the test print
+      localPrinterRepo.savePrinter({
+        id: "kitchen-printer-id",
+        name: kitchenPrinter,
+        type: "os" as any,
+        role: "kitchen",
+        enabled: true,
+        status: "online",
+        profile: {
+          paperWidth: "80mm",
+          charactersPerLine: 48,
           font: "A",
           density: 8,
           cutType: "full",
@@ -845,218 +1033,106 @@ function PrintersConfigTab({ setStatusMsg }: any) {
           marginTop: 0,
           marginBottom: 0,
           capabilities: {
-            supportsQR: form.printerType === "billing",
-            supportsImage: true,
-            supportsBarcode: form.printerType === "billing",
+            supportsQR: false,
+            supportsImage: false,
+            supportsBarcode: false,
             supportsCut: true,
-            supportsCashDrawer: form.printerType === "billing"
+            supportsCashDrawer: false
           }
         },
         uptimeStats: { totalJobs: 0, failedJobs: 0, uptimePercentage: 100 }
       });
-      setStatusMsg({ type: "success", text: `Printer ${form.name} saved successfully.` });
+
+      await printerQueue.enqueueJob("kitchen-printer-id", "kot", bytes, 2);
+      setStatusMsg({ type: "success", text: `KOT test ticket sent to: "${kitchenPrinter}"` });
     } catch (err: any) {
-      console.warn("Failed saving to local storage repo:", err);
+      setStatusMsg({ type: "error", text: `Kitchen test failed: ${err.message}` });
+    } finally {
+      setTestingKitchen(false);
     }
-
-    // 2. Sync to SQLite database (optional fallback/offline-resilient)
-    try {
-      await dbService.initialize();
-      await printerRepository.savePrinter({
-        ...form,
-        status: "online"
-      });
-    } catch (err: any) {
-      console.warn("SQLite database sync failed (WASM loading or offline):", err.message);
-    }
-
-    setForm({
-      id: "",
-      name: "",
-      printerType: "kitchen",
-      connectionType: "lan",
-      ipAddress: "",
-      port: 9100,
-      usbDevice: "",
-      paperWidth: 80,
-      isDefault: 0
-    });
-    await loadPrinters();
-  };
-
-  const handleDelete = async (id: string) => {
-    // 1. Delete from local storage
-    try {
-      localPrinterRepo.deletePrinter(id);
-      setStatusMsg({ type: "success", text: "Printer configurations deleted." });
-    } catch (err: any) {
-      console.warn("Failed deleting from local storage:", err);
-    }
-
-    // 2. Delete from SQLite
-    try {
-      await dbService.initialize();
-      await printerRepository.deletePrinter(id);
-    } catch (err: any) {
-      console.warn("Failed deleting from SQLite:", err);
-    }
-
-    await loadPrinters();
   };
 
   return (
-    <div className="space-y-6 text-xs font-semibold text-brown-deep">
+    <div className="space-y-6 text-xs font-semibold text-brown-deep max-w-lg">
       <div>
-        <h3 className="text-base font-bold text-brown-deep">Printers Dual Routing Setup</h3>
-        <p className="text-muted-foreground text-[11px] font-medium mt-1">Configure Counter and Kitchen printers with custom connection types and paper widths.</p>
+        <h3 className="text-base font-bold text-brown-deep">Printer Configuration</h3>
+        <p className="text-muted-foreground text-[11px] font-medium mt-1">Select and test system-installed thermal printers for counter billing and kitchen tickets.</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="md:col-span-1 space-y-3 bg-background border p-4 rounded-2xl">
-          <div className="space-y-1">
-            <label className="font-bold">Printer ID *</label>
-            <input
-              type="text"
-              required
-              value={form.id}
-              onChange={e => setForm({ ...form, id: e.target.value })}
-              placeholder="e.g. kitchen-kot"
-              className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
-            />
+      <div className="bg-card border border-border/60 rounded-3xl p-5 space-y-6 shadow-sm">
+        {/* Counter Printer */}
+        <div className="space-y-2">
+          <label className="block text-[10px] uppercase font-black text-muted-foreground tracking-wider">Counter Printer</label>
+          <div className="flex gap-2 items-center">
+            <select
+              value={counterPrinter}
+              onChange={e => setCounterPrinter(e.target.value)}
+              className="flex-1 rounded-xl border border-border bg-background px-3 py-2.5 text-xs font-bold focus:outline-none"
+            >
+              <option value="">-- Choose Counter Printer --</option>
+              {systemPrinters.map((name, idx) => (
+                <option key={idx} value={name}>{name}</option>
+              ))}
+            </select>
+            <button
+              onClick={handleTestCounterPrinter}
+              disabled={testingCounter || !counterPrinter}
+              className="bg-brown-deep hover:bg-brown-deep/90 text-gold px-4 py-2.5 rounded-xl font-bold uppercase disabled:opacity-50 transition-all cursor-pointer whitespace-nowrap"
+            >
+              {testingCounter ? "Printing..." : "Test"}
+            </button>
           </div>
+          <span className="text-[10px] text-muted-foreground/80 block leading-tight">Uses 80mm layout with logos and itemized bills.</span>
+        </div>
 
-          <div className="space-y-1">
-            <label className="font-bold">Name *</label>
-            <input
-              type="text"
-              required
-              value={form.name}
-              onChange={e => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. Kitchen KOT Printer"
-              className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
-            />
+        <hr className="border-border/60" />
+
+        {/* Kitchen Printer */}
+        <div className="space-y-2">
+          <label className="block text-[10px] uppercase font-black text-muted-foreground tracking-wider">Kitchen Printer</label>
+          <div className="flex gap-2 items-center">
+            <select
+              value={kitchenPrinter}
+              onChange={e => setKitchenPrinter(e.target.value)}
+              className="flex-1 rounded-xl border border-border bg-background px-3 py-2.5 text-xs font-bold focus:outline-none"
+            >
+              <option value="">-- Choose Kitchen Printer --</option>
+              {systemPrinters.map((name, idx) => (
+                <option key={idx} value={name}>{name}</option>
+              ))}
+            </select>
+            <button
+              onClick={handleTestKitchenPrinter}
+              disabled={testingKitchen || !kitchenPrinter}
+              className="bg-brown-deep hover:bg-brown-deep/90 text-gold px-4 py-2.5 rounded-xl font-bold uppercase disabled:opacity-50 transition-all cursor-pointer whitespace-nowrap"
+            >
+              {testingKitchen ? "Printing..." : "Test"}
+            </button>
           </div>
+          <span className="text-[10px] text-muted-foreground/80 block leading-tight">Prints Kitchen Order Tickets (KOT) without prices or payment terms.</span>
+        </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <label className="font-bold">Printer Type</label>
-              <select
-                value={form.printerType}
-                onChange={e => setForm({ ...form, printerType: e.target.value as any })}
-                className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
-              >
-                <option value="counter">Counter Printer</option>
-                <option value="kitchen">Kitchen Printer</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="font-bold">Connection</label>
-              <select
-                value={form.connectionType}
-                onChange={e => setForm({ ...form, connectionType: e.target.value as any })}
-                className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
-              >
-                <option value="usb">USB Device</option>
-                <option value="lan">LAN Network</option>
-                <option value="bluetooth">Bluetooth</option>
-              </select>
-            </div>
-          </div>
+        <hr className="border-border/60" />
 
-          {form.connectionType === "lan" && (
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-2 space-y-1">
-                <label className="font-bold">IP Address</label>
-                <input
-                  type="text"
-                  value={form.ipAddress}
-                  onChange={e => setForm({ ...form, ipAddress: e.target.value })}
-                  placeholder="192.168.1.100"
-                  className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
-                />
-              </div>
-              <div className="col-span-1 space-y-1">
-                <label className="font-bold">Port</label>
-                <input
-                  type="number"
-                  value={form.port}
-                  onChange={e => setForm({ ...form, port: Number(e.target.value) })}
-                  className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
-                />
-              </div>
-            </div>
-          )}
-
-          {form.connectionType === "usb" && (
-            <div className="space-y-1">
-              <label className="font-bold">USB Device ID</label>
-              <input
-                type="text"
-                value={form.usbDevice}
-                onChange={e => setForm({ ...form, usbDevice: e.target.value })}
-                placeholder="USB001"
-                className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
-              />
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <label className="font-bold">Paper Width</label>
-              <select
-                value={form.paperWidth}
-                onChange={e => setForm({ ...form, paperWidth: Number(e.target.value) })}
-                className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
-              >
-                <option value={80}>80 mm</option>
-                <option value={58}>58 mm</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="font-bold">Set Default</label>
-              <select
-                value={form.isDefault}
-                onChange={e => setForm({ ...form, isDefault: Number(e.target.value) })}
-                className="w-full px-3 py-1.5 bg-background border rounded-lg focus:outline-none"
-              >
-                <option value={0}>No</option>
-                <option value={1}>Yes</option>
-              </select>
-            </div>
-          </div>
-
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <button
-            type="submit"
-            className="w-full py-2 bg-brown-deep text-gold font-bold rounded-xl uppercase"
+            type="button"
+            onClick={handleScanInstalledPrinters}
+            disabled={scanning}
+            className="flex-1 border border-border bg-background hover:bg-muted/10 text-brown-deep py-3 rounded-xl font-bold uppercase tracking-wider transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
           >
-            Save Printer
+            <RefreshCw className={`h-4 w-4 ${scanning ? "animate-spin" : ""}`} />
+            {scanning ? "Sweeping System..." : "Scan Installed Printers"}
           </button>
-        </form>
-
-        {/* List */}
-        <div className="md:col-span-2 space-y-3">
-          <h4 className="font-bold">Configured Hardware</h4>
-          <div className="space-y-2">
-            {printers.length === 0 ? (
-              <p className="text-muted-foreground text-center py-6 bg-background border rounded-2xl">No printers configured.</p>
-            ) : (
-              printers.map(p => (
-                <div key={p.id} className="p-3 bg-background border rounded-xl flex justify-between items-center">
-                  <div>
-                    <div className="font-bold">{p.name}</div>
-                    <div className="text-[10px] text-muted-foreground">Type: <span className="uppercase font-bold text-gold">{p.printerType}</span> | Connection: <span className="uppercase">{p.connectionType}</span></div>
-                  </div>
-                  <button
-                    onClick={() => handleDelete(p.id)}
-                    className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg border"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={handleSaveConfiguration}
+            disabled={saving || (!counterPrinter && !kitchenPrinter)}
+            className="flex-1 bg-brown-gradient hover:opacity-95 text-cream py-3 rounded-xl font-bold uppercase tracking-wider shadow-md transition-all disabled:opacity-50 cursor-pointer"
+          >
+            {saving ? "Saving..." : "Save Configuration"}
+          </button>
         </div>
       </div>
     </div>
