@@ -110,12 +110,12 @@ function AdminLayout() {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen bg-background">
+    <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-background">
       
       {/* Sidebar for authenticated routes */}
       {!isLoginPage && (
         <aside 
-          className={`border-b lg:border-b-0 lg:border-r border-border/60 bg-card p-4 lg:p-6 flex flex-col shrink-0 transition-all duration-300 ${
+          className={`border-b lg:border-b-0 lg:border-r border-border/60 bg-card p-4 lg:p-6 flex flex-col shrink-0 lg:h-screen lg:overflow-y-auto no-scrollbar transition-all duration-300 ${
             sidebarCollapsed ? "w-full lg:w-20" : "w-full lg:w-64"
           }`}
         >
@@ -133,7 +133,7 @@ function AdminLayout() {
             </button>
           </div>
           
-          <nav className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible pb-2 lg:pb-0 no-scrollbar">
+          <nav className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-y-auto no-scrollbar pb-2 lg:pb-0">
             {menuItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -152,7 +152,7 @@ function AdminLayout() {
             })}
           </nav>
 
-          <div className="mt-auto pt-6 hidden lg:flex flex-col gap-3">
+          <div className="mt-auto pt-6 hidden lg:flex flex-col gap-3 shrink-0">
             <div className={`p-3 bg-cream/35 border border-gold/10 rounded-2xl ${sidebarCollapsed ? "items-center" : ""}`}>
               <div className="flex items-center gap-2">
                 <div className="h-7 w-7 rounded-full bg-gold-gradient flex items-center justify-center text-[10px] font-black text-brown-deep shadow-sm">
@@ -179,7 +179,7 @@ function AdminLayout() {
       )}
 
       {/* Main Container */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         
         {/* Top Navbar */}
         {!isLoginPage && (
