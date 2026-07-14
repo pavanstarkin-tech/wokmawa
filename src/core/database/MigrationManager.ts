@@ -1174,6 +1174,73 @@ export class MigrationManager {
           );
         `);
 
+        // 6. Indexes
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_print_jobs_status ON print_jobs(status);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_printer_routes_cat ON printer_routes(categoryId);");
+
+        logger.info("database", "Successfully applied Version 9 schema migrations.");
+      }
+    });
+
+    // Migration Version 10: Phase 8 - Staff Management Core (Leaves, Payroll & Photos)
+    this.migrations.push({
+      version: 10,
+      up: async (db: DatabaseAdapter) => {
+        logger.info("database", "Executing schema upgrade to Version 10 (Staff Management)...");
+
+        // 1. Alter staff table safely to add new fields
+        try { await db.execute("ALTER TABLE staff ADD COLUMN phone TEXT;"); } catch(e){}
+        try { await db.execute("ALTER TABLE staff ADD COLUMN email TEXT;"); } catch(e){}
+        try { await db.execute("ALTER TABLE staff ADD COLUMN salary REAL;"); } catch(e){}
+        try { await db.execute("ALTER TABLE staff ADD COLUMN salaryType TEXT;"); } catch(e){}
+        try { await db.execute("ALTER TABLE staff ADD COLUMN photo TEXT;"); } catch(e){}
+        try { await db.execute("ALTER TABLE staff ADD COLUMN joiningDate INTEGER;"); } catch(e){}
+
+        // 2. Alter attendance table to add format-friendly date column YYYY-MM-DD
+        try { await db.execute("ALTER TABLE attendance ADD COLUMN date TEXT;"); } catch(e){}
+
+        // 3. Create staff_leaves table
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS staff_leaves (
+            id TEXT PRIMARY KEY,
+            staffId TEXT,
+            startDate TEXT,
+            endDate TEXT,
+            reason TEXT,
+            status TEXT DEFAULT 'pending',
+            approvedBy TEXT,
+            createdAt INTEGER,
+            FOREIGN KEY(staffId) REFERENCES staff(id) ON DELETE CASCADE
+          );
+        `);
+
+        // 4. Create staff_payouts table
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS staff_payouts (
+            id TEXT PRIMARY KEY,
+            staffId TEXT,
+            month TEXT,
+            baseSalary REAL,
+            deductions REAL DEFAULT 0,
+            netSalary REAL,
+            paymentStatus TEXT DEFAULT 'pending',
+            paymentMode TEXT,
+            paidAt INTEGER,
+            notes TEXT,
+            FOREIGN KEY(staffId) REFERENCES staff(id) ON DELETE CASCADE
+          );
+        `);
+
+        // 5. Create Indexes
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(date);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_staff_leaves_staff ON staff_leaves(staffId);");
+        await db.execute("CREATE INDEX IF NOT EXISTS idx_staff_payouts_staff ON staff_payouts(staffId);");
+
+        logger.info("database", "Successfully applied Version 10 schema migrations.");
+      }
+    });
+  }
+
   /**
    * Run all pending migrations
    */
