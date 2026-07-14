@@ -1,4 +1,4 @@
-export type ConnectionType = "lan" | "usb" | "bluetooth" | "mock";
+export type ConnectionType = "lan" | "usb" | "bluetooth" | "mock" | "os";
 export type PrinterRole = "billing" | "kitchen" | "bar";
 export type PaperWidth = "58mm" | "80mm";
 
