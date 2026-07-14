@@ -199,6 +199,7 @@ export function PrinterWizard({ onSave, onClose }: PrinterWizardProps) {
       
       const printerAPI = (window as any).printerAPI;
       if (printerAPI && connection === "lan" && selectedIp) {
+        // Electron native TCP path
         const response = await printerAPI.printNetwork(selectedIp, selectedPort, bytes);
         if (response.success) {
           setTestResultSuccess(true);
@@ -208,11 +209,27 @@ export function PrinterWizard({ onSave, onClose }: PrinterWizardProps) {
           setStatusMsg({ type: "error", text: `Test print failed: ${response.error || "Driver error"}` });
         }
       } else {
-        // Mock print confirmation
-        setTimeout(() => {
-          setTestResultSuccess(true);
-          setStatusMsg({ type: "success", text: "[BROWSER MOCK] Test print job simulated successfully!" });
-        }, 1200);
+        // Browser environment — relay to Python ESC/POS emulator at 127.0.0.1:9100
+        const targetIp = (connection === "lan" && selectedIp) ? selectedIp : "127.0.0.1";
+        const targetPort = (connection === "lan" && selectedPort) ? selectedPort : 9100;
+        try {
+          const relayResponse = await fetch("/api/print-relay", {
+            method: "POST",
+            headers: { "Content-Type": "application/octet-stream" },
+            body: bytes
+          });
+          if (relayResponse.ok) {
+            setTestResultSuccess(true);
+            setStatusMsg({ type: "success", text: `✓ Test print relayed to ESC/POS emulator at ${targetIp}:${targetPort}. Check Downloads/receipts/` });
+          } else {
+            const err = await relayResponse.json().catch(() => ({ error: `HTTP ${relayResponse.status}` }));
+            setTestResultSuccess(false);
+            setStatusMsg({ type: "error", text: `Emulator relay failed: ${err.error}. Is python escpos_emulator.py running?` });
+          }
+        } catch (relayErr: any) {
+          setTestResultSuccess(false);
+          setStatusMsg({ type: "error", text: `Could not reach emulator: ${relayErr.message}. Run python escpos_emulator.py first.` });
+        }
       }
     } catch (err: any) {
       setTestResultSuccess(false);
