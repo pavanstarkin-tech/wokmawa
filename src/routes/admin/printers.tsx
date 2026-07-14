@@ -6,6 +6,8 @@ import {
   HelpCircle, ShieldAlert, Cpu
 } from "lucide-react";
 import { printerRepository } from "../../modules/printer/repository/PrinterRepository";
+import { printerRepository as sqlitePrinterRepo } from "@/modules/printing/repositories/PrinterRepository";
+import dbService from "@/core/database/DatabaseService";
 import { printerQueue } from "../../modules/printer/services/PrinterQueue";
 import { printerMonitor } from "../../modules/printer/services/PrinterMonitor";
 import { printerDiscovery } from "../../modules/printer/services/PrinterDiscovery";
