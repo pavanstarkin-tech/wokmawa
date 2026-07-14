@@ -809,6 +809,37 @@ function PrintersConfigTab({ setStatusMsg }: any) {
         ...form,
         status: "online"
       });
+
+      // Sync to localDb repository (used by POS billing, live orders, KOT routing)
+      localPrinterRepo.savePrinter({
+        id: form.id,
+        name: form.name,
+        type: form.connectionType,
+        ip: form.ipAddress || undefined,
+        port: form.port || undefined,
+        role: form.printerType,
+        enabled: true,
+        status: "online",
+        profile: {
+          paperWidth: `${form.paperWidth}mm`,
+          charactersPerLine: form.paperWidth === 58 ? 32 : 48,
+          font: "A",
+          density: 8,
+          cutType: "full",
+          logoEnabled: false,
+          marginTop: 0,
+          marginBottom: 0,
+          capabilities: {
+            supportsQR: form.printerType === "billing",
+            supportsImage: true,
+            supportsBarcode: form.printerType === "billing",
+            supportsCut: true,
+            supportsCashDrawer: form.printerType === "billing"
+          }
+        },
+        uptimeStats: { totalJobs: 0, failedJobs: 0, uptimePercentage: 100 }
+      });
+
       setStatusMsg({ type: "success", text: `Printer ${form.name} saved successfully.` });
       setForm({
         id: "",
@@ -831,6 +862,10 @@ function PrintersConfigTab({ setStatusMsg }: any) {
     try {
       await dbService.initialize();
       await printerRepository.deletePrinter(id);
+      
+      // Sync deletion to localDb repository
+      localPrinterRepo.deletePrinter(id);
+
       setStatusMsg({ type: "success", text: "Printer configurations deleted." });
       await loadPrinters();
     } catch (err: any) {
