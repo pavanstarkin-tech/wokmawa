@@ -16,7 +16,6 @@ export default defineConfig({
     preset: "node-server"
   },
   vite: {
-    base: "./",
     server: {
       port: 8081,
       strictPort: true,
