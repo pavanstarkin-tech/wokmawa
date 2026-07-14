@@ -294,8 +294,7 @@ function AdminTables() {
           <div className="space-y-8">
             {Object.entries(groupedTables).map(([baseKey, groupList]) => (
               <div key={baseKey} className="border border-border/50 bg-[#FDF8F0]/30 rounded-3xl p-6 space-y-4">
-                <h3 className="text-xs font-black text-brown-deep uppercase tracking-wider">Table Group: {baseKey}</h3>
-                <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(${groupList.length}, minmax(0, 1fr))` }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                   {groupList.map((table) => (
                     <div
                       key={table.id}
