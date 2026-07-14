@@ -217,7 +217,7 @@ ipcMain.handle("export-printer-diagnostics", async (event, { diagnosticsData }) 
 });
 
 // --- Phase 3 SQLite database operations ---
-const dbAdapter = require("./BetterSQLiteAdapter");
+const dbAdapter = require("./BetterSQLiteAdapter.cjs");
 
 try {
   dbAdapter.initialize();
