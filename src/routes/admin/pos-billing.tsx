@@ -282,6 +282,7 @@ function PosBillingPage() {
       });
 
       // 5. Trigger hardware print receipts
+      const settings = localDb.getSettings();
       const printReceiptData = {
         billNumber: bill.billNumber,
         tableId: bill.tableId,
@@ -293,9 +294,10 @@ function PosBillingPage() {
         tax: bill.tax,
         grandTotal: bill.grandTotal,
         cashierName: bill.cashierName,
-        branchName: "Paakashala Main",
-        branchAddress: "Jayanagar 4th Block, Bengaluru",
-        branchPhone: "918639122823",
+        branchName: settings.restaurant?.name || "Paakashala Main",
+        branchAddress: settings.restaurant?.address || "Jayanagar 4th Block, Bengaluru",
+        branchPhone: settings.restaurant?.phone || "918639122823",
+        logoPath: settings.restaurant?.logoUrl || undefined,
         upiId: paymentType === "upi" ? "paakashala@ybl" : undefined
       };
       
