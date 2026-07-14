@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, Plus, Minus, Trash2, Ticket, CheckCircle2, User, Table, CreditCard, Wallet, Smartphone, ShieldCheck } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { ref, onValue } from "firebase/database";
 import { MENU, CATEGORIES, MenuItem } from "@/lib/paakashala-menu";
 import { useOffers } from "@/lib/promotions";
 import { CartItem } from "@/lib/paakashala-store";
