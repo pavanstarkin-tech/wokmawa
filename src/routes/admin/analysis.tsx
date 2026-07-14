@@ -39,6 +39,12 @@ function AdminAnalysis() {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>("daily");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted on client load
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Load all historical orders from Firebase Realtime Database
   useEffect(() => {
@@ -60,7 +66,9 @@ function AdminAnalysis() {
   const filteredOrders = useMemo(() => {
     const now = new Date();
     return orders.filter(order => {
+      if (!order.createdAt) return false;
       const orderDate = new Date(order.createdAt);
+      if (isNaN(orderDate.getTime())) return false;
       
       // Status filter
       if (statusFilter !== "all" && order.status !== statusFilter) return false;
