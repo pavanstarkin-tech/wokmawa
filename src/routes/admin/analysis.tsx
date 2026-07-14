@@ -642,10 +642,12 @@ function AdminAnalysis() {
                 ) : (
                   filteredOrders.map((o) => (
                     <tr key={o.id} className="hover:bg-muted/10">
-                      <td className="p-3 font-mono text-[10px] text-muted-foreground">#{o.id.substring(0, 8)}</td>
-                      <td className="p-3">Table {o.tableId}</td>
+                      <td className="p-3 font-mono text-[10px] text-muted-foreground">#{(o.id || "").substring(0, 8)}</td>
+                      <td className="p-3">Table {o.tableId || "N/A"}</td>
                       <td className="p-3 text-muted-foreground">{o.customerName || "Walk-in Guest"}</td>
-                      <td className="p-3 font-mono text-[10px] text-slate-500">{new Date(o.createdAt).toLocaleDateString("en-IN")}</td>
+                      <td className="p-3 font-mono text-[10px] text-slate-500">
+                        {o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-IN") : "N/A"}
+                      </td>
                       <td className="p-3">
                         <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase border ${
                           o.status === "paid" 
@@ -654,10 +656,10 @@ function AdminAnalysis() {
                             ? "bg-red-50 border-red-200/50 text-red-600"
                             : "bg-amber-50 border-amber-200/50 text-amber-700"
                         }`}>
-                          {o.status}
+                          {o.status || "pending"}
                         </span>
                       </td>
-                      <td className="p-3 text-right text-brown-deep font-black">₹{o.total.toLocaleString("en-IN")}</td>
+                      <td className="p-3 text-right text-brown-deep font-black">₹{(o.total || 0).toLocaleString("en-IN")}</td>
                     </tr>
                   ))
                 )}
