@@ -31,6 +31,7 @@ import { Route as AdminErpRouteImport } from './routes/admin/erp'
 import { Route as AdminDevicesRouteImport } from './routes/admin/devices'
 import { Route as AdminDatabaseRouteImport } from './routes/admin/database'
 import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
+import { Route as AdminAnalysisRouteImport } from './routes/admin/analysis'
 
 const OrdersRoute = OrdersRouteImport.update({
   id: '/orders',
@@ -142,6 +143,11 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAnalysisRoute = AdminAnalysisRouteImport.update({
+  id: '/analysis',
+  path: '/analysis',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/image-picker': typeof ImagePickerRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
+  '/admin/analysis': typeof AdminAnalysisRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/database': typeof AdminDatabaseRoute
   '/admin/devices': typeof AdminDevicesRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/image-picker': typeof ImagePickerRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
+  '/admin/analysis': typeof AdminAnalysisRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/database': typeof AdminDatabaseRoute
   '/admin/devices': typeof AdminDevicesRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/image-picker': typeof ImagePickerRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
+  '/admin/analysis': typeof AdminAnalysisRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/database': typeof AdminDatabaseRoute
   '/admin/devices': typeof AdminDevicesRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/image-picker'
     | '/menu'
     | '/orders'
+    | '/admin/analysis'
     | '/admin/dashboard'
     | '/admin/database'
     | '/admin/devices'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/image-picker'
     | '/menu'
     | '/orders'
+    | '/admin/analysis'
     | '/admin/dashboard'
     | '/admin/database'
     | '/admin/devices'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/image-picker'
     | '/menu'
     | '/orders'
+    | '/admin/analysis'
     | '/admin/dashboard'
     | '/admin/database'
     | '/admin/devices'
@@ -457,10 +469,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminDashboardRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/analysis': {
+      id: '/admin/analysis'
+      path: '/analysis'
+      fullPath: '/admin/analysis'
+      preLoaderRoute: typeof AdminAnalysisRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminAnalysisRoute: typeof AdminAnalysisRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminDatabaseRoute: typeof AdminDatabaseRoute
   AdminDevicesRoute: typeof AdminDevicesRoute
@@ -479,6 +499,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAnalysisRoute: AdminAnalysisRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminDatabaseRoute: AdminDatabaseRoute,
   AdminDevicesRoute: AdminDevicesRoute,
