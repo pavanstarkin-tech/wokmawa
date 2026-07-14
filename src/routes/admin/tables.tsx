@@ -291,78 +291,72 @@ function AdminTables() {
             No tables yet. Add your first table above!
           </div>
         ) : (
-          <div className="space-y-8">
-            {Object.entries(groupedTables).map(([baseKey, groupList]) => (
-              <div key={baseKey} className="border border-border/50 bg-[#FDF8F0]/30 rounded-3xl p-6 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                  {groupList.map((table) => (
-                    <div
-                      key={table.id}
-                      className={`bg-card rounded-3xl border shadow-sm overflow-hidden flex flex-col transition-all ${
-                        table.active ? "border-border/60" : "border-border/30 opacity-60"
-                      }`}
-                    >
-                      {/* QR Code */}
-                      <div className="p-5 flex items-center justify-center bg-[#FDF8F0]">
-                        {qrDataUrls[table.id] ? (
-                          <img
-                            src={qrDataUrls[table.id]}
-                            alt={`QR for ${table.name}`}
-                            className="max-h-48 h-auto w-auto rounded-xl object-contain"
-                          />
-                        ) : (
-                          <div className="w-full aspect-square bg-muted/30 rounded-xl flex items-center justify-center">
-                            <div className="h-6 w-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Info */}
-                      <div className="px-4 pb-4 flex flex-col gap-3">
-                        <div className="text-center pt-2">
-                          <h3 className="font-black text-brown-deep text-base">Table {table.name}</h3>
-                          <p className="text-[10px] text-muted-foreground font-mono truncate">/t/{table.id}</p>
-                        </div>
-
-                        {/* Status Toggle */}
-                        <button
-                          onClick={() => toggleActive(table)}
-                          className={`flex items-center justify-center gap-2 text-[10px] font-bold px-3 py-1.5 rounded-xl border transition-colors ${
-                            table.active
-                              ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                              : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-                          }`}
-                        >
-                          {table.active ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
-                          {table.active ? "Active" : "Inactive"}
-                        </button>
-
-                        {/* Actions */}
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => printQR(table)}
-                            className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl bg-muted/30 hover:bg-muted/60 text-[10px] font-bold text-brown-deep transition-colors"
-                          >
-                            <Printer className="h-3.5 w-3.5" />
-                            Print
-                          </button>
-                          <button
-                            onClick={() => downloadQR(table)}
-                            className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl bg-muted/30 hover:bg-muted/60 text-[10px] font-bold text-brown-deep transition-colors"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                            Save
-                          </button>
-                          <button
-                            onClick={() => deleteTable(table.id)}
-                            className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 transition-colors"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+            {tables.map((table) => (
+              <div
+                key={table.id}
+                className={`bg-card rounded-3xl border shadow-sm overflow-hidden flex flex-col transition-all ${
+                  table.active ? "border-border/60" : "border-border/30 opacity-60"
+                }`}
+              >
+                {/* QR Code */}
+                <div className="p-5 flex items-center justify-center bg-[#FDF8F0]">
+                  {qrDataUrls[table.id] ? (
+                    <img
+                      src={qrDataUrls[table.id]}
+                      alt={`QR for ${table.name}`}
+                      className="max-h-48 h-auto w-auto rounded-xl object-contain"
+                    />
+                  ) : (
+                    <div className="w-full aspect-square bg-muted/30 rounded-xl flex items-center justify-center">
+                      <div className="h-6 w-6 border-2 border-gold border-t-transparent rounded-full animate-spin" />
                     </div>
-                  ))}
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="px-4 pb-4 flex flex-col gap-3">
+                  <div className="text-center pt-2">
+                    <h3 className="font-black text-brown-deep text-base">Table {table.name}</h3>
+                    <p className="text-[10px] text-muted-foreground font-mono truncate">/t/{table.id}</p>
+                  </div>
+
+                  {/* Status Toggle */}
+                  <button
+                    onClick={() => toggleActive(table)}
+                    className={`flex items-center justify-center gap-2 text-[10px] font-bold px-3 py-1.5 rounded-xl border transition-colors ${
+                      table.active
+                        ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                        : "bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                    }`}
+                  >
+                    {table.active ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+                    {table.active ? "Active" : "Inactive"}
+                  </button>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => printQR(table)}
+                      className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl bg-muted/30 hover:bg-muted/60 text-[10px] font-bold text-brown-deep transition-colors"
+                    >
+                      <Printer className="h-3.5 w-3.5" />
+                      Print
+                    </button>
+                    <button
+                      onClick={() => downloadQR(table)}
+                      className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl bg-muted/30 hover:bg-muted/60 text-[10px] font-bold text-brown-deep transition-colors"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Save
+                    </button>
+                    <button
+                      onClick={() => deleteTable(table.id)}
+                      className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-500 transition-colors"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
