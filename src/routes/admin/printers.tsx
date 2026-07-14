@@ -102,17 +102,32 @@ function PrinterManagementPage() {
   const handleDeletePrinter = async (id: string) => {
     setStatusMsg(null);
     try {
-      await dbService.initialize();
-      await sqlitePrinterRepo.deletePrinter(id);
       printerRepository.deletePrinter(id);
       loadPrintersData();
       setStatusMsg({ type: "success", text: "Printer configuration removed." });
     } catch (err: any) {
-      setStatusMsg({ type: "error", text: `Failed deleting printer config: ${err.message}` });
+      console.warn("Failed deleting printer config from local storage:", err);
+    }
+
+    try {
+      await dbService.initialize();
+      await sqlitePrinterRepo.deletePrinter(id);
+    } catch (err: any) {
+      console.warn("SQLite database delete failed (WASM loading or offline):", err.message);
     }
   };
 
   const handleTogglePrinter = async (config: PrinterConfig) => {
+    try {
+      printerRepository.savePrinter({
+        ...config,
+        enabled: !config.enabled
+      });
+      loadPrintersData();
+    } catch (err: any) {
+      console.warn("Failed saving printer toggle locally:", err);
+    }
+
     try {
       await dbService.initialize();
       await sqlitePrinterRepo.savePrinter({
@@ -127,17 +142,21 @@ function PrinterManagementPage() {
         isDefault: !config.enabled ? 1 : 0,
         status: config.status
       });
-      printerRepository.savePrinter({
-        ...config,
-        enabled: !config.enabled
-      });
-      loadPrintersData();
     } catch (err: any) {
-      console.error("Failed syncing toggle to SQLite:", err);
+      console.warn("SQLite database toggle sync failed:", err.message);
     }
   };
 
   const handleSaveWizard = async (config: PrinterConfig) => {
+    try {
+      printerRepository.savePrinter(config);
+      setShowWizard(false);
+      loadPrintersData();
+      setStatusMsg({ type: "success", text: `Printer "${config.name}" configured and saved.` });
+    } catch (err: any) {
+      console.warn("Failed saving printer config locally:", err);
+    }
+
     try {
       await dbService.initialize();
       await sqlitePrinterRepo.savePrinter({
@@ -152,12 +171,8 @@ function PrinterManagementPage() {
         isDefault: config.enabled ? 1 : 0,
         status: config.status
       });
-      printerRepository.savePrinter(config);
-      setShowWizard(false);
-      loadPrintersData();
-      setStatusMsg({ type: "success", text: `Printer "${config.name}" configured and saved.` });
     } catch (err: any) {
-      setStatusMsg({ type: "error", text: `Failed syncing printer wizard config to SQLite: ${err.message}` });
+      console.warn("SQLite database wizard sync failed:", err.message);
     }
   };
 
