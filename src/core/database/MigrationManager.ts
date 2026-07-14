@@ -1174,7 +1174,9 @@ export class MigrationManager {
           );
         `);
 
-
+        logger.info("database", "Successfully applied Version 9 schema migrations.");
+      }
+    });
 
   /**
    * Run all pending migrations
