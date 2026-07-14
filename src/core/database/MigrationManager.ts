@@ -1263,6 +1263,37 @@ export class MigrationManager {
         logger.info("database", "Successfully applied Version 10 schema migrations.");
       }
     });
+
+    // Migration Version 11: Fix cashSessions table legacy rename anomaly
+    this.migrations.push({
+      version: 11,
+      up: async (db: DatabaseAdapter) => {
+        logger.info("database", "Executing schema upgrade to Version 11 (Legacy Cash Session Fix)...");
+        await db.execute(`
+          CREATE TABLE IF NOT EXISTS cashSessions (
+            id TEXT PRIMARY KEY,
+            shiftId TEXT,
+            cashierName TEXT,
+            openedAt INTEGER,
+            closedAt INTEGER,
+            openingBalance REAL,
+            expectedBalance REAL,
+            actualBalance REAL,
+            discrepancy REAL,
+            status TEXT,
+            salesCash REAL DEFAULT 0,
+            salesCard REAL DEFAULT 0,
+            salesUpi REAL DEFAULT 0,
+            salesRazorpay REAL DEFAULT 0,
+            syncStatus TEXT DEFAULT 'pending',
+            branchId TEXT,
+            createdBy TEXT,
+            updatedBy TEXT
+          );
+        `);
+        logger.info("database", "Successfully applied Version 11 schema migrations.");
+      }
+    });
   }
 
   /**
