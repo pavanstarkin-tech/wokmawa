@@ -393,6 +393,11 @@ function PosBillingPage() {
                   }`}>
                     {item.type}
                   </div>
+                  {item.quantity !== undefined && (
+                    <div className="absolute top-2 right-2 rounded-lg bg-yellow-400 border border-amber-600/40 px-2 py-1 text-[11px] font-black text-black shadow-md">
+                      Qty: {item.quantity}
+                    </div>
+                  )}
                 </div>
                 <div className="min-w-0">
                   <h4 className="truncate text-xs font-semibold text-brown-deep">{item.name}</h4>
@@ -400,9 +405,6 @@ function PosBillingPage() {
                     <span className="text-xs font-bold text-gold">₹{item.price || 99}</span>
                     <div className="flex flex-col items-end text-[9px] font-bold">
                       <span className="text-muted-foreground uppercase">{item.category}</span>
-                      {item.quantity !== undefined && (
-                        <span className="bg-gold/15 text-gold px-1 rounded mt-0.5">Qty: {item.quantity}</span>
-                      )}
                     </div>
                   </div>
                 </div>
