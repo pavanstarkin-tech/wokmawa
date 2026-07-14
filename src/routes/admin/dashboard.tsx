@@ -41,6 +41,21 @@ function AdminDashboard() {
   const [firebaseConnected, setFirebaseConnected] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
 
+  const [tables, setTables] = useState<any[]>([]);
+  const [activeTables, setActiveTables] = useState<Set<string>>(new Set());
+
+  // Group tables by their base identifier (e.g. "1" for "1a", "1b", "1")
+  const groupedTables = useMemo(() => {
+    const groups: Record<string, any[]> = {};
+    tables.forEach(table => {
+      const match = table.name.match(/^(\d+|[a-zA-Z]+\d+)/);
+      const baseKey = match ? match[1] : table.name;
+      if (!groups[baseKey]) groups[baseKey] = [];
+      groups[baseKey].push(table);
+    });
+    return groups;
+  }, [tables]);
+
   useEffect(() => {
     // 1. Check local printer configurations
     const prs = printerManager.getPrinters();
