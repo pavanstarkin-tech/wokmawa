@@ -4,6 +4,7 @@ import { syncEngine } from "../sync/SyncEngine";
 import { printerQueue } from "@/modules/printer/services/PrinterQueue";
 import sessionManager from "@/services/session/SessionManager";
 import { consumptionEngine } from "../../modules/recipes/services/ConsumptionEngine";
+import logger from "@/services/logger/Logger";
 
 export class RecoveryManager {
   private recovered = false;
