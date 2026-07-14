@@ -26,6 +26,11 @@ import { PerformanceValidation } from "@/modules/validation/PerformanceValidatio
 import { InstallerValidation } from "@/modules/validation/InstallerValidation";
 import { printerRepository, PrinterRegistry } from "@/modules/printing/repositories/PrinterRepository";
 import { printerRepository as localPrinterRepo } from "@/modules/printer/repository/PrinterRepository";
+import { printerQueue } from "@/modules/printer/services/PrinterQueue";
+import { receiptRenderer } from "@/modules/printer/services/ReceiptRenderer";
+import { testDocument } from "@/modules/printer/templates/TestDocument";
+import { kotDocument } from "@/modules/printer/templates/KOTDocument";
+import { settingsRepository } from "@/modules/database/repositories/SettingsRepository";
 import dbService from "@/core/database/DatabaseService";
 
 export const Route = createFileRoute("/admin/settings")({
