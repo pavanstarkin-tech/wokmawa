@@ -21,17 +21,73 @@ export const Route = createFileRoute("/admin/pos-billing")({
 
 function PosBillingPage() {
   const navigate = useNavigate();
-  const menuItems = MENU;
   const { offers } = useOffers();
 
   // State
-  const [selectedCategory, setSelectedCategory] = useState<string>(CATEGORIES[0]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedTable, setSelectedTable] = useState("");
   const [tables, setTables] = useState<any[]>([]);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+
+  useEffect(() => {
+    const menuRef = ref(db, "restaurant/menu");
+    const unsubMenu = onValue(menuRef, (snapshot) => {
+      const data = snapshot.val();
+      if (!data) {
+        setMenuItems([]);
+        setCategories([]);
+        return;
+      }
+      
+      const itemsList: MenuItem[] = [];
+      const catsSet = new Set<string>();
+
+      for (const type of ["veg", "nonVeg"]) {
+        if (data[type]) {
+          for (const catName of Object.keys(data[type])) {
+            const productsStr = data[type][catName]?.productsJson;
+            if (productsStr) {
+              try {
+                const products = JSON.parse(productsStr);
+                products.forEach((p: any) => {
+                  if (p.available !== false) {
+                    catsSet.add(catName);
+                    itemsList.push({
+                      id: p.id,
+                      name: p.name,
+                      category: catName,
+                      price: p.price,
+                      mrp: p.mrp,
+                      quantity: p.quantity,
+                      type: p.veg ? "veg" : "non-veg",
+                      image: p.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=70",
+                    });
+                  }
+                });
+              } catch (e) {
+                console.error("Failed parsing menu item category", catName, e);
+              }
+            }
+          }
+        }
+      }
+
+      setMenuItems(itemsList);
+      const sortedCats = Array.from(catsSet).sort();
+      setCategories(sortedCats);
+      setSelectedCategory((prev) => {
+        if (sortedCats.includes(prev)) return prev;
+        return sortedCats[0] || "";
+      });
+    });
+
+    return () => unsubMenu();
+  }, []);
 
   useEffect(() => {
     const tablesRef = ref(db, "restaurant/tables");
