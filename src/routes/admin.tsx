@@ -67,7 +67,7 @@ function AdminLayout() {
     };
   }, []);
 
-  // Listen to new orders for popup notifications
+  // Listen to new orders for popup notifications & automatic ESC/POS printing
   useEffect(() => {
     if (!isAuthenticated) return;
     const ordersRef = ref(db, "restaurant/orders");
@@ -78,14 +78,51 @@ function AdminLayout() {
         if (order && order.createdAt) {
           const orderTime = new Date(order.createdAt).getTime();
           if (orderTime > lastOrderTime) {
-            setNewOrderPopup({ id: child.key, ...order });
-            setLastOrderTime(orderTime);
+            const orderId = child.key || order.id;
+
+            if (orderId && !processedOrderIds.has(orderId)) {
+              processedOrderIds.add(orderId);
+              setNewOrderPopup({ id: orderId, ...order });
+              setLastOrderTime(orderTime);
+
+              // Auto-print incoming Customer QR orders (they don't carry cashierName)
+              if (!order.cashierName) {
+                console.log(`[AutoPrint] Generating automated print jobs for new customer order: ${orderId}`);
+                
+                // 1. Dispatch Kitchen Copy (KOT)
+                printerManager.printKOT({
+                  kotNumber: `KOT-${orderId}`,
+                  tableId: order.tableId || "T1",
+                  orderType: "dine-in",
+                  items: order.items || [],
+                  instructions: order.notes || ""
+                });
+
+                // 2. Dispatch Customer Receipt Copy (Counter Bill)
+                printerManager.printReceipt({
+                  billNumber: `PK-${orderId}`,
+                  tableId: order.tableId || "T1",
+                  customerName: order.customerName || "Dine-in Guest",
+                  customerPhone: order.mobile || "",
+                  items: (order.items || []).map((i: any) => ({
+                    name: i.name,
+                    quantity: i.quantity,
+                    price: i.price || 0
+                  })),
+                  subtotal: order.subtotal || 0,
+                  discount: order.discount || 0,
+                  tax: order.tax || 0,
+                  grandTotal: order.total || 0,
+                  cashierName: "QR Auto-Print"
+                });
+              }
+            }
           }
         }
       });
     });
     return () => unsub();
-  }, [isAuthenticated, lastOrderTime]);
+  }, [isAuthenticated, lastOrderTime, processedOrderIds]);
 
   if (loading) {
     return (
