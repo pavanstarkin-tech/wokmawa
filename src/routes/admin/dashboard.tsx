@@ -77,9 +77,16 @@ function AdminDashboard() {
     const tablesRef = ref(db, "restaurant/tables");
     const unsubTables = onValue(tablesRef, (snapshot) => {
       let activeCount = 0;
+      const fetched: any[] = [];
       snapshot.forEach((child) => {
-        if (child.val().active) activeCount++;
+        const val = child.val();
+        if (val && val.active !== false) {
+          activeCount++;
+          fetched.push({ id: child.key, ...val });
+        }
       });
+      fetched.sort((a, b) => a.createdAt - b.createdAt);
+      setTables(fetched);
       setMetrics((m) => ({ ...m, totalTables: activeCount }));
     });
 
@@ -95,6 +102,7 @@ function AdminDashboard() {
       let itemsSold = 0;
       let pendingBills = 0;
       let orderCount = 0;
+      const occupied = new Set<string>();
       const itemCounts: Record<string, number> = {};
       const hourlySales: Record<string, number> = {
         "12:00": 0,
@@ -112,9 +120,11 @@ function AdminDashboard() {
         // Active/KDS tickets
         if (order.status === "pending" || order.status === "preparing") {
           activeOrders++;
+          if (order.tableId) occupied.add(order.tableId);
         }
         if (order.status === "ready") {
           pendingBills++;
+          if (order.tableId) occupied.add(order.tableId);
         }
 
         // Revenue calculations
@@ -140,6 +150,8 @@ function AdminDashboard() {
           hourlySales[bucket] = (hourlySales[bucket] || 0) + (order.total || 0);
         }
       });
+
+      setActiveTables(occupied);
 
       const avg = orderCount > 0 ? Math.round((revenue / orderCount) * 100) / 100 : 0;
       const sortedItems = Object.entries(itemCounts)
