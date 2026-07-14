@@ -33,6 +33,7 @@ function AdminLayout() {
   ]);
   const [newOrderPopup, setNewOrderPopup] = useState<any>(null);
   const [lastOrderTime, setLastOrderTime] = useState(Date.now());
+  const [processedOrderIds] = useState(() => new Set<string>());
 
   const isLoginPage = location.pathname === "/admin/login";
   const cashierName = sessionManager.getActiveShift()?.cashierName || "Head Cashier";
