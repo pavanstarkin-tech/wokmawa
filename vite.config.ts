@@ -16,7 +16,10 @@ export default defineConfig({
     preset: "node-server"
   },
   vite: {
+    base: "./",
     server: {
+      port: 8081,
+      strictPort: true,
       proxy: {
         // In dev, proxy /api/create-order.php → Razorpay and inject auth header
         // In prod, Hostinger runs the real PHP file which adds auth itself
