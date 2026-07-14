@@ -7,7 +7,68 @@ export class PrinterRepository {
    * Fetch all configured printers.
    */
   public getPrinters(): PrinterConfig[] {
-    return localDb.getTable("printers") || [];
+    const settings = localDb.getSettings() || {};
+    const list: PrinterConfig[] = [];
+
+    if (settings.counterPrinter) {
+      list.push({
+        id: "counter-printer-id",
+        name: settings.counterPrinter,
+        type: "os" as any,
+        role: "billing",
+        enabled: true,
+        status: "online",
+        profile: {
+          paperWidth: "80mm",
+          charactersPerLine: 48,
+          font: "A",
+          density: 8,
+          cutType: "full",
+          logoEnabled: true,
+          marginTop: 0,
+          marginBottom: 0,
+          capabilities: {
+            supportsQR: true,
+            supportsImage: true,
+            supportsBarcode: true,
+            supportsCut: true,
+            supportsCashDrawer: true
+          }
+        },
+        uptimeStats: { totalJobs: 0, failedJobs: 0, uptimePercentage: 100 }
+      });
+    }
+
+    if (settings.kitchenPrinter) {
+      list.push({
+        id: "kitchen-printer-id",
+        name: settings.kitchenPrinter,
+        type: "os" as any,
+        role: "kitchen",
+        enabled: true,
+        status: "online",
+        profile: {
+          paperWidth: "80mm",
+          charactersPerLine: 48,
+          font: "A",
+          density: 8,
+          cutType: "full",
+          logoEnabled: false,
+          marginTop: 0,
+          marginBottom: 0,
+          capabilities: {
+            supportsQR: false,
+            supportsImage: false,
+            supportsBarcode: false,
+            supportsCut: true,
+            supportsCashDrawer: false
+          }
+        },
+        uptimeStats: { totalJobs: 0, failedJobs: 0, uptimePercentage: 100 }
+      });
+    }
+
+    return list;
   }
 
   private seedDefaults(): PrinterConfig[] {
