@@ -209,6 +209,50 @@ function AdminDashboard() {
           </button>
         </div>
       </div>
+
+      {/* Live Clustered Tables Monitor */}
+      {tables.length > 0 && (
+        <div className="bg-card border border-border/60 rounded-3xl p-5 shadow-sm space-y-3.5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-black text-brown-deep uppercase tracking-wider">Live Tables Monitor</h3>
+            <span className="text-[10px] text-muted-foreground font-semibold">
+              {activeTables.size} / {tables.length} Occupied
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+            {Object.entries(groupedTables).map(([baseKey, groupList]) => (
+              <div 
+                key={baseKey} 
+                className="bg-background border border-border/40 rounded-2xl p-2.5 flex flex-col gap-2 justify-between"
+              >
+                <span className="text-[10px] font-black text-brown-deep tracking-wider border-b pb-1">Cluster {baseKey}</span>
+                <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${groupList.length}, minmax(0, 1fr))` }}>
+                  {groupList.map((table) => {
+                    const isOccupied = activeTables.has(table.id);
+                    return (
+                      <div
+                        key={table.id}
+                        className={`rounded-xl py-2 px-1 text-center flex flex-col items-center justify-center transition-all ${
+                          isOccupied
+                            ? "bg-red-500/10 text-red-600 border border-red-200/50 shadow-sm animate-pulse-slow"
+                            : "bg-green-500/10 text-green-700 border border-green-200/40"
+                        }`}
+                        title={isOccupied ? "Occupied (Cooking / Billing)" : "Available / Clean"}
+                      >
+                        <span className="text-xs font-black">{table.name}</span>
+                        <span className="text-[8px] font-bold uppercase mt-0.5 tracking-wider">
+                          {isOccupied ? "Occupied" : "Free"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       
       {/* Core KPI metrics grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
