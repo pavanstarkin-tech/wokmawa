@@ -237,15 +237,22 @@ function AdminAnalysis() {
       </tr>
     `).join("");
 
-    const orderRows = filteredOrders.slice(0, 15).map(o => `
-      <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; font-family: monospace;">#${o.id.substring(0, 8)}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">Table ${o.tableId}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${new Date(o.createdAt).toLocaleDateString("en-IN")}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold; text-transform: uppercase; color: ${o.status === "paid" ? "green" : "orange"}">${o.status}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">₹${o.total.toLocaleString("en-IN")}</td>
-      </tr>
-    `).join("");
+    const orderRows = filteredOrders.slice(0, 15).map(o => {
+      const orderId = (o.id || "").substring(0, 8);
+      const tableId = o.tableId || "N/A";
+      const dateStr = o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-IN") : "N/A";
+      const statusStr = o.status || "pending";
+      const totalStr = (o.total || 0).toLocaleString("en-IN");
+      return `
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; font-family: monospace;">#${orderId}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">Table ${tableId}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${dateStr}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold; text-transform: uppercase; color: ${statusStr === "paid" ? "green" : "orange"}">${statusStr}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right; font-weight: bold;">₹${totalStr}</td>
+        </tr>
+      `;
+    }).join("");
 
     const dateRangeStr = timeFilter === "daily" ? "Last 7 Days" : timeFilter === "weekly" ? "Last 30 Days" : timeFilter === "monthly" ? "Last 6 Months" : "All Time";
 
