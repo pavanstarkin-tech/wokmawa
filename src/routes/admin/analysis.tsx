@@ -118,7 +118,9 @@ function AdminAnalysis() {
     const groups: Record<string, { sales: number; profit: number }> = {};
 
     paid.forEach(o => {
+      if (!o.createdAt) return;
       const date = new Date(o.createdAt);
+      if (isNaN(date.getTime())) return;
       let key = "";
       if (timeFilter === "daily" || timeFilter === "all") {
         key = format(date, "dd MMM");
@@ -170,12 +172,20 @@ function AdminAnalysis() {
 
     // Find all historical orders that occurred on this specific day of the week
     const matchingDayOrders = orders.filter(o => {
-      if (o.status !== "paid") return false;
-      return new Date(o.createdAt).getDay() === tomorrowDayOfWeek;
+      if (o.status !== "paid" || !o.createdAt) return false;
+      const d = new Date(o.createdAt);
+      return !isNaN(d.getTime()) && d.getDay() === tomorrowDayOfWeek;
     });
 
     // Group dates to find how many unique matching weekdays are present in history (to compute average)
-    const uniqueDates = new Set(matchingDayOrders.map(o => format(new Date(o.createdAt), "yyyy-MM-dd")));
+    const uniqueDates = new Set(
+      matchingDayOrders
+        .map(o => {
+          const d = new Date(o.createdAt);
+          return isNaN(d.getTime()) ? "" : format(d, "yyyy-MM-dd");
+        })
+        .filter(Boolean)
+    );
     const occurrencesCount = Math.max(uniqueDates.size, 1);
 
     const itemTotals: Record<string, number> = {};
@@ -347,7 +357,7 @@ function AdminAnalysis() {
     win.document.close();
   };
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
       <div className="flex h-64 items-center justify-center bg-background rounded-3xl border border-border/60">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-gold border-t-transparent" />
