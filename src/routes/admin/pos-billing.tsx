@@ -354,7 +354,12 @@ function PosBillingPage() {
                   <h4 className="truncate text-xs font-semibold text-brown-deep">{item.name}</h4>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xs font-bold text-gold">₹{item.price || 99}</span>
-                    <span className="text-[10px] text-muted-foreground">{item.category}</span>
+                    <div className="flex flex-col items-end text-[9px] font-bold">
+                      <span className="text-muted-foreground uppercase">{item.category}</span>
+                      {item.quantity !== undefined && (
+                        <span className="bg-gold/15 text-gold px-1 rounded mt-0.5">Qty: {item.quantity}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
