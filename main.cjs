@@ -27,6 +27,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 768,
     title: "Paakashala Restaurant OS",
+    icon: path.join(__dirname, "public_html", "logo-new.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),
       contextIsolation: true,
