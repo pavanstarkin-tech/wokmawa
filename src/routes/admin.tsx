@@ -156,24 +156,34 @@ function AdminLayout() {
   ];
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-background">
+    <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-[#080808] text-white">
       
       {/* Sidebar for authenticated routes */}
       {!isLoginPage && (
         <aside 
-          className={`border-b lg:border-b-0 lg:border-r border-border/60 bg-card p-4 lg:p-6 flex flex-col shrink-0 lg:h-screen lg:overflow-y-auto no-scrollbar transition-all duration-300 ${
+          className={`border-b lg:border-b-0 lg:border-r border-[#27272A] bg-[#101010] p-4 lg:p-5 flex flex-col shrink-0 lg:h-screen lg:overflow-y-auto no-scrollbar transition-all duration-300 ${
             sidebarCollapsed ? "w-full lg:w-20" : "w-full lg:w-64"
           }`}
         >
-          <div className="flex items-center justify-between mb-4 lg:mb-10 shrink-0">
-            <div className={`flex flex-col transition-opacity duration-300 ${sidebarCollapsed ? "lg:opacity-0 lg:hidden" : ""}`}>
-              <h2 className="text-xl font-bold text-brown-deep tracking-tight">Paakashala</h2>
-              <span className="text-[10px] font-black tracking-[0.2em] text-gold uppercase mt-0.5">RESTAURANT OS</span>
+          <div className="flex items-center justify-between mb-4 lg:mb-8 shrink-0">
+            <div className={`flex items-center gap-2.5 transition-opacity duration-300 ${sidebarCollapsed ? "lg:opacity-0 lg:hidden" : ""}`}>
+              <img
+                src="/assets/logo.png"
+                alt="WOKMAWA"
+                className="h-8 w-auto object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/wokmawa/assets/logo.png';
+                }}
+              />
+              <div className="flex flex-col">
+                <h2 className="text-base font-black font-display text-white tracking-wider">WOKMAWA</h2>
+                <span className="text-[9px] font-bold tracking-[0.2em] text-[#D4AF37] uppercase -mt-0.5">RESTAURANT OS</span>
+              </div>
             </div>
             
             <button 
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="hidden lg:grid h-8 w-8 place-items-center rounded-xl bg-background hover:bg-gold/5 border border-border/60 text-muted-foreground hover:text-gold"
+              className="hidden lg:grid h-8 w-8 place-items-center rounded-xl bg-[#1A1A1A] hover:bg-[#252525] border border-[#27272A] text-[#A1A1AA] hover:text-[#D4AF37] transition-all cursor-pointer"
             >
               {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
             </button>
@@ -186,10 +196,10 @@ function AdminLayout() {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className="shrink-0 flex items-center gap-3 rounded-xl px-4 py-2.5 lg:py-3 text-xs font-bold transition-all [&.active]:bg-brown-gradient [&.active]:text-cream hover:bg-gold/5 text-brown-deep/80 hover:text-gold active:scale-98"
+                  className="shrink-0 flex items-center gap-3 rounded-xl px-3.5 py-2.5 lg:py-2.8 text-xs font-bold transition-all text-[#A1A1AA] hover:text-white hover:bg-[#1A1A1A] [&.active]:bg-gradient-to-r [&.active]:from-[#F7D360] [&.active]:via-[#E5B83B] [&.active]:to-[#D4A328] [&.active]:text-black [&.active]:shadow-[0_0_15px_rgba(212,175,55,0.3)] active:scale-98"
                   title={item.label}
                 >
-                  <Icon className="h-4.5 w-4.5 shrink-0" />
+                  <Icon className="h-4 w-4 shrink-0" />
                   <span className={`transition-opacity duration-300 ${sidebarCollapsed ? "lg:opacity-0 lg:hidden" : ""}`}>
                     {item.label}
                   </span>
@@ -199,15 +209,15 @@ function AdminLayout() {
           </nav>
 
           <div className="mt-auto pt-6 hidden lg:flex flex-col gap-3 shrink-0">
-            <div className={`p-3 bg-cream/35 border border-gold/10 rounded-2xl ${sidebarCollapsed ? "items-center" : ""}`}>
-              <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-full bg-gold-gradient flex items-center justify-center text-[10px] font-black text-brown-deep shadow-sm">
+            <div className={`p-3 bg-[#181818] border border-[#27272A] rounded-2xl ${sidebarCollapsed ? "items-center" : ""}`}>
+              <div className="flex items-center gap-2.5">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#F7D360] to-[#D4A328] flex items-center justify-center text-[11px] font-black text-black shadow-sm">
                   {cashierName.substring(0, 2).toUpperCase()}
                 </div>
                 {!sidebarCollapsed && (
                   <div className="min-w-0">
-                    <span className="block text-[10px] font-black text-brown-deep truncate">{cashierName}</span>
-                    <span className="block text-[9px] text-muted-foreground uppercase tracking-wider font-semibold">Active Cashier</span>
+                    <span className="block text-xs font-black text-white truncate">{cashierName}</span>
+                    <span className="block text-[9px] text-[#D4AF37] uppercase tracking-wider font-semibold">Active Session</span>
                   </div>
                 )}
               </div>
@@ -225,7 +235,7 @@ function AdminLayout() {
                 setIsAuthenticated(false);
                 navigate({ to: "/admin/login" });
               }}
-              className="w-full flex items-center gap-3 rounded-xl px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-500/10 active:scale-98 transition-all"
+              className="w-full flex items-center gap-3 rounded-xl px-4 py-2.5 text-xs font-bold text-red-400 hover:bg-red-500/15 border border-red-500/20 active:scale-98 transition-all cursor-pointer"
             >
               <LogOut className="h-4.5 w-4.5 shrink-0" />
               <span className={sidebarCollapsed ? "lg:opacity-0 lg:hidden" : ""}>Logout Shift</span>
@@ -235,16 +245,16 @@ function AdminLayout() {
       )}
 
       {/* Main Container */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden bg-[#080808]">
         
         {/* Top Navbar */}
         {!isLoginPage && (
-          <header className="h-16 border-b border-border/60 bg-card px-4 md:px-8 flex items-center justify-between shrink-0 select-none">
+          <header className="h-16 border-b border-[#27272A] bg-[#0E0E0E] px-4 md:px-8 flex items-center justify-between shrink-0 select-none">
             {/* Left: Breadcrumb / Search */}
             <div className="flex items-center gap-3 flex-1 max-w-md">
-              <span className="text-xs font-bold text-muted-foreground">Admin</span>
-              <span className="text-muted-foreground/45 text-xs">/</span>
-              <span className="text-xs font-black text-brown-deep uppercase tracking-wider">
+              <span className="text-xs font-bold text-[#71717A]">WOKMAWA OS</span>
+              <span className="text-[#3F3F46] text-xs">/</span>
+              <span className="text-xs font-black text-[#D4AF37] uppercase tracking-wider">
                 {location.pathname.split("/").pop()?.replace("-", " ")}
               </span>
             </div>
@@ -255,13 +265,13 @@ function AdminLayout() {
               {/* Network Status Badge */}
               <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-bold ${
                 isOnline 
-                  ? "bg-green-50 border-green-200/50 text-green-700" 
-                  : "bg-red-50 border-red-200/50 text-red-700 animate-pulse"
+                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
+                  : "bg-red-500/10 border-red-500/30 text-red-400 animate-pulse"
               }`}>
                 {isOnline ? (
                   <>
                     <Wifi className="h-3 w-3" />
-                    <span>ONLINE</span>
+                    <span>ONLINE POS</span>
                   </>
                 ) : (
                   <>
@@ -275,29 +285,29 @@ function AdminLayout() {
               <div className="relative">
                 <button 
                   onClick={() => setNotificationsOpen(!notificationsOpen)}
-                  className="h-10 w-10 grid place-items-center rounded-xl bg-background hover:bg-gold/5 border border-border/60 text-muted-foreground hover:text-gold relative cursor-pointer"
+                  className="h-9 w-9 grid place-items-center rounded-xl bg-[#181818] hover:bg-[#222222] border border-[#27272A] text-[#A1A1AA] hover:text-[#D4AF37] relative cursor-pointer transition-all"
                 >
-                  <Bell className="h-4.5 w-4.5" />
+                  <Bell className="h-4 w-4" />
                   {notifications.length > 0 && (
-                    <span className="absolute top-2.5 right-2.5 h-2 w-2 rounded-full bg-gold" />
+                    <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37]" />
                   )}
                 </button>
 
                 {/* Notifications Popup */}
                 {notificationsOpen && (
-                  <div className="absolute right-0 mt-2.5 w-64 bg-card border border-border/60 rounded-2xl shadow-luxe p-4 z-50">
-                    <h4 className="text-xs font-black text-brown-deep mb-3 flex items-center gap-1.5">
-                      <AlertCircle className="h-4 w-4 text-gold" /> System Notifications
+                  <div className="absolute right-0 mt-2.5 w-64 bg-[#141414] border border-[#27272A] rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] p-4 z-50">
+                    <h4 className="text-xs font-black text-white mb-3 flex items-center gap-1.5">
+                      <AlertCircle className="h-4 w-4 text-[#D4AF37]" /> System Alerts
                     </h4>
-                    <ul className="space-y-2.5 max-h-48 overflow-y-auto">
+                    <ul className="space-y-2 max-h-48 overflow-y-auto">
                       {notifications.map((n) => (
-                        <li key={n.id} className="text-[10px] bg-background border border-border/40 p-2 rounded-xl text-brown-deep">
+                        <li key={n.id} className="text-[10px] bg-[#1E1E1E] border border-[#2A2A2A] p-2 rounded-xl text-[#E4E4E7]">
                           {n.text}
                         </li>
                       ))}
                     </ul>
                     {notifications.length === 0 && (
-                      <p className="text-[10px] text-muted-foreground text-center py-4">No new notifications</p>
+                      <p className="text-[10px] text-[#71717A] text-center py-4">No new notifications</p>
                     )}
                   </div>
                 )}
@@ -307,7 +317,7 @@ function AdminLayout() {
         )}
 
         {/* Main Content Area */}
-        <main className={`flex-1 overflow-y-auto p-4 md:p-8 bg-background`}>
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-[#080808]">
           <Outlet />
         </main>
       </div>
