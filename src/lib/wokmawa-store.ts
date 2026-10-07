@@ -121,7 +121,7 @@ async function syncOrderToRestocare(order: LiveOrder) {
       customerName: order.customer?.name || 'Guest Diner',
       customerPhone: order.customer?.phone || '',
       paymentMethod: order.paymentMethod,
-      status: 'received',
+      status: 'preparing',
       items: order.items.map(i => {
         const details = [
           i.portionName ? `Portion: ${i.portionName}` : null,
