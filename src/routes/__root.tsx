@@ -131,6 +131,47 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const location = useLocation();
 
+  // Auto-fullscreen on load and on first user interaction/gesture
+  useEffect(() => {
+    const triggerFullscreen = () => {
+      try {
+        const doc = document.documentElement as any;
+        if (!document.fullscreenElement && !(document as any).webkitFullscreenElement && !(document as any).mozFullScreenElement && !(document as any).msFullscreenElement) {
+          if (doc.requestFullscreen) {
+            doc.requestFullscreen().catch(() => {});
+          } else if (doc.webkitRequestFullscreen) {
+            doc.webkitRequestFullscreen();
+          } else if (doc.mozRequestFullScreen) {
+            doc.mozRequestFullScreen();
+          } else if (doc.msRequestFullscreen) {
+            doc.msRequestFullscreen();
+          }
+        }
+      } catch (e) {}
+    };
+
+    // Attempt immediately on mount
+    triggerFullscreen();
+
+    // Trigger on first user touch / click to comply with browser fullscreen user gesture policy
+    const handleFirstInteraction = () => {
+      triggerFullscreen();
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+      window.removeEventListener('pointerdown', handleFirstInteraction);
+    };
+
+    window.addEventListener('click', handleFirstInteraction, { passive: true });
+    window.addEventListener('touchstart', handleFirstInteraction, { passive: true });
+    window.addEventListener('pointerdown', handleFirstInteraction, { passive: true });
+
+    return () => {
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+      window.removeEventListener('pointerdown', handleFirstInteraction);
+    };
+  }, []);
+
   // Smooth scroll to top whenever route / page changes
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });

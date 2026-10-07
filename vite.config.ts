@@ -34,6 +34,24 @@ export default defineConfig({
             "Authorization": `Basic ${Buffer.from("rzp_live_StBUehIpeULYuL:M76UWnmNsVE7hU5QrkriZuor").toString("base64")}`,
           },
         },
+        // Restocare Express API Backend Proxy (Port 5001)
+        "/api/orders": {
+          target: "http://localhost:5001",
+          changeOrigin: true,
+        },
+        "/api/tables": {
+          target: "http://localhost:5001",
+          changeOrigin: true,
+        },
+        "/api/menu": {
+          target: "http://localhost:5001",
+          changeOrigin: true,
+        },
+        "/socket.io": {
+          target: "http://localhost:5001",
+          ws: true,
+          changeOrigin: true,
+        },
       },
     },
   },

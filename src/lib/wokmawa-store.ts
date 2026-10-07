@@ -111,6 +111,45 @@ function notify() {
   listeners.forEach((l) => l());
 }
 
+async function syncOrderToRestocare(order: LiveOrder) {
+  try {
+    const payload = {
+      orderId: order.orderId,
+      orderType: 'dine-in',
+      tableNumber: order.tableNumber,
+      tableId: order.tableNumber,
+      customerName: order.customer?.name || 'Guest Diner',
+      customerPhone: order.customer?.phone || '',
+      paymentMethod: order.paymentMethod,
+      status: 'received',
+      items: order.items.map(i => ({
+        name: i.name,
+        price: i.portionPrice || i.unitPrice,
+        quantity: i.quantity,
+        portion: i.portionName,
+        spiceLevel: i.spiceLevel?.name,
+        extras: i.extras?.map(e => e.name).join(', ') || '',
+        instructions: i.instructions || '',
+      })),
+      subtotal: order.itemTotal,
+      tax: order.taxGst,
+      totalAmount: order.grandTotal,
+    };
+
+    const endpoint = typeof window !== 'undefined' && window.location.port === '8081'
+      ? '/api/orders'
+      : 'http://localhost:5001/api/orders';
+
+    await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(() => null);
+  } catch (err) {
+    // Non-blocking fallback
+  }
+}
+
 export const wokStore = {
   getState() {
     return globalState;
@@ -414,6 +453,7 @@ export const wokStore = {
       discountAmount: 0,
     };
     notify();
+    syncOrderToRestocare(order);
     return order;
   },
 
@@ -425,6 +465,7 @@ export const wokStore = {
       orderHistory: [order, ...prevHistory.filter(o => o.orderId !== order.orderId)],
     };
     notify();
+    syncOrderToRestocare(order);
   },
 
   updateOrderStatus(status: LiveOrder['status']) {
