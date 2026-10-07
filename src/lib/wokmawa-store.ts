@@ -56,6 +56,7 @@ interface WokMawaState {
   draft: CustomizationDraft | null;
   customer: CustomerDetails;
   activeOrder: LiveOrder | null;
+  orderHistory: LiveOrder[];
   searchQuery: string;
   appliedCoupon: string | null;
   discountAmount: number;
@@ -75,6 +76,7 @@ const defaultState: WokMawaState = {
     isGuest: false,
   },
   activeOrder: null,
+  orderHistory: [],
   searchQuery: '',
   appliedCoupon: null,
   discountAmount: 0,
@@ -416,10 +418,11 @@ export const wokStore = {
   },
 
   setActiveOrder(order: LiveOrder) {
+    const prevHistory = Array.isArray(globalState.orderHistory) ? globalState.orderHistory : [];
     globalState = {
       ...globalState,
       activeOrder: order,
-      orderHistory: [order, ...globalState.orderHistory.filter(o => o.orderId !== order.orderId)],
+      orderHistory: [order, ...prevHistory.filter(o => o.orderId !== order.orderId)],
     };
     notify();
   },

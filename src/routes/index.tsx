@@ -137,8 +137,8 @@ function WokMawaApp() {
           onClick={() => setCurrentScreen('scanner')}
         />
 
-        {/* Bottom START ORDER Button (Redirects to Scanner Page) */}
-        <div className="w-full max-w-sm pb-6 z-10 space-y-3 relative">
+        {/* Bottom START ORDER Button & 3 Highlight Badges */}
+        <div className="w-full max-w-sm pb-4 z-10 space-y-4 relative">
           <button
             type="button"
             onClick={() => setCurrentScreen('scanner')}
@@ -147,8 +147,59 @@ function WokMawaApp() {
             <span>START ORDER</span>
             <ArrowRight className="w-5 h-5 stroke-[2.5]" />
           </button>
-          <div className="text-[10px] text-white/90 text-center font-bold tracking-wide drop-shadow-md">
-            Tap to Scan Table QR & View Menu
+
+          {/* 3 Step Features below START ORDER */}
+          <div className="w-full flex items-center justify-between pt-1 px-1">
+            {/* 1. BROWSE MENU */}
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <svg className="w-8 h-8 text-[#F5C249] mb-1.5" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="16" cy="8" r="1.5" strokeWidth="1.5" />
+                <path d="M6 21C6 14.5 10.5 10 16 10C21.5 10 26 14.5 26 21" strokeWidth="1.8" />
+                <path d="M4 23H28" strokeWidth="2" />
+                <path d="M6 26H26" strokeWidth="1.5" />
+              </svg>
+              <span className="text-[10px] sm:text-[11px] font-extrabold text-white tracking-wider leading-tight uppercase">
+                BROWSE<br />MENU
+              </span>
+            </div>
+
+            {/* Divider 1 */}
+            <div className="w-[1.5px] h-9 bg-gradient-to-b from-[#F5C249] to-[#C9A227] opacity-75 rounded-full mx-1" />
+
+            {/* 2. ORDER YOUR FAVOURITES */}
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <svg className="w-8 h-8 text-[#F5C249] mb-1.5" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M6 8H26L23 18H9L6 8Z" strokeWidth="1.8" />
+                <path d="M6 8L4 4H2" strokeWidth="1.8" />
+                <circle cx="11" cy="24" r="2" fill="currentColor" stroke="none" />
+                <circle cx="21" cy="24" r="2" fill="currentColor" stroke="none" />
+              </svg>
+              <span className="text-[10px] sm:text-[11px] font-extrabold text-white tracking-wider leading-tight uppercase">
+                ORDER<br />YOUR FAVOURITES
+              </span>
+            </div>
+
+            {/* Divider 2 */}
+            <div className="w-[1.5px] h-9 bg-gradient-to-b from-[#F5C249] to-[#C9A227] opacity-75 rounded-full mx-1" />
+
+            {/* 3. FRESHLY SERVED */}
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <svg className="w-8 h-8 text-[#F5C249] mb-1.5" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                {/* Fork */}
+                <path d="M4 7V13C4 14.5 5 15.5 6 16V25" strokeWidth="1.5" />
+                <path d="M8 7V13C8 14.5 7 15.5 6 16" strokeWidth="1.5" />
+                <path d="M6 7V13" strokeWidth="1.5" />
+                {/* Plate */}
+                <circle cx="16" cy="16" r="6.5" strokeWidth="1.8" />
+                <circle cx="16" cy="16" r="4.2" strokeWidth="1.2" />
+                {/* Knife */}
+                <path d="M26 7V16C26 17.5 25 18 25 25" strokeWidth="1.5" />
+                <path d="M26 7C24.5 8.5 24 11 24 14C24 16.5 25 17.5 25 18" strokeWidth="1.5" />
+              </svg>
+              <span className="text-[10px] sm:text-[11px] font-extrabold text-white tracking-wider leading-tight uppercase">
+                FRESHLY<br />SERVED
+              </span>
+            </div>
           </div>
         </div>
       </div>
