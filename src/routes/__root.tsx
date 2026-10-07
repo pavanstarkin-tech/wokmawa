@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { WOKMAWA_ASSETS } from "../lib/wokmawa-menu";
 
 function NotFoundComponent() {
   return (
@@ -203,7 +204,7 @@ function RootComponent() {
       {/* Global Background Texture (2.5% Opacity) across all pages */}
       <div
         className="fixed inset-0 pointer-events-none z-[1] bg-repeat bg-center bg-cover opacity-[0.025] select-none"
-        style={{ backgroundImage: `url('/assets/sitbg.png')` }}
+        style={{ backgroundImage: `url('${WOKMAWA_ASSETS.SIT_BG}')` }}
         aria-hidden="true"
       />
 

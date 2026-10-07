@@ -7,9 +7,10 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 const isProd = process.env.NODE_ENV === "production";
+const appBase = process.env.VITE_BASE || (isProd ? "/wokmawa/" : "/");
 
 export default defineConfig({
-  base: isProd ? "/wokmawa/" : "/",
+  base: appBase,
   tanstackStart: {
     // Disable SSR to output a pure static SPA with an index.html file for Hostinger.
     ssr: false,
@@ -19,7 +20,7 @@ export default defineConfig({
     preset: "node-server"
   },
   vite: {
-    base: isProd ? "/wokmawa/" : "/",
+    base: appBase,
     server: {
       port: 8081,
       strictPort: true,

@@ -16,7 +16,8 @@ server.stdout.on('data', (data) => {
     if (extracted) return;
     extracted = true;
     
-    const fetchHtml = (urlPath = '/wokmawa/') => {
+    const targetBase = process.env.VITE_BASE || '/wokmawa/';
+    const fetchHtml = (urlPath = targetBase) => {
       http.get(`http://localhost:3000${urlPath}`, (res) => {
         if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
           fetchHtml(res.headers.location);
@@ -45,7 +46,7 @@ server.stdout.on('data', (data) => {
     };
 
     setTimeout(() => {
-      fetchHtml('/wokmawa/');
+      fetchHtml(targetBase);
     }, 1000);
   }
 });
