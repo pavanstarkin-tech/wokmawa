@@ -23,15 +23,7 @@ if (fs.existsSync(publicDir)) {
   fs.cpSync(publicDir, tempDir, { recursive: true, force: true });
 }
 
-// 3. Ensure subfolder wokmawa-admin also exists with all files
-const adminSubDir = path.join(tempDir, 'wokmawa-admin');
-fs.mkdirSync(adminSubDir, { recursive: true });
-fs.cpSync(publicHtml, adminSubDir, { recursive: true });
-if (fs.existsSync(publicDir)) {
-  fs.cpSync(publicDir, adminSubDir, { recursive: true, force: true });
-}
-
-// 4. Recursive path transformer: replace /wokmawa/ with /wokmawa-admin/
+// 3. Recursive path transformer: replace /wokmawa/ with /wokmawa-admin/
 function transformDir(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
@@ -41,15 +33,15 @@ function transformDir(dir) {
     } else if (/\.(html|js|css|json|mjs)$/i.test(entry.name)) {
       let content = fs.readFileSync(fullPath, 'utf8');
       
-      // Replace /wokmawa/ with /wokmawa-admin/
-      content = content.replace(/\/wokmawa\//g, '/wokmawa-admin/');
-      content = content.replace(/"\/wokmawa"/g, '"/wokmawa-admin"');
-      content = content.replace(/'\/wokmawa'/g, "'/wokmawa-admin'");
+      // Clean single-pass replacement of /wokmawa/ with /wokmawa-admin/
+      content = content.replaceAll('/wokmawa/', '/wokmawa-admin/');
+      content = content.replaceAll('"/wokmawa"', '"/wokmawa-admin"');
+      content = content.replaceAll("'/wokmawa'", "'/wokmawa-admin'");
 
-      // Fix raw /assets/ and static files if any
-      content = content.replace(/(?<!\/wokmawa-admin)\/assets\//g, '/wokmawa-admin/assets/');
-      content = content.replace(/(?<!\/wokmawa-admin)\/sitbg\.png/g, '/wokmawa-admin/sitbg.png');
-      content = content.replace(/(?<!\/wokmawa-admin)\/splash\.mp4/g, '/wokmawa-admin/assets/splash.mp4');
+      // Normalize any accidental duplicate prefixes
+      content = content.replaceAll('/wokmawa-admin/assets/wokmawa-admin/assets/', '/wokmawa-admin/assets/');
+      content = content.replaceAll('/wokmawa-admin/assets/wokmawa-admin/', '/wokmawa-admin/assets/');
+      content = content.replaceAll('/wokmawa-admin/wokmawa-admin/', '/wokmawa-admin/');
 
       fs.writeFileSync(fullPath, content, 'utf8');
     }
@@ -58,7 +50,34 @@ function transformDir(dir) {
 
 transformDir(tempDir);
 
-// 5. Ensure root index.html and 404.html are present and valid
+// 4. Mirror all assets into /wokmawa-admin/ and /assets/
+const adminSubDir = path.join(tempDir, 'wokmawa-admin');
+fs.mkdirSync(adminSubDir, { recursive: true });
+fs.cpSync(path.join(tempDir, 'assets'), path.join(adminSubDir, 'assets'), { recursive: true, force: true });
+
+// 5. Generate physical static route folders for zero 404s
+const staticRoutes = [
+  'admin',
+  'admin/login',
+  'admin/dashboard',
+  'admin/orders',
+  'admin/kds',
+  'admin/pos-billing',
+  'admin/tables',
+  'admin/menu',
+  'admin/offers',
+  'admin/analysis',
+  'admin/printers',
+  'admin/staff',
+  'admin/settings',
+  'wokmawa-admin/admin',
+  'wokmawa-admin/admin/login',
+  'wokmawa-admin/admin/dashboard',
+  'wokmawa-admin/admin/orders',
+  'wokmawa-admin/admin/kds',
+  'wokmawa-admin/admin/pos-billing',
+];
+
 const appIndexHtml = path.join(tempDir, 'index.html');
 if (fs.existsSync(appIndexHtml)) {
   let mainIndexContent = fs.readFileSync(appIndexHtml, 'utf8');
@@ -78,19 +97,48 @@ if (fs.existsSync(appIndexHtml)) {
   fs.writeFileSync(path.join(tempDir, '404.html'), mainIndexContent, 'utf8');
   fs.writeFileSync(path.join(adminSubDir, 'index.html'), mainIndexContent, 'utf8');
   fs.writeFileSync(path.join(adminSubDir, '404.html'), mainIndexContent, 'utf8');
+
+  for (const route of staticRoutes) {
+    const rDir = path.join(tempDir, route);
+    fs.mkdirSync(rDir, { recursive: true });
+    fs.writeFileSync(path.join(rDir, 'index.html'), mainIndexContent, 'utf8');
+  }
 }
 
-// 6. Ensure .nojekyll exists
+// 6. Ensure all media files exist in all possible requested subpaths
+const mediaFiles = ['sitbg.png', 'splash.mp4', 'splash.png', 'logo.png', 'favicon.ico'];
+for (const mf of mediaFiles) {
+  const src = path.join(publicDir, mf);
+  const srcAssets = path.join(publicDir, 'assets', mf);
+  const sourceFile = fs.existsSync(src) ? src : (fs.existsSync(srcAssets) ? srcAssets : null);
+  if (sourceFile) {
+    [
+      path.join(tempDir, mf),
+      path.join(tempDir, 'assets', mf),
+      path.join(tempDir, 'wokmawa-admin', mf),
+      path.join(tempDir, 'wokmawa-admin', 'assets', mf),
+      path.join(tempDir, 'assets', 'wokmawa-admin', mf),
+      path.join(tempDir, 'assets', 'wokmawa-admin', 'assets', mf),
+    ].forEach(dest => {
+      try {
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.copyFileSync(sourceFile, dest);
+      } catch (e) {}
+    });
+  }
+}
+
+// 7. Ensure .nojekyll exists
 fs.writeFileSync(path.join(tempDir, '.nojekyll'), '', 'utf8');
 fs.writeFileSync(path.join(adminSubDir, '.nojekyll'), '', 'utf8');
 
-// 7. Git Deploy
+// 8. Git Deploy
 execSync('git init', { cwd: tempDir, stdio: 'inherit' });
 execSync('git config user.name "pavanstarkin-tech"', { cwd: tempDir, stdio: 'inherit' });
 execSync('git config user.email "pavanstarkin.tech@gmail.com"', { cwd: tempDir, stdio: 'inherit' });
 execSync('git checkout -b gh-pages', { cwd: tempDir, stdio: 'inherit' });
 execSync('git add -A', { cwd: tempDir, stdio: 'inherit' });
-execSync('git commit -m "Deploy WOKMAWA Admin Portal with correct /wokmawa-admin/ asset basepaths"', { cwd: tempDir, stdio: 'inherit' });
+execSync('git commit -m "Deploy WOKMAWA Admin Portal with zero-404 static routes and clean asset resolution"', { cwd: tempDir, stdio: 'inherit' });
 
 const tokenParts = ['ghp_', 'XSA3dMT', 'NTX8U0nc', 'GDZQdk4v', 'WXcDNsi2', '3OFrO'];
 const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || tokenParts.join('');
@@ -106,5 +154,5 @@ try {
   console.warn('Push error:', e.message);
 }
 
-// 8. Cleanup
+// 9. Cleanup
 fs.rmSync(tempDir, { recursive: true, force: true });

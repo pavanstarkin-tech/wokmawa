@@ -77,10 +77,63 @@ if (fs.existsSync(sqlJsDist)) {
 // 5. Ensure .nojekyll exists
 fs.writeFileSync(path.join(publicHtml, '.nojekyll'), '', 'utf8');
 
-// 6. Ensure 404.html matches updated index.html for SPA routing
+// 7. Generate static route fallback folders with index.html for zero 404s
+const staticRoutes = [
+  'admin',
+  'admin/login',
+  'admin/dashboard',
+  'admin/orders',
+  'admin/kds',
+  'admin/pos-billing',
+  'admin/tables',
+  'admin/menu',
+  'admin/offers',
+  'admin/analysis',
+  'admin/printers',
+  'admin/staff',
+  'admin/settings',
+  'orders',
+  'cart',
+  'menu',
+  'wokmawa/admin',
+  'wokmawa/admin/login',
+  'wokmawa/admin/dashboard',
+  'wokmawa/admin/orders',
+  'wokmawa/admin/kds',
+  'wokmawa/admin/pos-billing',
+  'wokmawa/orders',
+  'wokmawa/cart',
+  'wokmawa/menu',
+];
+
 if (fs.existsSync(path.join(publicHtml, 'index.html'))) {
   const indexHtml = fs.readFileSync(path.join(publicHtml, 'index.html'), 'utf8');
-  fs.writeFileSync(path.join(publicHtml, '404.html'), indexHtml, 'utf8');
+  for (const route of staticRoutes) {
+    const routeDir = path.join(publicHtml, route);
+    fs.mkdirSync(routeDir, { recursive: true });
+    fs.writeFileSync(path.join(routeDir, 'index.html'), indexHtml, 'utf8');
+  }
+}
+
+// 8. Place sitbg.png and splash.mp4 in root, assets, wokmawa, and wokmawa/assets
+const mediaFiles = ['sitbg.png', 'splash.mp4', 'splash.png', 'logo.png', 'favicon.ico'];
+for (const mf of mediaFiles) {
+  const src = path.join(publicDir, mf);
+  const srcAssets = path.join(publicDir, 'assets', mf);
+  const sourceFile = fs.existsSync(src) ? src : (fs.existsSync(srcAssets) ? srcAssets : null);
+  if (sourceFile) {
+    [
+      path.join(publicHtml, mf),
+      path.join(publicHtml, 'assets', mf),
+      path.join(publicHtml, 'wokmawa', mf),
+      path.join(publicHtml, 'wokmawa', 'assets', mf),
+    ].forEach(dest => {
+      try {
+        fs.mkdirSync(path.dirname(dest), { recursive: true });
+        fs.copyFileSync(sourceFile, dest);
+      } catch (e) {}
+    });
+  }
 }
 
 console.log('✅ Successfully prepared public_html for GitHub Pages subpath /wokmawa/!');

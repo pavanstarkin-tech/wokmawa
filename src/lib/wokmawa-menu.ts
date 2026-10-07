@@ -1,19 +1,37 @@
+export const getAssetUrl = (assetPath: string) => {
+  if (!assetPath) return '';
+  if (assetPath.startsWith('http://') || assetPath.startsWith('https://') || assetPath.startsWith('data:')) {
+    return assetPath;
+  }
+  const cleanPath = assetPath.startsWith('/') ? assetPath : `/${assetPath}`;
+  if (typeof window !== 'undefined') {
+    if (window.location.pathname.startsWith('/wokmawa-admin')) {
+      return `/wokmawa-admin${cleanPath}`;
+    }
+    if (window.location.pathname.startsWith('/wokmawa')) {
+      return `/wokmawa${cleanPath}`;
+    }
+  }
+  return cleanPath;
+};
+
 export const WOKMAWA_ASSETS = {
-  LOGO: '/assets/logo.png',
-  SPLASH_BG: '/assets/splash.png',
-  SPLASH_VIDEO: '/assets/splash.mp4',
-  HERO_1: '/assets/hero1.png',
-  HERO_2: '/assets/hero2.png',
-  ADDON_EGG: '/assets/ADDONS/OMLET.png',
-  ADDON_CHICKEN: '/assets/ADDONS/EXTRAC-CHIKEN.png',
-  ADDON_SAUCE: '/assets/ADDONS/SOUSE.png',
-  FIERY_FRAME: '/assets/fiery-frame.png',
-  CART_REVIEW_BANNER: '/assets/cart-review-banner.png',
-  CUSTOMER_DETAILS_BANNER: '/assets/chk.png',
-  PAYMENT_BANNER: '/assets/payment-banner.png',
-  PAYMENT_PROCESSING_BG: '/assets/payment-processing-bg.png',
-  ORDER_CONFIRMED_BANNER: '/assets/order-confirmed-banner.png',
-  ORDER_CONFIRMED_BG: '/assets/order-confirmed-bg.png',
+  LOGO: getAssetUrl('/assets/logo.png'),
+  SPLASH_BG: getAssetUrl('/assets/splash.png'),
+  SPLASH_VIDEO: getAssetUrl('/assets/splash.mp4'),
+  HERO_1: getAssetUrl('/assets/hero1.png'),
+  HERO_2: getAssetUrl('/assets/hero2.png'),
+  ADDON_EGG: getAssetUrl('/assets/addons/OMLET.png'),
+  ADDON_CHICKEN: getAssetUrl('/assets/addons/EXTRAC-CHIKEN.png'),
+  ADDON_SAUCE: getAssetUrl('/assets/addons/SOUSE.png'),
+  FIERY_FRAME: getAssetUrl('/assets/fiery-frame.png'),
+  CART_REVIEW_BANNER: getAssetUrl('/assets/cart-review-banner.png'),
+  CUSTOMER_DETAILS_BANNER: getAssetUrl('/assets/chk.png'),
+  PAYMENT_BANNER: getAssetUrl('/assets/payment-banner.png'),
+  PAYMENT_PROCESSING_BG: getAssetUrl('/assets/payment-processing-bg.png'),
+  ORDER_CONFIRMED_BANNER: getAssetUrl('/assets/order-confirmed-banner.png'),
+  ORDER_CONFIRMED_BG: getAssetUrl('/assets/order-confirmed-bg.png'),
+  SIT_BG: getAssetUrl('/assets/sitbg.png'),
 };
 
 export interface SpiceLevel {
