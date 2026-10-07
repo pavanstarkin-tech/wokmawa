@@ -75,38 +75,38 @@ function KDSPage() {
 
   // Color coding tickets based on wait time
   const getTicketColor = (minutes: number, status: string) => {
-    if (status === "ready") return "border-green-500 bg-green-50/10";
-    if (minutes >= 15) return "border-red-500 bg-red-50/15 animate-pulse-slow";
-    if (minutes >= 10) return "border-orange-400 bg-orange-50/10";
-    return "border-border/80 bg-background";
+    if (status === "ready") return "border-emerald-500/50 bg-[#141414]";
+    if (minutes >= 15) return "border-red-500/60 bg-[#141414] shadow-[0_0_20px_rgba(239,68,68,0.2)] animate-pulse";
+    if (minutes >= 10) return "border-amber-500/60 bg-[#141414]";
+    return "border-[#27272A] bg-[#141414]";
   };
 
   return (
     <div className="h-full flex flex-col gap-6 animate-in fade-in duration-300">
       
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-border/40 pb-4">
+      <div className="flex items-center justify-between border-b border-[#27272A] pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-brown-deep tracking-tight">Kitchen Display System (KDS)</h1>
-          <p className="text-xs text-muted-foreground mt-1">Live updates | Double-click or press buttons to change status</p>
+          <h1 className="text-2xl font-black font-display text-white tracking-tight">Kitchen Display System (KDS)</h1>
+          <p className="text-xs text-[#A1A1AA] mt-1">Live updates | Double-click or press buttons to change status</p>
         </div>
         
         {/* Connection status */}
-        <div className="flex items-center gap-4 bg-card px-4 py-2 border border-border/60 rounded-xl shadow-sm">
-          <div className="h-2.5 w-2.5 rounded-full bg-green-500 animate-ping" />
-          <span className="text-xs font-semibold text-brown-deep">Kitchen Terminals Syncing</span>
+        <div className="flex items-center gap-2.5 bg-[#141414] px-4 py-2 border border-[#27272A] rounded-xl shadow-sm">
+          <div className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-ping" />
+          <span className="text-xs font-bold text-white">Kitchen Terminals Syncing</span>
         </div>
       </div>
 
       {loading ? (
         <div className="flex-1 flex items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gold border-t-transparent" />
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#D4AF37] border-t-transparent" />
         </div>
       ) : orders.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground">
-          <UtensilsCrossed className="h-12 w-12 text-gold opacity-40 mb-3" />
-          <p className="text-sm font-semibold">Kitchen queue is clear.</p>
-          <p className="text-xs mt-1">New customer and table bills will appear here automatically.</p>
+        <div className="flex-1 flex flex-col items-center justify-center text-center text-[#71717A]">
+          <UtensilsCrossed className="h-12 w-12 text-[#D4AF37] opacity-40 mb-3" />
+          <p className="text-sm font-bold text-white">Kitchen queue is clear.</p>
+          <p className="text-xs mt-1 text-[#A1A1AA]">New customer and table bills will appear here automatically.</p>
         </div>
       ) : (
         /* KDS Tickets Grid */
@@ -119,43 +119,43 @@ function KDSPage() {
               return (
                 <div
                   key={o.id}
-                  className={`w-72 border rounded-3xl overflow-hidden shadow-luxe flex flex-col transition-all max-h-[90%] ${cardClass}`}
+                  className={`w-72 border rounded-3xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.5)] flex flex-col transition-all max-h-[90%] ${cardClass}`}
                 >
                   {/* Ticket Header */}
-                  <div className="p-4 border-b border-border/40 bg-card flex justify-between items-center">
+                  <div className="p-4 border-b border-[#27272A] bg-[#181818] flex justify-between items-center">
                     <div>
-                      <h3 className="font-extrabold text-sm text-brown-deep uppercase">
+                      <h3 className="font-black text-sm text-white uppercase">
                         Table {o.tableId || "POS"}
                       </h3>
-                      <span className="text-[9px] text-muted-foreground block font-medium">
+                      <span className="text-[9px] text-[#A1A1AA] block font-mono">
                         ID: {o.id.substring(0, 8)}
                       </span>
                     </div>
                     
-                    <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground bg-background px-2.5 py-1 rounded-lg border border-border/40">
-                      <Clock className="h-3 w-3 text-gold" />
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-[#D4AF37] bg-[#121212] px-2.5 py-1 rounded-lg border border-[#27272A]">
+                      <Clock className="h-3 w-3 text-[#D4AF37]" />
                       <span>{elapsed}m ago</span>
                     </div>
                   </div>
 
                   {/* KDS Items */}
-                  <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-card/45">
+                  <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-[#111111]">
                     {o.items?.map((it, idx) => (
-                      <div key={idx} className="flex justify-between items-start gap-2 border-b border-dashed border-border/30 pb-2 last:border-0">
+                      <div key={idx} className="flex justify-between items-start gap-2 border-b border-dashed border-[#27272A] pb-2 last:border-0">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
-                            <span className={`inline-block h-2 w-2 rounded-full ${it.type === "veg" ? "bg-green-600" : "bg-red-600"}`} />
-                            <span className="text-xs font-bold text-brown-deep truncate block">
+                            <span className={`inline-block h-2 w-2 rounded-full ${it.type === "veg" ? "bg-emerald-500" : "bg-red-500"}`} />
+                            <span className="text-xs font-bold text-[#E4E4E7] truncate block">
                               {it.name}
                             </span>
                           </div>
                           {it.notes && (
-                            <span className="text-[10px] italic text-red-600 font-medium mt-1 block">
+                            <span className="text-[10px] italic text-red-400 font-medium mt-1 block">
                               * {it.notes}
                             </span>
                           )}
                         </div>
-                        <span className="text-xs font-black text-gold bg-gold/10 px-2 py-0.5 rounded shadow-sm shrink-0">
+                        <span className="text-xs font-black text-[#D4AF37] bg-[#D4AF37]/15 border border-[#D4AF37]/30 px-2 py-0.5 rounded shadow-sm shrink-0">
                           x{it.quantity}
                         </span>
                       </div>
@@ -163,29 +163,29 @@ function KDSPage() {
                   </div>
 
                   {/* Ticket Actions */}
-                  <div className="p-3 border-t border-border/40 bg-card flex gap-2 justify-between">
+                  <div className="p-3 border-t border-[#27272A] bg-[#181818] flex gap-2 justify-between">
                     {o.status === "pending" && (
                       <button
                         onClick={() => updateStatus(o.id, "preparing")}
-                        className="flex-1 bg-brown-gradient text-cream text-[10px] font-bold uppercase tracking-wider py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
+                        className="flex-1 bg-gradient-to-r from-[#F7D360] via-[#E5B83B] to-[#D4A328] text-black text-[10px] font-black uppercase tracking-wider py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-gold-glow active:scale-95 transition-all cursor-pointer"
                       >
-                        <Play className="h-3.5 w-3.5" /> Start Cooking
+                        <Play className="h-3.5 w-3.5 fill-black" /> Start Cooking
                       </button>
                     )}
 
                     {o.status === "preparing" && (
                       <button
                         onClick={() => updateStatus(o.id, "ready")}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
+                        className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-black font-black text-[10px] uppercase tracking-wider py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
                       >
-                        <Check className="h-3.5 w-3.5" /> Mark Ready
+                        <Check className="h-3.5 w-3.5 stroke-[3]" /> Mark Ready
                       </button>
                     )}
 
                     {o.status === "ready" && (
                       <button
                         onClick={() => updateStatus(o.id, "completed")}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold uppercase tracking-wider py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all"
+                        className="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-black text-[10px] uppercase tracking-wider py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer"
                       >
                         <AlertCircle className="h-3.5 w-3.5" /> Dispatched / Done
                       </button>

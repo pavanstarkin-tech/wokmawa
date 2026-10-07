@@ -112,11 +112,11 @@ function AdminOrders() {
   const ready = orders.filter((o) => o.status === "ready");
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in duration-300">
-      <div className="mb-6 flex items-center justify-between shrink-0">
+    <div className="flex flex-col h-full animate-in fade-in duration-300 space-y-6">
+      <div className="flex items-center justify-between shrink-0 border-b border-[#27272A] pb-4">
         <div>
-          <h1 className="text-2xl font-bold text-brown-deep tracking-tight">Live Orders Monitor</h1>
-          <p className="text-xs text-muted-foreground mt-1">Real-time KOT routing and POS order status tracker.</p>
+          <h1 className="text-2xl font-black font-display text-white tracking-tight">Live Orders Monitor</h1>
+          <p className="text-xs text-[#A1A1AA] mt-1">Real-time KOT routing and POS order status tracker.</p>
         </div>
       </div>
       
@@ -128,7 +128,7 @@ function AdminOrders() {
           title="New Orders" 
           icon={Receipt} 
           count={pending.length} 
-          color="bg-red-50 text-red-600 border-red-200"
+          headerBg="bg-red-500/15 border-red-500/30 text-red-400"
         >
           {pending.map(order => (
             <OrderCard 
@@ -141,7 +141,7 @@ function AdminOrders() {
               onPrintKOT={() => handlePrintKOT(order)}
             />
           ))}
-          {pending.length === 0 && <EmptyState text="No new orders" />}
+          {pending.length === 0 && <EmptyState text="No new incoming orders" />}
         </KanbanColumn>
 
         {/* PREPARING COLUMN */}
@@ -149,7 +149,7 @@ function AdminOrders() {
           title="Preparing" 
           icon={ChefHat} 
           count={preparing.length} 
-          color="bg-amber-50 text-amber-600 border-amber-200"
+          headerBg="bg-[#D4AF37]/15 border-[#D4AF37]/30 text-[#D4AF37]"
         >
           {preparing.map(order => (
             <OrderCard 
@@ -169,7 +169,7 @@ function AdminOrders() {
           title="Ready to Serve" 
           icon={CheckCircle2} 
           count={ready.length} 
-          color="bg-green-50 text-green-600 border-green-200"
+          headerBg="bg-emerald-500/15 border-emerald-500/30 text-emerald-400"
         >
           {ready.map(order => (
             <OrderCard 
@@ -189,19 +189,19 @@ function AdminOrders() {
   );
 }
 
-function KanbanColumn({ title, icon: Icon, count, color, children }: any) {
+function KanbanColumn({ title, icon: Icon, count, headerBg, children }: any) {
   return (
-    <div className="flex flex-col min-h-[450px] lg:min-h-0 lg:h-full bg-card rounded-3xl border border-border/60 shadow-sm overflow-hidden">
-      <div className={`px-5 py-4 border-b flex items-center justify-between ${color}`}>
+    <div className="flex flex-col min-h-[450px] lg:min-h-0 lg:h-full bg-[#141414] rounded-3xl border border-[#27272A] shadow-[0_4px_20px_rgba(0,0,0,0.5)] overflow-hidden">
+      <div className={`px-5 py-4 border-b flex items-center justify-between ${headerBg}`}>
         <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider">
           <Icon className="h-4.5 w-4.5" />
           {title}
         </div>
-        <div className="h-6 w-6 rounded-full bg-white/50 flex items-center justify-center text-[10px] font-black">
+        <div className="h-6 w-6 rounded-full bg-black/40 border border-current flex items-center justify-center text-[10px] font-black">
           {count}
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#0F0F0F]">
         {children}
       </div>
     </div>
@@ -212,21 +212,21 @@ function OrderCard({ order, onNext, nextLabel, onCancel, onPrintReceipt, onPrint
   const timeAgo = formatDistanceToNow(order.createdAt, { addSuffix: true });
 
   return (
-    <div className="bg-card rounded-2xl p-4 shadow-sm border border-border/50 transition-all hover:shadow-md">
-      <div className="flex items-start justify-between mb-3 border-b border-border/50 pb-3">
+    <div className="bg-[#181818] rounded-2xl p-4 shadow-sm border border-[#27272A] transition-all hover:border-[#D4AF37]/40 hover:shadow-[0_0_15px_rgba(212,175,55,0.15)]">
+      <div className="flex items-start justify-between mb-3 border-b border-[#27272A] pb-3">
         <div>
-          <h3 className="text-base font-black text-brown-deep">Table {order.tableId}</h3>
+          <h3 className="text-base font-black text-white">Table {order.tableId}</h3>
           {(order.customerName || order.mobile) && (
-            <div className="text-[11px] font-bold text-brown-deep/80 mt-0.5">
-              {order.customerName || "Guest"} • <span className="font-mono text-[10px] text-muted-foreground">+91 {order.mobile}</span>
+            <div className="text-[11px] font-bold text-[#E4E4E7] mt-0.5">
+              {order.customerName || "Guest"} • <span className="font-mono text-[10px] text-[#A1A1AA]">+91 {order.mobile}</span>
             </div>
           )}
-          <div className="flex items-center text-[10px] text-muted-foreground mt-1">
-            <Clock className="h-3 w-3 mr-1 text-gold" />
+          <div className="flex items-center text-[10px] text-[#71717A] mt-1">
+            <Clock className="h-3 w-3 mr-1 text-[#D4AF37]" />
             {timeAgo}
           </div>
         </div>
-        <div className="font-black text-sm text-gold">
+        <div className="font-black text-sm text-[#D4AF37]">
           ₹{order.total}
         </div>
       </div>
@@ -234,43 +234,43 @@ function OrderCard({ order, onNext, nextLabel, onCancel, onPrintReceipt, onPrint
       <div className="space-y-1.5 mb-4 max-h-36 overflow-y-auto pr-1">
         {order.items?.map((item: any, idx: number) => (
           <div key={idx} className="flex items-start justify-between text-xs">
-            <span className="font-semibold text-brown-deep/80">
-              <span className="text-muted-foreground mr-1">{item.quantity}x</span>
+            <span className="font-semibold text-[#E4E4E7]">
+              <span className="text-[#D4AF37] font-bold mr-1">{item.quantity}x</span>
               {item.name}
             </span>
-            <span className="text-muted-foreground ml-2">₹{((item.price || 99) * item.quantity).toFixed(0)}</span>
+            <span className="text-[#A1A1AA] ml-2 font-mono">₹{((item.price || 99) * item.quantity).toFixed(0)}</span>
           </div>
         ))}
       </div>
 
       {/* Hardware Print Overrides */}
-      <div className="flex gap-2 border-t border-border/40 pt-3.5 mb-3.5">
+      <div className="flex gap-2 border-t border-[#27272A] pt-3.5 mb-3.5">
         <button
           onClick={onPrintReceipt}
-          className="flex-1 bg-cream hover:bg-gold/10 text-brown-deep border border-gold/40 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+          className="flex-1 bg-[#222222] hover:bg-[#2A2A2A] text-white border border-[#27272A] hover:border-[#D4AF37]/50 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
         >
-          <Printer className="h-3.5 w-3.5" /> Bill
+          <Printer className="h-3.5 w-3.5 text-[#D4AF37]" /> Bill
         </button>
         <button
           onClick={onPrintKOT}
-          className="flex-1 bg-cream hover:bg-gold/10 text-brown-deep border border-gold/40 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
+          className="flex-1 bg-[#222222] hover:bg-[#2A2A2A] text-white border border-[#27272A] hover:border-[#D4AF37]/50 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1 active:scale-95 transition-all cursor-pointer"
         >
-          <Printer className="h-3.5 w-3.5" /> KOT
+          <Printer className="h-3.5 w-3.5 text-[#D4AF37]" /> KOT
         </button>
       </div>
 
       <div className="flex items-center gap-2">
         <button 
           onClick={onNext}
-          className="flex-1 bg-brown-gradient text-cream py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-sm flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-95 transition-all"
+          className="flex-1 bg-gradient-to-r from-[#F7D360] via-[#E5B83B] to-[#D4A328] text-black py-2.5 rounded-xl font-black text-xs uppercase tracking-widest shadow-gold-glow flex items-center justify-center gap-1.5 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
         >
           {nextLabel}
-          <ArrowRight className="h-3.5 w-3.5" />
+          <ArrowRight className="h-3.5 w-3.5 stroke-[3]" />
         </button>
         {onCancel && (
           <button 
             onClick={onCancel}
-            className="p-2.5 text-red-500 bg-red-50 rounded-xl hover:bg-red-100 active:scale-95 transition-all"
+            className="p-2.5 text-red-400 bg-red-500/15 border border-red-500/30 rounded-xl hover:bg-red-500/25 active:scale-95 transition-all cursor-pointer"
             title="Cancel Order"
           >
             <XCircle className="h-4.5 w-4.5" />
@@ -283,7 +283,7 @@ function OrderCard({ order, onNext, nextLabel, onCancel, onPrintReceipt, onPrint
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="h-32 flex items-center justify-center text-muted-foreground font-semibold text-xs border-2 border-dashed border-border/60 rounded-2xl py-6">
+    <div className="h-32 flex items-center justify-center text-[#71717A] font-semibold text-xs border-2 border-dashed border-[#27272A] rounded-2xl py-6">
       {text}
     </div>
   );

@@ -5,10 +5,15 @@ import { routeTree } from "./routeTree.gen";
 export const getRouter = () => {
   const queryClient = new QueryClient();
 
-  const isGhPages =
-    typeof window !== "undefined" &&
-    window.location.pathname.startsWith("/wokmawa");
-  const basepath = isGhPages ? "/wokmawa" : undefined;
+  let basepath: string | undefined = undefined;
+  if (typeof window !== "undefined") {
+    const pathname = window.location.pathname;
+    if (pathname.startsWith("/wokmawa-admin")) {
+      basepath = "/wokmawa-admin";
+    } else if (pathname.startsWith("/wokmawa")) {
+      basepath = "/wokmawa";
+    }
+  }
 
   const router = createRouter({
     routeTree,
