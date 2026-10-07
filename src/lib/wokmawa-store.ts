@@ -122,15 +122,26 @@ async function syncOrderToRestocare(order: LiveOrder) {
       customerPhone: order.customer?.phone || '',
       paymentMethod: order.paymentMethod,
       status: 'received',
-      items: order.items.map(i => ({
-        name: i.name,
-        price: i.portionPrice || i.unitPrice,
-        quantity: i.quantity,
-        portion: i.portionName,
-        spiceLevel: i.spiceLevel?.name,
-        extras: i.extras?.map(e => e.name).join(', ') || '',
-        instructions: i.instructions || '',
-      })),
+      items: order.items.map(i => {
+        const details = [
+          i.portionName ? `Portion: ${i.portionName}` : null,
+          i.spiceLevel?.name ? `Spice: ${i.spiceLevel.name}` : null,
+          i.extras && i.extras.length > 0 ? `Addons: ${i.extras.map(e => e.name).join(', ')}` : null,
+          i.instructions ? `Note: ${i.instructions}` : null,
+        ].filter(Boolean).join(' | ');
+
+        return {
+          name: i.name,
+          price: i.portionPrice || i.unitPrice,
+          quantity: i.quantity,
+          isOpenItem: true,
+          notes: details || i.instructions || '',
+          portion: i.portionName,
+          spiceLevel: i.spiceLevel?.name,
+          extras: i.extras?.map(e => e.name).join(', ') || '',
+          instructions: i.instructions || '',
+        };
+      }),
       subtotal: order.itemTotal,
       tax: order.taxGst,
       totalAmount: order.grandTotal,
