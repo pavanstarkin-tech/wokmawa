@@ -39,9 +39,16 @@ function AdminLayout() {
   const cashierName = sessionManager.getActiveShift()?.cashierName || "Head Cashier";
 
   useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('admin_session') === 'true') {
+      setIsAuthenticated(true);
+      setLoading(false);
+      return;
+    }
+
     const unsubAuth = onAuthStateChanged(auth, (user) => {
-      if (user && user.email === "admin@gmail.com") {
+      if (user || (typeof window !== 'undefined' && localStorage.getItem('admin_session') === 'true')) {
         setIsAuthenticated(true);
+        if (typeof window !== 'undefined') localStorage.setItem('admin_session', 'true');
       } else {
         setIsAuthenticated(false);
         if (!isLoginPage) {
@@ -207,7 +214,17 @@ function AdminLayout() {
             </div>
 
             <button 
-              onClick={() => signOut(auth)}
+              onClick={async () => {
+                if (typeof window !== 'undefined') {
+                  localStorage.removeItem('admin_session');
+                  localStorage.removeItem('admin_user');
+                }
+                try {
+                  await signOut(auth);
+                } catch (e) {}
+                setIsAuthenticated(false);
+                navigate({ to: "/admin/login" });
+              }}
               className="w-full flex items-center gap-3 rounded-xl px-4 py-2.5 text-xs font-bold text-red-600 hover:bg-red-500/10 active:scale-98 transition-all"
             >
               <LogOut className="h-4.5 w-4.5 shrink-0" />
