@@ -35,12 +35,17 @@ class DatabaseService {
           await SchemaManager.initialize(this.adapter);
         } else {
           logger.warn("database", "Web browser environment detected. Loading SqlJsAdapter (sql.js WebAssembly fallback).");
-          const wasmAdapter = new SqlJsAdapter();
-          await wasmAdapter.initialize();
-          this.adapter = wasmAdapter;
-          // Run database migrations and schema checks prior to resolving the adapter
-          const SchemaManager = (await import("./SchemaManager")).default;
-          await SchemaManager.initialize(this.adapter);
+          try {
+            const wasmAdapter = new SqlJsAdapter();
+            await wasmAdapter.initialize();
+            this.adapter = wasmAdapter;
+            // Run database migrations and schema checks prior to resolving the adapter
+            const SchemaManager = (await import("./SchemaManager")).default;
+            await SchemaManager.initialize(this.adapter);
+          } catch (wasmErr) {
+            logger.warn("database", "SqlJsAdapter init failed, using fallback in-memory adapter:", wasmErr);
+            this.adapter = new ServerMockAdapter();
+          }
         }
         return this.adapter;
       } catch (err: any) {
