@@ -8,6 +8,12 @@ export const WOKMAWA_ASSETS = {
   ADDON_CHICKEN: '/assets/ADDONS/EXTRAC-CHIKEN.png',
   ADDON_SAUCE: '/assets/ADDONS/SOUSE.png',
   FIERY_FRAME: '/assets/fiery-frame.png',
+  CART_REVIEW_BANNER: '/assets/cart-review-banner.png',
+  CUSTOMER_DETAILS_BANNER: '/assets/chk.png',
+  PAYMENT_BANNER: '/assets/payment-banner.png',
+  PAYMENT_PROCESSING_BG: '/assets/payment-processing-bg.png',
+  ORDER_CONFIRMED_BANNER: '/assets/order-confirmed-banner.png',
+  ORDER_CONFIRMED_BG: '/assets/order-confirmed-bg.png',
 };
 
 export interface SpiceLevel {

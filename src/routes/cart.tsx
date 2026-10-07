@@ -191,7 +191,7 @@ function WokCartPage() {
           <div className="relative w-full max-w-[340px] sm:max-w-[380px] rounded-3xl overflow-hidden flex items-center justify-center">
             {/* Wok Image Backdrop (Contains full artwork and stylized text) */}
             <img
-              src="/wokmawa/payment-processing-bg.png"
+              src={WOKMAWA_ASSETS.PAYMENT_PROCESSING_BG}
               alt="Confirming Your Payment"
               className="w-full h-auto object-contain drop-shadow-[0_10px_30px_rgba(255,69,0,0.35)]"
             />
@@ -253,7 +253,7 @@ function WokCartPage() {
           {/* Top Order Confirmed Banner Image */}
           <div className="w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-[#D4AF37]/40 shadow-[0_4px_25px_rgba(0,0,0,0.7)] bg-black">
             <img
-              src="/wokmawa/order-confirmed-banner.png"
+              src={WOKMAWA_ASSETS.ORDER_CONFIRMED_BANNER}
               alt="Fiery Order Confirmed Stir-Fry"
               className="w-full h-auto object-cover block"
             />
@@ -762,7 +762,7 @@ function WokCartPage() {
             {/* Top Cart Order Review Banner */}
             <div className="w-full rounded-2xl overflow-hidden border border-[#D4AF37]/35 shadow-[0_4px_20px_rgba(0,0,0,0.6)] bg-black">
               <img
-                src="/wokmawa/cart-review-banner.png"
+                src={WOKMAWA_ASSETS.CART_REVIEW_BANNER}
                 alt="Spicy Wok Order Review"
                 className="w-full h-auto object-cover block"
               />
@@ -990,7 +990,7 @@ function WokCartPage() {
             {/* Top Diner Details Banner */}
             <div className="w-full rounded-2xl overflow-hidden border border-[#D4AF37]/35 shadow-[0_4px_20px_rgba(0,0,0,0.6)] bg-black">
               <img
-                src="/wokmawa/chk.png"
+                src={WOKMAWA_ASSETS.CUSTOMER_DETAILS_BANNER}
                 alt="Almost There! Share Your Details"
                 className="w-full h-auto object-cover block"
               />
@@ -1067,7 +1067,7 @@ function WokCartPage() {
             {/* Top Payment Banner */}
             <div className="w-full rounded-2xl overflow-hidden border border-[#D4AF37]/35 shadow-[0_4px_20px_rgba(0,0,0,0.6)] bg-black">
               <img
-                src="/wokmawa/payment-banner.png"
+                src={WOKMAWA_ASSETS.PAYMENT_BANNER}
                 alt="Payment Fiery Wok Flavor"
                 className="w-full h-auto object-cover block"
               />

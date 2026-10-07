@@ -45,10 +45,21 @@ if (fs.existsSync(publicDir)) {
   fs.cpSync(publicDir, publicHtml, { recursive: true, force: true });
 }
 
-// 2. Process all files for GitHub Pages subpath replacement
+// 2. Mirror all assets to /wokmawa/ and /assets/ inside public_html
+const wokmawaSubdir = path.join(publicHtml, 'wokmawa');
+fs.mkdirSync(wokmawaSubdir, { recursive: true });
+if (fs.existsSync(publicDir)) {
+  fs.cpSync(publicDir, wokmawaSubdir, { recursive: true, force: true });
+}
+const assetsDir = path.join(publicHtml, 'assets');
+if (fs.existsSync(assetsDir)) {
+  fs.cpSync(assetsDir, path.join(wokmawaSubdir, 'assets'), { recursive: true, force: true });
+}
+
+// 3. Process all files for GitHub Pages subpath replacement
 processDir(publicHtml);
 
-// 3. Ensure WASM files are copied to public_html
+// 4. Ensure WASM files are copied to public_html
 const sqlJsDist = path.resolve(__dirname, '../node_modules/sql.js/dist');
 if (fs.existsSync(sqlJsDist)) {
   const wasmFiles = fs.readdirSync(sqlJsDist).filter(f => f.endsWith('.wasm'));
@@ -57,14 +68,16 @@ if (fs.existsSync(sqlJsDist)) {
       const src = path.join(sqlJsDist, wf);
       const dst = path.join(publicHtml, wf);
       if (src !== dst) fs.copyFileSync(src, dst);
+      const dstSub = path.join(wokmawaSubdir, wf);
+      if (src !== dstSub) fs.copyFileSync(src, dstSub);
     } catch (e) {}
   }
 }
 
-// 4. Ensure .nojekyll exists
+// 5. Ensure .nojekyll exists
 fs.writeFileSync(path.join(publicHtml, '.nojekyll'), '', 'utf8');
 
-// 5. Ensure 404.html matches updated index.html for SPA routing
+// 6. Ensure 404.html matches updated index.html for SPA routing
 if (fs.existsSync(path.join(publicHtml, 'index.html'))) {
   const indexHtml = fs.readFileSync(path.join(publicHtml, 'index.html'), 'utf8');
   fs.writeFileSync(path.join(publicHtml, '404.html'), indexHtml, 'utf8');

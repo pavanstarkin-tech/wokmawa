@@ -207,7 +207,7 @@ function WokOrdersPage() {
         <div className="relative w-full rounded-2xl overflow-hidden border border-[#D4AF37]/35 shadow-[0_6px_25px_rgba(0,0,0,0.8)] bg-black min-h-[140px] flex items-center justify-between p-4">
           {/* Background Flaming Stir-Fry Artwork */}
           <img
-            src="/wokmawa/order-confirmed-bg.png"
+            src={WOKMAWA_ASSETS.ORDER_CONFIRMED_BG}
             alt="Flaming Wok in Golden Kitchen"
             className="absolute inset-0 w-full h-full object-cover object-center opacity-70"
           />
