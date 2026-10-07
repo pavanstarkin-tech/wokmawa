@@ -1,424 +1,178 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, X } from "lucide-react";
-import { z } from "zod";
-import { AppShell } from "@/components/paakashala/AppShell";
-import { MiniCategoryCard } from "@/components/paakashala/MiniCategoryCard";
-import { CATEGORIES, CATEGORY_IMAGE, type Category } from "@/lib/paakashala-menu";
-import { KEYS, useMenu } from "@/lib/paakashala-store";
-import { useSmartCollections } from "@/lib/promotions";
-
-const searchSchema = z.object({
-  category: z.string().optional(),
-  q: z.string().optional(),
-});
-
-const SMART_COLLECTIONS: Record<string, { title: string; subtitle: string; emoji: string; bgClass: string }> = {
-  bogo: {
-    title: "Buy 1 Get 1 Free",
-    subtitle: "Double the taste, half the price",
-    emoji: "🔥",
-    bgClass: "from-orange-500 to-amber-600"
-  },
-  under199: {
-    title: "Budget Bites Under ₹199",
-    subtitle: "Budget friendly options just for you",
-    emoji: "💸",
-    bgClass: "from-teal-600 to-emerald-600"
-  },
-  under299: {
-    title: "Premium Feasts Under ₹299",
-    subtitle: "Amazing main courses and combos",
-    emoji: "🍲",
-    bgClass: "from-indigo-600 to-blue-600"
-  },
-  combo: {
-    title: "Value Combos & Thalis",
-    subtitle: "Handpicked plates and full family packs",
-    emoji: "🍱",
-    bgClass: "from-purple-600 to-pink-600"
-  },
-  starters199: {
-    title: "Starters Under ₹199",
-    subtitle: "Delicious appetizers at great prices",
-    emoji: "🌶️",
-    bgClass: "from-rose-600 to-red-600"
-  },
-  biryani299: {
-    title: "Biryanis Under ₹299",
-    subtitle: "Delicious aromatic biryanis under budget",
-    emoji: "🍗",
-    bgClass: "from-yellow-600 to-amber-700"
-  },
-  offers: {
-    title: "Special Offers & Discounts",
-    subtitle: "Best deals and discounts catalog",
-    emoji: "🎉",
-    bgClass: "from-amber-500 to-amber-700"
-  }
-};
+import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
+import { CATEGORIES, MENU_ITEMS } from "@/lib/wokmawa-menu";
+import { useWokStore } from "@/lib/wokmawa-store";
+import { WokHeader } from "@/components/wokmawa/WokHeader";
+import { VegBadge, MawaHotBadge } from "@/components/wokmawa/WokBadge";
+import { CartSummaryBar } from "@/components/wokmawa/CartSummaryBar";
+import { WokItemModal } from "@/components/wokmawa/WokItemModal";
+import { WokAddButton } from "@/components/wokmawa/WokAddButton";
 
 export const Route = createFileRoute("/menu")({
-  validateSearch: (s) => searchSchema.parse(s),
-  component: MenuPage,
+  component: WokMenuPage,
 });
 
-function MenuPage() {
-  const { category: initialCat, q: initialQ } = Route.useSearch();
+function WokMenuPage() {
   const navigate = useNavigate();
-  const [smartCollection, setSmartCollection] = useState<string | null>(null);
-  const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | "veg" | "non-veg">("all");
-
-  // Synchronize state when URL query search parameters change
-  useEffect(() => {
-    const normQ = initialQ?.trim().toLowerCase() ?? "";
-    if (["bogo", "under199", "under299", "combo", "starters199", "biryani299", "offers"].includes(normQ)) {
-      setSmartCollection(normQ);
-      setQ("");
-    } else {
-      setSmartCollection(null);
-      setQ(initialQ ?? "");
-    }
-  }, [initialQ]);
-  const [active, setActive] = useState<Category>(() => {
-    if (initialCat && (CATEGORIES as readonly string[]).includes(initialCat)) return initialCat as Category;
-    if (typeof window !== "undefined") {
-      const last = window.localStorage.getItem(KEYS.lastCategory);
-      if (last && (CATEGORIES as readonly string[]).includes(last)) return last as Category;
-    }
-    return CATEGORIES[0];
-  });
+  const { searchQuery } = useWokStore();
+  const [selectedCategory, setSelectedCategory] = useState<string>(CATEGORIES[0]?.slug || 'wok-noodles');
+  const [selectedModalItem, setSelectedModalItem] = useState<any>(null);
+  const [isSticky, setIsSticky] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined") window.localStorage.setItem(KEYS.lastCategory, active);
-  }, [active]);
-
-  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
-
-  const goCategory = (c: string) => {
-    setActive(c as Category);
-    const el = sectionRefs.current[c];
-    if (el) {
-      const offset = 100;
-      const y = el.getBoundingClientRect().top + window.scrollY - offset;
-      window.scrollTo({ top: y, behavior: "smooth" });
-    }
-  };
-
-  useEffect(() => {
-    if (initialCat) goCategory(initialCat as Category);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const handleScroll = () => {
+      setIsSticky(window.scrollY > 60);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const fullMenu = useMenu();
-  const { data: savedCollections, loading: collectionsLoading } = useSmartCollections();
+  // Smooth scroll to top when category is selected or changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }, [selectedCategory]);
 
-  const filtered = useMemo(() => {
-    const query = q.trim().toLowerCase();
-    
-    // Step 1: Filter
-    const matched = fullMenu.filter((m) => {
-      if (!m || !m.name) return false;
-      if (filter !== "all" && m.type !== filter) return false;
-
-      // 1. Filter by Smart Collection
-      if (smartCollection) {
-        // Check if admin has manually curated items for this collection
-        const raw = (savedCollections as Record<string, unknown>)[smartCollection];
-        // Normalize: Firebase may return object {0:id,1:id} or array
-        const savedIds: string[] = Array.isArray(raw)
-          ? (raw as string[]).filter(Boolean)
-          : raw && typeof raw === "object"
-            ? (Object.values(raw as object) as string[]).filter(Boolean)
-            : [];
-
-        let matchesCollection = false;
-        const cat = (m.category ?? "").toLowerCase();
-        const price = Number(m.price ?? 9999);
-
-        // Curated override match
-        if (savedIds.includes(m.id)) {
-          matchesCollection = true;
-        }
-
-        // Auto filter match
-        if (smartCollection === "bogo") {
-          matchesCollection = matchesCollection || false;
-        } else if (smartCollection === "under199") {
-          matchesCollection = matchesCollection || price < 199;
-        } else if (smartCollection === "under299") {
-          matchesCollection = matchesCollection || price < 299;
-        } else if (smartCollection === "combo") {
-          matchesCollection = matchesCollection || cat.includes("thali") || cat.includes("fried rice") || cat.includes("rice") ||
-            m.name.toLowerCase().includes("combo") || m.name.toLowerCase().includes("pack") ||
-            m.name.toLowerCase().includes("meal") || m.name.toLowerCase().includes("full") || m.name.toLowerCase().includes("half");
-        } else if (smartCollection === "starters199") {
-          matchesCollection = matchesCollection || ((cat === "veg starters" || cat === "non veg starters" || cat === "south indian starters" || cat === "tandoori starters") && price < 199);
-        } else if (smartCollection === "biryani299") {
-          matchesCollection = matchesCollection || (cat.includes("biryani") && price < 299);
-        } else if (smartCollection === "offers") {
-          const mrp = Number(m.mrp ?? 0);
-          matchesCollection = matchesCollection || (mrp > 0 && mrp > price) || price < 200;
-        }
-
-        if (!matchesCollection) return false;
-      }
-
-      // 2. Filter by text search query
-      if (!query) return true;
-      return (
-        (m.name ?? "").toLowerCase().includes(query) ||
-        (m.category ?? "").toLowerCase().includes(query)
-      );
-    });
-
-    // Step 2: Map to override prices for price-based collections
-    return matched.map((item) => {
-      if (smartCollection) {
-        let limit: number | undefined = undefined;
-        if (smartCollection === "under199" || smartCollection === "starters199") {
-          limit = 199;
-        } else if (smartCollection === "under299" || smartCollection === "biryani299") {
-          limit = 299;
-        }
-
-        if (limit !== undefined && item.price !== null && item.price !== undefined && item.price > limit) {
-          return {
-            ...item,
-            price: limit,
-            mrp: item.price
-          };
-        }
-      }
-      return item;
-    });
-  }, [q, smartCollection, filter, fullMenu, savedCollections]);
-
-  // Build grouped map dynamically from actual data (not just static CATEGORIES)
-  // Guard against items with no category
-  const grouped = useMemo(() => {
-    const by = new Map<string, typeof fullMenu>();
-    filtered.forEach((m) => {
-      const cat = m.category || "Other";
-      if (!by.has(cat)) by.set(cat, []);
-      by.get(cat)!.push(m);
-    });
-    return by;
-  }, [filtered]);
-
-  // When searching: show all matched categories sorted by relevance
-  // When not searching: respect the CATEGORIES order + append any extras
-  const orderedCategories = useMemo(() => {
-    if (q.trim()) {
-      const query = q.trim().toLowerCase();
-      return Array.from(grouped.keys()).sort((a, b) => {
-        const aStart = a.toLowerCase().startsWith(query) ? 0 : 1;
-        const bStart = b.toLowerCase().startsWith(query) ? 0 : 1;
-        return aStart - bStart;
-      });
+  const filteredItems = MENU_ITEMS.filter((item) => {
+    if (selectedCategory && item.categorySlug !== selectedCategory) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return item.name.toLowerCase().includes(q) || item.description.toLowerCase().includes(q);
     }
-    const known = CATEGORIES.filter((c) => grouped.has(c));
-    const extra = Array.from(grouped.keys()).filter(
-      (c) => !(CATEGORIES as readonly string[]).includes(c)
-    );
-    return [...known, ...extra];
-  }, [q, grouped]);
+    return true;
+  });
 
-  const isSearching = q.trim().length > 0 || smartCollection !== null;
+  const activeCategoryObj = CATEGORIES.find((c) => c.slug === selectedCategory);
 
   return (
-    <AppShell>
+    <div className="min-h-screen bg-transparent text-white pb-28">
+      <WokHeader title="Menu" showBack backTo="/" />
 
-      {/* Search + Veg toggle */}
-      <div className="relative z-10 -mx-4 md:-mx-8 lg:-mx-12 mt-4 px-4 md:px-8 lg:px-12 pb-3 pt-2 mb-2">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-2xl mx-auto w-full">
-          <div className="flex-1 flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 shadow-luxe focus-within:border-gold transition-colors">
-            <Search className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search biryani, paneer, chicken…"
-              className="flex-1 bg-transparent text-xs text-brown-deep outline-none placeholder:text-muted-foreground/70"
-            />
-            {q && (
-              <button onClick={() => setQ("")} aria-label="Clear" className="text-muted-foreground hover:text-brown-deep transition-colors">
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-
-          <div className="shrink-0 flex items-center justify-center gap-1.5 bg-card border border-border/80 px-2 py-2 rounded-xl shadow-sm">
-            <span className={`text-[9px] font-bold transition-colors ${filter === 'veg' ? 'text-green-700' : 'text-muted-foreground/50'}`}>VEG</span>
-            <button
-              onClick={() => {
-                if (filter === 'all') setFilter('veg');
-                else if (filter === 'veg') setFilter('non-veg');
-                else setFilter('all');
-              }}
-              className={`relative flex h-4 w-10 items-center rounded-full transition-colors ${
-                filter === 'all' ? 'bg-muted-foreground/20' : filter === 'veg' ? 'bg-green-500/20' : 'bg-red-500/20'
-              }`}
-            >
-              <div
-                className={`absolute h-3.5 w-3.5 rounded-full shadow-md transition-transform duration-300 flex items-center justify-center ${
-                  filter === 'all'
-                    ? 'translate-x-[13px] bg-muted-foreground'
-                    : filter === 'veg'
-                    ? 'translate-x-[2px] bg-green-500'
-                    : 'translate-x-[24px] bg-red-500'
-                }`}
+      <main className="max-w-xl mx-auto px-4 space-y-5 pt-3">
+        {/* Top Story Category Circles (Sticky on scroll to top, blurred only when stuck) */}
+        <section
+          className={`sticky top-0 z-40 -mx-4 px-4 py-2.5 flex gap-3.5 overflow-x-auto no-scrollbar snap-x transition-all duration-300 ${
+            isSticky
+              ? 'bg-[#080808]/80 backdrop-blur-md border-b border-white/10 rounded-b-[25px] shadow-[0_8px_25px_rgba(0,0,0,0.6)]'
+              : 'bg-transparent border-transparent rounded-none shadow-none'
+          }`}
+        >
+          {CATEGORIES.map((cat) => {
+            const isSelected = selectedCategory === cat.slug;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.slug)}
+                className="flex flex-col items-center gap-1 shrink-0 snap-start group cursor-pointer"
               >
-                <div className="h-1 w-1 rounded-full bg-white" />
-              </div>
-            </button>
-            <span className={`text-[9px] font-bold transition-colors ${filter === 'non-veg' ? 'text-red-700' : 'text-muted-foreground/50'}`}>NON-VEG</span>
-          </div>
-        </div>
-
-        {/* Live result count while searching */}
-        {isSearching && (
-          <p className="text-[11px] text-muted-foreground mt-2 px-1 max-w-2xl mx-auto">
-            {filtered.length === 0
-              ? "No dishes found"
-              : `${filtered.length} dish${filtered.length !== 1 ? "es" : ""} found for "${q.trim()}"`}
-          </p>
-        )}
-      </div>
-
-      {/* Category pill bar — hidden while actively searching */}
-      {!isSearching && (
-        <div className="sticky top-0 z-20 -mx-4 md:-mx-8 lg:-mx-12 bg-background/85 backdrop-blur-md border-b border-border/60">
-          <div className="overflow-x-auto no-scrollbar py-3">
-            <div className="flex gap-4 px-4 md:px-8 lg:px-12">
-              {CATEGORIES.map((c) => {
-                const on = active === c;
-                return (
-                  <button
-                    key={c}
-                    onClick={() => goCategory(c)}
-                    className={`group relative flex w-[72px] shrink-0 flex-col items-center gap-2 transition active:scale-95 ${on ? 'scale-105' : ''}`}
-                  >
-                    <div className={`h-[72px] w-[72px] overflow-hidden rounded-full shadow-luxe p-0.5 bg-card transition-colors ${on ? 'border-2 border-gold' : 'border border-gold/30'}`}>
-                      <img src={CATEGORY_IMAGE[c]} alt={c} loading="lazy" className="h-full w-full rounded-full object-cover transition duration-500 group-hover:scale-110" />
-                    </div>
-                    <div className={`w-full text-center text-[10px] font-semibold leading-tight line-clamp-2 ${on ? 'text-gold' : 'text-brown-deep'}`}>
-                      {c}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {smartCollection && (
-        <div className={`mt-2 p-5 rounded-2xl bg-gradient-to-r ${
-          smartCollection === "bogo" ? "from-orange-500 to-amber-600" :
-          smartCollection === "under199" ? "from-teal-600 to-emerald-600" :
-          smartCollection === "under299" ? "from-indigo-600 to-blue-600" :
-          smartCollection === "combo" ? "from-purple-600 to-pink-600" :
-          smartCollection === "starters199" ? "from-rose-600 to-red-600" :
-          smartCollection === "biryani299" ? "from-yellow-600 to-amber-700" :
-          "from-amber-500 to-amber-700"
-        } text-white shadow-md relative overflow-hidden flex items-center justify-between`}>
-          <div className="space-y-0.5 z-10">
-            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/80 block">⚡ Smart Collection</span>
-            <h1 className="text-base font-extrabold tracking-tight">
-              {SMART_COLLECTIONS[smartCollection]?.title || "Special Offers & Discounts"}
-            </h1>
-            <p className="text-[10px] text-white/85 font-medium">
-              {SMART_COLLECTIONS[smartCollection]?.subtitle || "Best deals and discounts catalog"}
-            </p>
-          </div>
-          <button 
-            onClick={() => {
-              setSmartCollection(null);
-              navigate({ to: "/menu", search: (prev) => ({ ...prev, q: undefined }) });
-            }}
-            className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm transition-all z-10 cursor-pointer active:scale-95 flex items-center justify-center shrink-0 ml-4"
-            aria-label="Clear filter"
-          >
-            <X className="h-4 w-4" />
-          </button>
-          <div className="absolute right-0 bottom-0 opacity-15 text-7xl font-bold translate-y-3 translate-x-3 pointer-events-none select-none">
-            {SMART_COLLECTIONS[smartCollection]?.emoji || "🎉"}
-          </div>
-        </div>
-      )}
-
-      {/* Menu sections */}
-      <div className="mt-5 space-y-8">
-        {(fullMenu.length === 0 || (smartCollection !== null && collectionsLoading)) ? (
-          <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="relative flex flex-col overflow-hidden rounded-2xl bg-card shadow-sm border border-border animate-pulse">
-                <div className="relative aspect-[4/3] w-full bg-muted/40" />
-                <div className="flex flex-1 flex-col justify-between p-3 gap-4">
-                  <div className="space-y-2">
-                    <div className="h-3 w-3/4 rounded-full bg-muted/60" />
-                    <div className="h-2 w-1/2 rounded-full bg-muted/40" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="h-3 w-1/3 rounded-full bg-muted/60" />
-                    <div className="h-6 w-14 rounded-full bg-muted/60" />
+                <div
+                  className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden p-0.5 transition-all ${
+                    isSelected
+                      ? 'bg-gradient-to-tr from-[#E8C547] to-[#D4AF37] shadow-gold-glow scale-105 ring-2 ring-[#D4AF37]/50'
+                      : 'bg-[#27272A] hover:bg-[#3F3F46]'
+                  }`}
+                >
+                  <div className="w-full h-full rounded-full overflow-hidden bg-[#141414]">
+                    <img
+                      src={cat.image}
+                      alt={cat.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <>
-            {orderedCategories.map((c) => {
-              const items = grouped.get(c) ?? [];
-              if (items.length === 0) return null;
-              return (
-                <section
-                  key={c}
-                  ref={(el) => {
-                    sectionRefs.current[c] = el;
-                  }}
+                {/* Single-line truncated label */}
+                <span
+                  className={`text-[10px] font-bold text-center max-w-[68px] truncate whitespace-nowrap leading-tight transition-colors ${
+                    isSelected ? 'text-[#D4AF37]' : 'text-[#A1A1AA] group-hover:text-white'
+                  }`}
+                  title={cat.name}
                 >
-                  <div className="mb-3 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-gold-gradient opacity-40" />
-                    <h2 className="text-xs font-bold uppercase tracking-[0.35em] text-brown-deep">{c}</h2>
-                    <div className="h-px flex-1 bg-gold-gradient opacity-40" />
-                  </div>
-                  <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
-                    {items.map((m) => (
-                      <MiniCategoryCard key={m.id} item={m} />
-                    ))}
-                  </div>
-                </section>
-              );
-            })}
-          </>
+                  {cat.name}
+                </span>
+              </button>
+            );
+          })}
+        </section>
+
+        {/* Category Header Banner */}
+        {activeCategoryObj && (
+          <div className="p-4 bg-gradient-to-r from-[#1A1A1A] to-[#121212] border border-[#27272A] rounded-2xl flex items-center justify-between shadow-card-luxe">
+            <div>
+              <h2 className="font-display font-black text-xl text-white flex items-center gap-2">
+                <span>{activeCategoryObj.icon}</span>
+                <span>{activeCategoryObj.name}</span>
+              </h2>
+              <p className="text-xs text-[#D4AF37] mt-0.5">
+                {activeCategoryObj.tagline}
+              </p>
+            </div>
+            <span className="text-xs font-extrabold text-[#A1A1AA] bg-[#0A0A0A] px-2.5 py-1 rounded-full border border-[#27272A]">
+              {filteredItems.length} Dishes
+            </span>
+          </div>
         )}
 
-        {fullMenu.length > 0 && filtered.length === 0 && (
-          <div className="rounded-2xl bg-card p-8 text-center border border-border/60 shadow-luxe">
-            <div className="text-2xl mb-2">🍽️</div>
-            <div className="text-sm font-semibold text-brown-deep">
-              {smartCollection ? "There are no offers today." : "No dishes match your search."}
-            </div>
-            <div className="mt-1 text-xs text-muted-foreground">
-              {smartCollection ? "Check back later for exciting deals!" : "Try clearing filters or a different keyword."}
-            </div>
-            <button
-              onClick={() => {
-                setQ("");
-                setSmartCollection(null);
-                setFilter("all");
-                navigate({ to: "/menu", search: (prev) => ({ ...prev, q: undefined }) });
-              }}
-              className="mt-4 text-xs font-bold text-gold underline underline-offset-2"
+        {/* Item Cards (2 Cards Per Row) */}
+        <div className="grid grid-cols-2 gap-3">
+          {filteredItems.map((item) => (
+            <div
+              key={item.id}
+              onClick={() => setSelectedModalItem(item)}
+              className="bg-[#121212] border border-[#27272A] rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between hover:border-[#D4AF37]/60 transition-all cursor-pointer shadow-card-luxe group relative active:scale-[0.98]"
             >
-              {smartCollection ? "View Full Menu" : "Clear search"}
-            </button>
-          </div>
-        )}
-      </div>
-    </AppShell>
+              {/* Image */}
+              <div className="relative h-28 sm:h-32 w-full rounded-xl overflow-hidden bg-[#1A1A1A] mb-2">
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                <div className="absolute top-2 left-2">
+                  <VegBadge isVeg={item.isVeg} size="sm" />
+                </div>
+                {item.isMawaHot && (
+                  <div className="absolute top-0 right-0 z-10">
+                    <MawaHotBadge text="HOT 🔥" variant="corner" />
+                  </div>
+                )}
+              </div>
+
+              {/* Details */}
+              <div className="space-y-1 flex-1">
+                <h4 className="font-display font-extrabold text-xs sm:text-sm text-white group-hover:text-[#D4AF37] transition-colors line-clamp-1">
+                  {item.name}
+                </h4>
+                <p className="text-[10px] text-[#A1A1AA] line-clamp-2 leading-tight">
+                  {item.description}
+                </p>
+              </div>
+
+              {/* Price & Button */}
+              <div className="pt-2 mt-2 border-t border-[#27272A]/70 flex items-center justify-between gap-1">
+                <span className="font-display font-black text-sm sm:text-base text-white">
+                  ₹{item.price}
+                </span>
+                <WokAddButton
+                  item={item}
+                  onOpenModal={() => setSelectedModalItem(item)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </main>
+
+      {/* Floating Bottom Cart Bar */}
+      <CartSummaryBar />
+
+      {/* 2-Step Item Customizer Bottom Sheet */}
+      <WokItemModal
+        item={selectedModalItem}
+        isOpen={!!selectedModalItem}
+        onClose={() => setSelectedModalItem(null)}
+      />
+    </div>
   );
 }

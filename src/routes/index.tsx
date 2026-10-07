@@ -1,449 +1,764 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { ChevronRight, Sparkles, Search, Plus, Minus, Leaf, Drumstick, PlayCircle } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { useCart, useMenu, useUpdates } from "@/lib/paakashala-store";
-import { AppShell } from "@/components/paakashala/AppShell";
-import { HeroCarousel } from "@/components/paakashala/HeroCarousel";
-import { FeaturedCard } from "@/components/paakashala/FeaturedCard";
-import { MiniCategoryCard } from "@/components/paakashala/MiniCategoryCard";
-import { CATEGORIES, CATEGORY_IMAGE, MENU, FEATURED_IDS, type Category } from "@/lib/paakashala-menu";
-import { usePopupCampaigns, recordPopupView, recordPopupClick, type PopupCampaign } from "@/lib/promotions";
-import { PromoPopup } from "@/components/paakashala/PromoPopup";
-import { Gift, Percent, Flame, Award, Compass } from "lucide-react";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useState, useEffect, lazy, Suspense } from "react";
+import {
+  Flame,
+  Sparkles,
+  ChevronRight,
+  Search,
+  Plus,
+  ArrowRight,
+  Star,
+  Award,
+  TrendingUp,
+  Percent,
+} from "lucide-react";
+import { CATEGORIES, MENU_ITEMS, MenuItem, Category, WOKMAWA_ASSETS } from "@/lib/wokmawa-menu";
+import { useWokStore } from "@/lib/wokmawa-store";
+import { WokHeader } from "@/components/wokmawa/WokHeader";
+import { VegBadge, MawaHotBadge, PopularBadge } from "@/components/wokmawa/WokBadge";
+import { CartSummaryBar } from "@/components/wokmawa/CartSummaryBar";
+import { WokCheckoutModal } from "@/components/wokmawa/WokCheckoutModal";
+import { WokItemModal } from "@/components/wokmawa/WokItemModal";
+import { WokAddButton } from "@/components/wokmawa/WokAddButton";
+
+// Lazy load QR Scanner
+const Scanner = lazy(() => import('@yudiel/react-qr-scanner').then((m) => ({ default: m.Scanner })));
 
 export const Route = createFileRoute("/")({
-  component: Index,
+  component: WokMawaApp,
 });
 
-// Helper to convert standard YouTube links to embed links
-const getEmbedUrl = (url: string) => {
-  if (!url) return "";
-  if (url.includes("youtube.com/watch?v=")) return url.replace("watch?v=", "embed/");
-  if (url.includes("youtu.be/")) return url.replace("youtu.be/", "youtube.com/embed/");
-  if (url.includes("youtube.com/shorts/")) return url.replace("youtube.com/shorts/", "youtube.com/embed/");
-  return url;
-};
-
-function VideoPlayer({ src }: { src: string }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [objectUrl, setObjectUrl] = useState<string | null>(null);
-
-  // Aggressive Blob Caching
-  useEffect(() => {
-    let active = true;
-    const loadVideo = async () => {
-      try {
-        const cache = await caches.open('video-cache-v1');
-        const cached = await cache.match(src);
-        if (cached) {
-          const blob = await cached.blob();
-          if (active) setObjectUrl(URL.createObjectURL(blob));
-          return;
-        }
-        const response = await fetch(src);
-        if (response.ok) {
-          cache.put(src, response.clone());
-          const blob = await response.blob();
-          if (active) setObjectUrl(URL.createObjectURL(blob));
-        }
-      } catch (err) {
-        console.error("Cache fetch failed, falling back to network url", err);
-        if (active) setObjectUrl(src); // Fallback to raw url
-      }
-    };
-    loadVideo();
-    return () => { active = false; };
-  }, [src]);
-
-  // Autoplay Observer
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || !objectUrl) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            // Attempt to auto-play with sound
-            video.muted = false;
-            video.play().then(() => {
-              setIsMuted(false);
-            }).catch(() => {
-              // Browser blocked unmuted autoplay, fallback to muted
-              video.muted = true;
-              video.play().then(() => {
-                setIsMuted(true);
-              }).catch(() => {}); // Catch all
-            });
-          } else {
-            video.pause();
-          }
-        });
-      },
-      { threshold: 0.7 } // Play when 70% visible
-    );
-
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, [objectUrl]);
-
-  const togglePlay = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.paused) {
-      // Direct user interaction guarantees audio will be allowed
-      video.muted = false;
-      setIsMuted(false);
-      video.play().catch(() => {});
-    } else {
-      video.pause();
-    }
-  };
-
-  const handlePlay = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    setIsPlaying(true);
-    
-    // Pause and mute all other videos on the page
-    const videos = document.querySelectorAll('video');
-    videos.forEach(v => {
-      if (v !== e.target) {
-        v.muted = true;
-        v.pause();
-      }
-    });
-  };
-
-  return (
-    <div className="relative w-full h-full" onClick={togglePlay}>
-      <video
-        ref={videoRef}
-        src={objectUrl ? `${objectUrl}#t=4` : undefined}
-        loop
-        muted={isMuted}
-        playsInline
-        preload="auto"
-        onPlay={handlePlay}
-        onPause={() => setIsPlaying(false)}
-        className="w-full h-full object-cover cursor-pointer"
-      />
-      
-      {/* Central Play Overlay */}
-      {!isPlaying && (
-        <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none transition-opacity">
-          <div className="h-14 w-14 rounded-full bg-cream/90 backdrop-blur-md flex items-center justify-center shadow-luxe">
-            <PlayCircle className="h-8 w-8 text-brown-deep fill-brown-deep/20" />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Section({ title, kicker, action }: { title: string; kicker?: string; action?: { to: "/menu"; label: string } }) {
-  return (
-    <div className="mb-3 flex items-end justify-between">
-      <div className="min-w-0">
-        {kicker && <div className="text-[10px] tracking-[0.35em] uppercase text-gold">{kicker}</div>}
-        <h2 className="mt-0.5 truncate text-xl font-semibold text-brown-deep">{title}</h2>
-      </div>
-      {action && (
-        <Link to={action.to} className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-brown-deep hover:text-gold">
-          {action.label} <ChevronRight className="h-3.5 w-3.5" />
-        </Link>
-      )}
-    </div>
-  );
-}
-
-function Index() {
+function WokMawaApp() {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<Category | null>(CATEGORIES[2]);
-  const [typeFilter, setTypeFilter] = useState<"all" | "veg" | "non-veg">("all");
+  const { tableNumber, searchQuery, totals, actions } = useWokStore();
 
-  const fullMenu = useMenu();
-  const updates = useUpdates();
+  // Screen State: 'splash' | 'scanner' | 'home'
+  // Initial state is 'splash' to match SSR HTML; hydrated state is checked in useEffect
+  const [currentScreen, setCurrentScreen] = useState<'splash' | 'scanner' | 'home'>('splash');
+  const [tempTableInput, setTempTableInput] = useState(tableNumber);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [dietaryFilter, setDietaryFilter] = useState<'all' | 'veg' | 'non-veg' | 'mawa-hot' | 'popular'>('all');
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [selectedModalItem, setSelectedModalItem] = useState<MenuItem | null>(null);
+  const [heroSlide, setHeroSlide] = useState(0);
+  const [isSticky, setIsSticky] = useState(false);
 
-  // Popup campaigns setup
-  const { campaigns } = usePopupCampaigns();
-  const [activePopup, setActivePopup] = useState<PopupCampaign | null>(null);
-
+  // Restore screen session after hydration
   useEffect(() => {
-    if (campaigns.length === 0) return;
-
-    const now = new Date();
-    const activeCampaigns = campaigns.filter(c => {
-      if (c.status !== "active") return false;
-      const start = new Date(c.startDate).getTime();
-      const end = new Date(c.endDate);
-      end.setHours(23, 59, 59, 999);
-      const nowTime = now.getTime();
-      return nowTime >= start && nowTime <= end.getTime();
-    });
-
-    if (activeCampaigns.length === 0) return;
-
-    const highestCampaign = activeCampaigns[0];
-    const dismissedToday = localStorage.getItem(`paakashala_hide_popup_${highestCampaign.id}`);
-    const todayStr = new Date().toDateString();
-    const shownThisSession = sessionStorage.getItem(`paakashala_popup_shown_${highestCampaign.id}`);
-
-    if (dismissedToday !== todayStr && !shownThisSession) {
-      setActivePopup(highestCampaign);
-      sessionStorage.setItem(`paakashala_popup_shown_${highestCampaign.id}`, "true");
-      recordPopupView(highestCampaign.id);
+    if (typeof window !== 'undefined' && sessionStorage.getItem('wokmawa_seen_splash') === 'true') {
+      setCurrentScreen('home');
     }
-  }, [campaigns]);
+  }, []);
 
-  const filteredMenu = typeFilter === "all" ? fullMenu : fullMenu.filter(m => m.type === typeFilter);
+  // Track scroll position to blur category bar only when stuck at the top
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsSticky(window.scrollY > 60);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
-  const featured = FEATURED_IDS.map((id) => filteredMenu.find((m) => m.id === id)).filter(Boolean) as typeof fullMenu;
-  const chefPicks = filteredMenu.filter((m) => ["Chicken Lollipop", "Paneer Butter Masala", "Mutton Ghee Roast", "Chilli Prawns", "Kalmi Kebab (Half)"].includes(m.name));
-  const bestBiryani = filteredMenu.filter((m) => m.category === "Biryani").slice(0, 6);
-  const andhra = filteredMenu.filter((m) => m.category === "South Indian Starters").slice(0, 6);
+  // Smooth scroll to top when category is selected or changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }, [selectedCategory]);
 
-  const smartCollections = [
-    { id: "bogo", title: "Buy 1 Get 1", query: "bogo", image: "/collections/1.png" },
-    { id: "under199", title: "Under ₹199", query: "under199", image: "/collections/2.png" },
-    { id: "under299", title: "Under ₹299", query: "under299", image: "/collections/3.png" },
-    { id: "combos", title: "Combo Deals", query: "combo", image: "/collections/4.png" },
-    { id: "starters199", title: "Starters < ₹199", query: "starters199", image: "/collections/5.png" },
-    { id: "biryani299", title: "Biryanis < ₹299", query: "biryani299", image: "/collections/6.png" },
-  ];
+  const handleOpenItem = (itemOrId: MenuItem | string) => {
+    const foundItem = typeof itemOrId === 'string'
+      ? MENU_ITEMS.find((m) => m.id === itemOrId || m.slug === itemOrId)
+      : itemOrId;
+    if (foundItem) {
+      setSelectedModalItem(foundItem);
+    }
+  };
 
-  return (
-    <AppShell>
-      {activePopup && (
-        <PromoPopup 
-          campaign={activePopup} 
-          onClose={() => setActivePopup(null)}
-          onCtaClick={() => recordPopupClick(activePopup.id)}
+  // Auto rotate hero banner slides
+  useEffect(() => {
+    if (currentScreen !== 'home') return;
+    const timer = setInterval(() => {
+      setHeroSlide((prev) => (prev + 1) % 2);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [currentScreen]);
+
+  // Filter items
+  const filteredItems = MENU_ITEMS.filter((item) => {
+    // Category match
+    if (selectedCategory !== 'all' && item.categorySlug !== selectedCategory) {
+      return false;
+    }
+    // Search match
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const matchName = item.name.toLowerCase().includes(q);
+      const matchDesc = item.description.toLowerCase().includes(q);
+      const matchCat = item.categoryName.toLowerCase().includes(q);
+      if (!matchName && !matchDesc && !matchCat) return false;
+    }
+    // Dietary/Hot filter
+    if (dietaryFilter === 'veg' && !item.isVeg) return false;
+    if (dietaryFilter === 'non-veg' && item.isVeg) return false;
+    if (dietaryFilter === 'mawa-hot' && !item.isMawaHot) return false;
+    if (dietaryFilter === 'popular' && !item.isPopular) return false;
+
+    return true;
+  });
+
+  const handleSelectTableAndProceed = (tableNum: string) => {
+    const clean = tableNum.trim() || '04';
+    actions.setTableNumber(clean);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('wokmawa_seen_splash', 'true');
+    }
+    setCurrentScreen('home');
+  };
+
+  // 1. SPLASH / LANDING SCREEN (Plays /assets/splash.mp4 video)
+  if (currentScreen === 'splash') {
+    return (
+      <div className="relative min-h-screen w-full bg-[#080808] flex flex-col items-center justify-end p-6 overflow-hidden text-center select-none">
+        {/* Fullscreen Video Background */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0"
+          src={WOKMAWA_ASSETS.SPLASH_VIDEO}
         />
-      )}
-      <section className="animate-fade-up">
-        <HeroCarousel />
-      </section>
 
-      {/* Smart Collections Section */}
-      <section className="mt-6 animate-fade-up">
-        <div className="mb-3">
-          <div className="text-[10px] tracking-[0.35em] uppercase text-gold">Instant Savings</div>
-          <h2 className="mt-0.5 text-lg font-bold text-brown-deep">Smart Collections</h2>
-        </div>
-        <div className="-mx-[15px] md:-mx-8 lg:-mx-12 overflow-x-auto no-scrollbar">
-          <div className="flex gap-2.5 px-[15px] md:px-8 lg:px-12 pb-3 w-max">
-            {smartCollections.map((col) => (
-              <button
-                key={col.id}
-                onClick={() => navigate({ to: "/menu", search: { q: col.query } })}
-                className="relative overflow-hidden rounded-2xl w-[96px] h-[96px] shrink-0 shadow-luxe transition-all active:scale-95 hover:shadow-xl cursor-pointer group border border-border/40"
-              >
-                <img
-                  src={col.image}
-                  alt={col.title}
-                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/25" />
-                <span className="absolute inset-x-2 bottom-2.5 text-[9px] font-black text-white leading-tight drop-shadow-[0_1.5px_1.5px_rgba(0,0,0,0.9)] text-center tracking-wide uppercase">
-                  {col.title}
-                </span>
-              </button>
-            ))}
+        {/* Dark gradient overlay for bottom button readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-[1] pointer-events-none" />
+
+        {/* Empty flexible space so tapping anywhere navigates to scanner */}
+        <div
+          className="flex-1 w-full cursor-pointer z-[2]"
+          onClick={() => setCurrentScreen('scanner')}
+        />
+
+        {/* Bottom START ORDER Button (Redirects to Scanner Page) */}
+        <div className="w-full max-w-sm pb-6 z-10 space-y-3 relative">
+          <button
+            type="button"
+            onClick={() => setCurrentScreen('scanner')}
+            className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#E8C547] via-[#D4AF37] to-[#C9A227] text-black font-display font-black text-base uppercase tracking-wider shadow-gold-glow-lg hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer"
+          >
+            <span>START ORDER</span>
+            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+          </button>
+          <div className="text-[10px] text-white/90 text-center font-bold tracking-wide drop-shadow-md">
+            Tap to Scan Table QR & View Menu
           </div>
         </div>
-      </section>
+      </div>
+    );
+  }
 
-      {/* Latest Updates Section */}
-      {updates.length > 0 && (
-        <section className="mt-8 animate-fade-up">
-          <Section kicker="From the Kitchen" title="Latest Updates" />
-          <div className="-mx-[15px] md:-mx-8 lg:-mx-12 overflow-x-auto no-scrollbar snap-x snap-mandatory">
-            <div className="flex gap-2.5 px-[15px] md:px-8 lg:px-12 pb-4 w-max">
-              {updates.map((update) => (
-                <div key={update.id} className="w-[135px] shrink-0 bg-card rounded-3xl overflow-hidden shadow-luxe border border-border/60 snap-center">
-                  <div className="h-[240px] w-full bg-black relative">
-                    {update.videoUrl.includes("youtube") || update.videoUrl.includes("youtu.be") ? (
-                      <iframe
-                        src={getEmbedUrl(update.videoUrl)}
-                        className="w-full h-full object-cover pointer-events-none"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      ></iframe>
-                    ) : (
-                      <VideoPlayer src={update.videoUrl} />
-                    )}
+  // 2. TABLE SCANNER PAGE (Exact classic design with centered camera & bottom curved container)
+  if (currentScreen === 'scanner') {
+    const isSecureContext =
+      typeof window !== 'undefined' &&
+      typeof navigator !== 'undefined' &&
+      !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col bg-[#080808] select-none animate-fade-in overflow-hidden">
+        {/* Centered Camera Container */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pb-[180px]">
+          {/* The Scanning Box */}
+          <div className="w-64 h-64 border-4 border-[#D4AF37] rounded-3xl relative overflow-hidden bg-zinc-900 shadow-gold-glow-lg">
+            {isSecureContext ? (
+              <Suspense
+                fallback={
+                  <div className="text-white text-xs font-bold flex items-center justify-center h-full bg-black">
+                    Loading camera...
+                  </div>
+                }
+              >
+                <Scanner
+                  onScan={(detectedCodes) => {
+                    if (detectedCodes && detectedCodes.length > 0) {
+                      const val = detectedCodes[0].rawValue;
+                      if (val) {
+                        const match = val.match(/\/t\/([^/]+)/i);
+                        const table = match ? match[1] : val.replace(/[^A-Z0-9]/gi, '');
+                        handleSelectTableAndProceed(table || '04');
+                      }
+                    }
+                  }}
+                  onError={(error) => console.log(error?.message)}
+                  styles={{
+                    container: { width: '100%', height: '100%' },
+                    video: { objectFit: 'cover', width: '100%', height: '100%' },
+                  }}
+                />
+              </Suspense>
+            ) : (
+              <div className="text-center p-4 flex flex-col items-center justify-center h-full bg-black/90 space-y-2">
+                <div className="w-12 h-12 rounded-full bg-[#1C1C1C] border border-[#D4AF37]/50 flex items-center justify-center text-2xl">
+                  📷
+                </div>
+                <p className="text-white font-bold text-xs">Camera Unavailable</p>
+                <p className="text-[#A1A1AA] text-[10px]">Enter table ID below</p>
+              </div>
+            )}
+            {/* Animated Laser Line */}
+            <div
+              className="absolute top-0 left-0 w-full h-[3px] bg-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,1)] animate-ping pointer-events-none"
+              style={{ animationDuration: '3s' }}
+            />
+          </div>
+        </div>
+
+        {/* Bottom Semi-Sphere Curved Overlay */}
+        <div className="absolute bottom-0 left-0 w-full z-10">
+          <div
+            className="bg-gradient-to-b from-[#141414] to-[#0A0A0A] border-t border-[#D4AF37]/50 pt-10 pb-8 px-6 text-center shadow-[0_-10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col items-center"
+            style={{
+              borderTopLeftRadius: '100% 120px',
+              borderTopRightRadius: '0',
+            }}
+          >
+            {/* WOKMAWA Gold Flame Logo */}
+            <div className="h-16 w-[220px] mb-3 mt-1 flex items-center justify-center">
+              <img
+                src={WOKMAWA_ASSETS.LOGO}
+                alt="WOKMAWA"
+                className="h-full w-full object-contain"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/assets/logo.png';
+                }}
+              />
+            </div>
+
+            <p className="text-[#A1A1AA] leading-relaxed text-xs max-w-[280px] mx-auto relative z-10 font-medium mb-4">
+              Scan the QR code on your table to view the menu and place your order.
+            </p>
+
+            {/* Manual Table Input with Go */}
+            <div className="relative z-10 w-full max-w-[280px] mx-auto flex gap-2">
+              <input
+                type="text"
+                placeholder="Or enter table ID..."
+                value={tempTableInput}
+                onChange={(e) => setTempTableInput(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === 'Enter' && handleSelectTableAndProceed(tempTableInput)}
+                className="flex-1 rounded-xl border border-[#27272A] bg-[#1C1C1C] px-4 py-2.5 text-xs font-bold text-[#D4AF37] uppercase outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => handleSelectTableAndProceed(tempTableInput)}
+                disabled={!tempTableInput.trim()}
+                className="bg-gradient-to-r from-[#E8C547] to-[#D4AF37] px-5 py-2.5 rounded-xl text-black font-extrabold text-xs shadow-gold-glow active:scale-95 transition disabled:opacity-50"
+              >
+                Go
+              </button>
+            </div>
+
+            {/* Skip Option */}
+            <button
+              type="button"
+              onClick={() => handleSelectTableAndProceed(tableNumber)}
+              className="mt-3 text-[11px] text-[#A1A1AA] hover:text-[#D4AF37] font-semibold underline transition-colors"
+            >
+              Skip & Continue as Table #{tableNumber} →
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. HOME SCREEN & CATEGORY MENU
+  return (
+    <div className="min-h-screen bg-transparent text-white pb-28">
+      {/* Sticky Top Header */}
+      <WokHeader
+        onLogout={() => {
+          actions.clearCart();
+          setCurrentScreen('splash');
+        }}
+      />
+
+      <main className="max-w-xl mx-auto px-4 space-y-6 pt-3">
+        {/* Top Story Category Circles (Sticky on scroll to top, blurred only when stuck) */}
+        <section
+          className={`sticky top-0 z-40 -mx-4 px-4 py-2.5 flex gap-3.5 overflow-x-auto no-scrollbar snap-x transition-all duration-300 ${
+            isSticky
+              ? 'bg-[#080808]/80 backdrop-blur-md border-b border-white/10 rounded-b-[25px] shadow-[0_8px_25px_rgba(0,0,0,0.6)]'
+              : 'bg-transparent border-transparent rounded-none shadow-none'
+          }`}
+        >
+          {CATEGORIES.map((cat) => {
+            const isSelected = selectedCategory === cat.slug;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(selectedCategory === cat.slug ? 'all' : cat.slug)}
+                className="flex flex-col items-center gap-1 shrink-0 snap-start group"
+              >
+                <div
+                  className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden p-0.5 transition-all ${
+                    isSelected
+                      ? 'bg-gradient-to-tr from-[#E8C547] to-[#D4AF37] shadow-gold-glow scale-105 ring-2 ring-[#D4AF37]/50'
+                      : 'bg-[#27272A] hover:bg-[#3F3F46]'
+                  }`}
+                >
+                  <div className="w-full h-full rounded-full overflow-hidden bg-[#141414]">
+                    <img
+                      src={cat.image}
+                      alt={cat.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
                   </div>
                 </div>
+                {/* Single-line truncated text */}
+                <span
+                  className={`text-[10px] font-bold text-center max-w-[68px] truncate whitespace-nowrap leading-tight transition-colors ${
+                    isSelected ? 'text-[#D4AF37]' : 'text-[#A1A1AA] group-hover:text-white'
+                  }`}
+                  title={cat.name}
+                >
+                  {cat.name}
+                </span>
+              </button>
+            );
+          })}
+        </section>
+
+        {/* Hero Slider Carousel (Shown only when 'all' is active) */}
+        {selectedCategory === 'all' && (
+          <div className="relative rounded-3xl overflow-hidden border border-[#27272A] bg-[#0E0E0E] shadow-card-luxe my-1 animate-fade-in">
+            <div className="relative h-44 sm:h-52 w-full overflow-hidden">
+              {[WOKMAWA_ASSETS.HERO_1, WOKMAWA_ASSETS.HERO_2].map((imgSrc, idx) => (
+                <img
+                  key={idx}
+                  src={imgSrc}
+                  alt={`Hero Banner ${idx + 1}`}
+                  className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-in-out ${
+                    heroSlide === idx ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                  }`}
+                />
               ))}
             </div>
+
+            {/* Slider Dots Indicator */}
+            <div className="absolute bottom-3 right-3 flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 z-10">
+              {[WOKMAWA_ASSETS.HERO_1, WOKMAWA_ASSETS.HERO_2].map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setHeroSlide(idx)}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    heroSlide === idx ? 'w-4 bg-[#D4AF37]' : 'w-1.5 bg-white/40'
+                  }`}
+                  aria-label={`Go to slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+
+
+        {/* SECTION 1: POPULAR RIGHT NOW (Shown when 'all' is active) */}
+        {selectedCategory === 'all' && (
+          <section className="space-y-3.5 pt-1 animate-fade-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <h3 className="font-display font-black text-sm sm:text-base text-white uppercase tracking-wider">
+                  POPULAR RIGHT NOW
+                </h3>
+              </div>
+              <Link
+                to="/menu"
+                className="text-xs font-bold text-[#A1A1AA] hover:text-[#D4AF37] flex items-center gap-0.5 transition-colors"
+              >
+                <span>See All</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            {/* 3 Vertical Cards Side by Side (Horizontal Scroll) */}
+            <div className="flex gap-3.5 overflow-x-auto no-scrollbar pb-2 px-1 snap-x">
+            {[
+              {
+                id: 'pop-01',
+                name: 'Mawa Hot Noodles',
+                desc: 'Our signature wok-tossed noodles with bold Asian spices.',
+                price: 189,
+                chillies: 3,
+                image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=600&auto=format&fit=crop&q=80',
+                isVeg: true,
+                rawItem: MENU_ITEMS.find((i) => i.id === 'wn-01') || MENU_ITEMS[0],
+              },
+              {
+                id: 'pop-02',
+                name: 'Mawa Hot Rice',
+                desc: 'Fiery wok rice with fresh veggies and house sauces.',
+                price: 199,
+                chillies: 3,
+                image: 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=600&auto=format&fit=crop&q=80',
+                isVeg: true,
+                rawItem: MENU_ITEMS.find((i) => i.id === 'rb-01') || MENU_ITEMS[5],
+              },
+              {
+                id: 'pop-03',
+                name: 'Mawa Hot Bowl',
+                desc: 'A complete Asian bowl with bold flavours.',
+                price: 199,
+                chillies: 3,
+                image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80',
+                isVeg: true,
+                rawItem: MENU_ITEMS.find((i) => i.id === 'ba-01') || MENU_ITEMS[10],
+              },
+            ].map((card) => (
+              <div
+                key={card.id}
+                onClick={() => handleOpenItem(card.rawItem?.id || card.id)}
+                className="w-44 sm:w-48 shrink-0 snap-start bg-[#121212] border border-[#27272A] rounded-2xl p-3 flex flex-col justify-between hover:border-[#D4AF37]/60 transition-all cursor-pointer shadow-card-luxe group relative"
+              >
+                {/* Heart / Favorite Icon Top Right */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                  className="absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white/70 hover:text-[#FF3B3B] transition-colors"
+                >
+                  <span className="text-xs">♡</span>
+                </button>
+
+                {/* Dish Photo */}
+                <div className="relative h-28 w-full rounded-xl overflow-hidden bg-[#1A1A1A] mb-2.5">
+                  <img
+                    src={card.image}
+                    alt={card.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
+
+                {/* Tags: Veg + Spice Chillies */}
+                <div className="space-y-1.5 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <VegBadge isVeg={card.isVeg} size="sm" />
+                    <div className="flex items-center text-[10px]">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <span
+                          key={i}
+                          className={i < card.chillies ? 'text-[#FF3B3B]' : 'text-[#3F3F46] opacity-40'}
+                        >
+                          🌶️
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Title & Description */}
+                  <h4 className="font-display font-extrabold text-sm text-white group-hover:text-[#D4AF37] transition-colors line-clamp-1">
+                    {card.name}
+                  </h4>
+                  <p className="text-[10px] text-[#A1A1AA] line-clamp-2 leading-snug">
+                    {card.desc}
+                  </p>
+                </div>
+
+                {/* Price & Full-width ADD Button */}
+                <div className="pt-2.5 mt-2 border-t border-[#27272A]/70 space-y-2">
+                  <div className="font-display font-black text-base text-white">
+                    ₹{card.price}
+                  </div>
+
+                  <WokAddButton
+                    item={card.rawItem || (MENU_ITEMS.find((m) => m.id === card.id) as MenuItem)}
+                    size="full"
+                    onOpenModal={() => handleOpenItem(card.rawItem?.id || card.id)}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
         </section>
       )}
 
-      <section className="mt-8 animate-fade-up">
-        <Section kicker="Curated for you" title="Browse the Menu" action={{ to: "/menu", label: "View all" }} />
-      </section>
-
-      <div className="relative z-10 -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 pt-2 pb-3 mb-2">
-        <div className="flex items-center gap-3 max-w-2xl mx-auto w-full">
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              if (searchQuery.trim()) {
-                navigate({ to: "/menu", search: { q: searchQuery.trim() } });
-              }
-            }} className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <input 
-                type="text" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search biryani…" 
-                className="w-full rounded-xl border border-border bg-card py-2.5 pl-9 pr-3 text-xs shadow-sm focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-all"
-              />
-            </form>
-
-            <div className="shrink-0 flex items-center justify-center gap-1.5 bg-card border border-border/80 px-2 py-2 rounded-xl shadow-sm">
-              <span className={`text-[9px] font-bold transition-colors ${typeFilter === 'veg' ? 'text-green-700' : 'text-muted-foreground/50'}`}>VEG</span>
-              
-              <button 
-                onClick={() => {
-                  if (typeFilter === 'all') setTypeFilter('veg');
-                  else if (typeFilter === 'veg') setTypeFilter('non-veg');
-                  else setTypeFilter('all');
-                }}
-                className={`relative flex h-4 w-10 items-center rounded-full transition-colors ${
-                  typeFilter === 'all' ? 'bg-muted-foreground/20' : typeFilter === 'veg' ? 'bg-green-500/20' : 'bg-red-500/20'
-                }`}
-              >
-                <div 
-                  className={`absolute h-3.5 w-3.5 rounded-full shadow-md transition-transform duration-300 flex items-center justify-center ${
-                    typeFilter === 'all' 
-                      ? 'translate-x-[13px] bg-muted-foreground' 
-                      : typeFilter === 'veg' 
-                      ? 'translate-x-[2px] bg-green-500' 
-                      : 'translate-x-[24px] bg-red-500'
-                  }`}
+      {/* Dynamic Category Items (When a specific category is selected) */}
+        {selectedCategory !== 'all' && (
+          <section className="space-y-3 animate-fade-in">
+            <div className="grid grid-cols-2 gap-3">
+              {filteredItems.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => handleOpenItem(item.id)}
+                  className="bg-[#121212] border border-[#27272A] rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between hover:border-[#D4AF37]/60 transition-all cursor-pointer shadow-card-luxe group relative active:scale-[0.98]"
                 >
-                   <div className="h-1 w-1 rounded-full bg-white" />
+                  {/* Dish Photo */}
+                  <div className="relative h-28 sm:h-32 w-full rounded-xl overflow-hidden bg-[#1A1A1A] mb-2">
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                    />
+                    <div className="absolute top-2 left-2">
+                      <VegBadge isVeg={item.isVeg} size="sm" />
+                    </div>
+                    {item.isMawaHot && (
+                      <div className="absolute top-0 right-0 z-10">
+                        <MawaHotBadge text="HOT 🔥" variant="corner" />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Title & Description */}
+                  <div className="space-y-1 flex-1">
+                    <h4 className="font-display font-extrabold text-xs sm:text-sm text-white group-hover:text-[#D4AF37] transition-colors line-clamp-1">
+                      {item.name}
+                    </h4>
+                    <p className="text-[10px] text-[#A1A1AA] line-clamp-2 leading-tight">
+                      {item.description}
+                    </p>
+                  </div>
+
+                  {/* Price & ADD Button */}
+                  <div className="pt-2 mt-2 border-t border-[#27272A]/70 flex items-center justify-between gap-1">
+                    <span className="font-display font-black text-sm sm:text-base text-white">
+                      ₹{item.price}
+                    </span>
+                    <WokAddButton
+                      item={item}
+                      onOpenModal={() => handleOpenItem(item.id)}
+                    />
+                  </div>
                 </div>
-              </button>
-              
-              <span className={`text-[9px] font-bold transition-colors ${typeFilter === 'non-veg' ? 'text-red-700' : 'text-muted-foreground/50'}`}>NON-VEG</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="sticky top-0 z-20 -mx-4 md:-mx-8 lg:-mx-12 bg-background/85 backdrop-blur-md border-b border-border/60 mb-6">
-          <div className="overflow-x-auto no-scrollbar py-3">
-            <div className="flex gap-4 px-4 md:px-8 lg:px-12">
-              {CATEGORIES.map((c) => (
-                <button
-                  key={c}
-                  onClick={() => {
-                    const isOpening = activeCategory !== c;
-                    setActiveCategory(isOpening ? c : null);
-                    if (isOpening) {
-                      setTimeout(() => {
-                        const el = document.getElementById("dynamic-category-section");
-                        if (el) {
-                          const y = el.getBoundingClientRect().top + window.scrollY - 100;
-                          window.scrollTo({ top: y, behavior: "smooth" });
-                        }
-                      }, 50);
-                    }
-                  }}
-                  className={`group relative flex w-[72px] shrink-0 flex-col items-center gap-2 transition active:scale-95 ${activeCategory === c ? 'scale-105' : ''}`}
-                >
-                  <div className={`h-[72px] w-[72px] overflow-hidden rounded-full shadow-luxe p-0.5 bg-card transition-colors ${activeCategory === c ? 'border-2 border-gold' : 'border border-gold/30'}`}>
-                    <img src={CATEGORY_IMAGE[c]} alt={c} loading="lazy" className="h-full w-full rounded-full object-cover transition duration-500 group-hover:scale-110" />
-                  </div>
-                  <div className={`w-full text-center text-[10px] font-semibold leading-tight line-clamp-2 ${activeCategory === c ? 'text-gold' : 'text-brown-deep'}`}>
-                    {c}
-                  </div>
-                </button>
               ))}
             </div>
-          </div>
-        </div>
+          </section>
+        )}
 
-        {/* Dynamic Category Products */}
-        {activeCategory && (
-          <div id="dynamic-category-section" className="mt-4 animate-fade-up bg-luxe-gradient -mx-4 md:-mx-8 lg:-mx-12 px-4 md:px-8 lg:px-12 py-4 border-y border-gold/20 shadow-inner">
-            <div className="mb-3 flex items-end justify-between">
-              <h3 className="text-sm font-semibold text-brown-deep">
-                {activeCategory}
-              </h3>
-              <Link to="/menu" search={{ category: activeCategory }} className="text-[10px] font-semibold uppercase tracking-widest text-gold hover:underline">
-                View All
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mt-2">
-                {filteredMenu.filter((m) => m.category === activeCategory).map((f) => (
-                  <div key={f.id}>
-                    <MiniCategoryCard item={f} />
+        {/* Full Category Sections (Shown when 'all' is active) */}
+        {selectedCategory === 'all' && (
+          <>
+            {/* SECTION 2: WOK NOODLES (2 Cards Per Row Grid) */}
+            <section className="space-y-3.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <h3 className="font-display font-black text-sm sm:text-base text-white uppercase tracking-wider">
+                    WOK NOODLES
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedCategory('wok-noodles')}
+                  className="text-xs font-bold text-[#A1A1AA] hover:text-[#D4AF37] flex items-center gap-0.5 transition-colors"
+                >
+                  <span>See All</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {MENU_ITEMS.filter((i) => i.categorySlug === 'wok-noodles').map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => handleOpenItem(item.id)}
+                    className="bg-[#121212] border border-[#27272A] rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between hover:border-[#D4AF37]/60 transition-all cursor-pointer shadow-card-luxe group relative active:scale-[0.98]"
+                  >
+                    {/* Dish Photo */}
+                    <div className="relative h-28 sm:h-32 w-full rounded-xl overflow-hidden bg-[#1A1A1A] mb-2">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-2 left-2">
+                        <VegBadge isVeg={item.isVeg} size="sm" />
+                      </div>
+                      {item.isMawaHot && (
+                        <div className="absolute top-0 right-0 z-10">
+                          <MawaHotBadge text="HOT 🔥" variant="corner" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Title & Description */}
+                    <div className="space-y-1 flex-1">
+                      <h4 className="font-display font-extrabold text-xs sm:text-sm text-white group-hover:text-[#D4AF37] transition-colors line-clamp-1">
+                        {item.name}
+                      </h4>
+                      <p className="text-[10px] text-[#A1A1AA] line-clamp-2 leading-tight">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    {/* Price & ADD Button */}
+                    <div className="pt-2 mt-2 border-t border-[#27272A]/70 flex items-center justify-between gap-1">
+                      <span className="font-display font-black text-sm sm:text-base text-white">
+                        ₹{item.price}
+                      </span>
+                      <WokAddButton
+                        item={item}
+                        onOpenModal={() => handleOpenItem(item.id)}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
-          </div>
+            </section>
+
+            {/* SECTION 3: RICE & ASIAN BOWLS (2 Cards Per Row Grid) */}
+            <section className="space-y-3.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <h3 className="font-display font-black text-sm sm:text-base text-white uppercase tracking-wider">
+                    RICE & ASIAN BOWLS
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedCategory('rice-bowls')}
+                  className="text-xs font-bold text-[#A1A1AA] hover:text-[#D4AF37] flex items-center gap-0.5 transition-colors"
+                >
+                  <span>See All</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {MENU_ITEMS.filter((i) => i.categorySlug === 'rice-bowls' || i.categorySlug === 'bowls-of-asia').map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => handleOpenItem(item.id)}
+                    className="bg-[#121212] border border-[#27272A] rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between hover:border-[#D4AF37]/60 transition-all cursor-pointer shadow-card-luxe group relative active:scale-[0.98]"
+                  >
+                    {/* Dish Photo */}
+                    <div className="relative h-28 sm:h-32 w-full rounded-xl overflow-hidden bg-[#1A1A1A] mb-2">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-2 left-2">
+                        <VegBadge isVeg={item.isVeg} size="sm" />
+                      </div>
+                      {item.isMawaHot && (
+                        <div className="absolute top-0 right-0 z-10">
+                          <MawaHotBadge text="HOT 🔥" variant="corner" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Title & Description */}
+                    <div className="space-y-1 flex-1">
+                      <h4 className="font-display font-extrabold text-xs sm:text-sm text-white group-hover:text-[#D4AF37] transition-colors line-clamp-1">
+                        {item.name}
+                      </h4>
+                      <p className="text-[10px] text-[#A1A1AA] line-clamp-2 leading-tight">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    {/* Price & ADD Button */}
+                    <div className="pt-2 mt-2 border-t border-[#27272A]/70 flex items-center justify-between gap-1">
+                      <span className="font-display font-black text-sm sm:text-base text-white">
+                        ₹{item.price}
+                      </span>
+                      <WokAddButton
+                        item={item}
+                        onOpenModal={() => handleOpenItem(item.id)}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* SECTION 4: MOMOS & STARTERS (2 Cards Per Row Grid) */}
+            <section className="space-y-3.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <h3 className="font-display font-black text-sm sm:text-base text-white uppercase tracking-wider">
+                    MOMOS & STARTERS
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedCategory('momos')}
+                  className="text-xs font-bold text-[#A1A1AA] hover:text-[#D4AF37] flex items-center gap-0.5 transition-colors"
+                >
+                  <span>See All</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {MENU_ITEMS.filter((i) => i.categorySlug === 'momos' || i.categorySlug === 'starters').map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => handleOpenItem(item.id)}
+                    className="bg-[#121212] border border-[#27272A] rounded-2xl p-2.5 sm:p-3 flex flex-col justify-between hover:border-[#D4AF37]/60 transition-all cursor-pointer shadow-card-luxe group relative active:scale-[0.98]"
+                  >
+                    {/* Dish Photo */}
+                    <div className="relative h-28 sm:h-32 w-full rounded-xl overflow-hidden bg-[#1A1A1A] mb-2">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                      <div className="absolute top-2 left-2">
+                        <VegBadge isVeg={item.isVeg} size="sm" />
+                      </div>
+                      {item.isMawaHot && (
+                        <div className="absolute top-0 right-0 z-10">
+                          <MawaHotBadge text="HOT 🔥" variant="corner" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Title & Description */}
+                    <div className="space-y-1 flex-1">
+                      <h4 className="font-display font-extrabold text-xs sm:text-sm text-white group-hover:text-[#D4AF37] transition-colors line-clamp-1">
+                        {item.name}
+                      </h4>
+                      <p className="text-[10px] text-[#A1A1AA] line-clamp-2 leading-tight">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    {/* Price & ADD Button */}
+                    <div className="pt-2 mt-2 border-t border-[#27272A]/70 flex items-center justify-between gap-1">
+                      <span className="font-display font-black text-sm sm:text-base text-white">
+                        ₹{item.price}
+                      </span>
+                      <WokAddButton
+                        item={item}
+                        onOpenModal={() => handleOpenItem(item.id)}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </>
         )}
+      </main>
 
-      <section className="mt-8 animate-fade-up">
-        <Section kicker="Today's Highlights" title="Freshly Curated" action={{ to: "/menu", label: "See menu" }} />
-        <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mt-2">
-          {featured.map((f) => <FeaturedCard key={f.id} item={f} />)}
-        </div>
-      </section>
+      {/* Floating Bottom Cart Bar */}
+      <CartSummaryBar />
 
-      <section className="mt-8 animate-fade-up">
-        <div 
-          className="mt-8 rounded-3xl p-6 text-cream shadow-luxe relative overflow-hidden bg-brown-deep"
-          style={{
-            backgroundImage: "url('https://i.ibb.co/q3ykTymX/Chat-GPT-Image-Jul-10-2026-11-59-40-PM.png')",
-            backgroundSize: "cover",
-            backgroundPosition: "center"
-          }}
-        >
-          <div className="absolute inset-0 bg-black/30" />
-          <Sparkles className="absolute right-[-10%] top-[-10%] h-48 w-48 opacity-10 mix-blend-overlay" />
-          
-          <div className="relative z-10">
-            <div className="text-[9px] tracking-[0.3em] text-gold uppercase font-bold">Chef's Table</div>
-            <h2 className="mt-1 text-lg font-bold leading-tight max-w-[200px]">
-              A composed spread, <br />poured with care.
-            </h2>
-            <p className="mt-1.5 text-[10px] text-cream/90 leading-relaxed max-w-[240px]">
-              From Andhra classics to Mughlai biryanis — every plate is finished at our heritage kitchen.
-            </p>
-            <Link to="/menu" className="mt-3.5 inline-flex bg-gold-gradient text-brown-deep px-4 py-2 rounded-xl text-[9px] uppercase font-bold tracking-widest shadow-sm hover:opacity-90 transition active:scale-95">
-              Explore Signature Flavours
-            </Link>
-          </div>
-        </div>
-      </section>
+      {/* 2-Step Item Customizer Bottom Sheet */}
+      <WokItemModal
+        item={selectedModalItem}
+        isOpen={!!selectedModalItem}
+        onClose={() => setSelectedModalItem(null)}
+      />
 
-      <section className="mt-8 animate-fade-up">
-        <Section kicker="Chef's Picks" title="House Favourites" />
-        <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mt-2">
-          {chefPicks.map((f) => <FeaturedCard key={f.id} item={f} />)}
-        </div>
-      </section>
-
-      <section className="mt-8 animate-fade-up">
-        <Section kicker="Bestselling" title="Biryani Specials" action={{ to: "/menu", label: "All biryanis" }} />
-        <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mt-2">
-          {bestBiryani.map((f) => <FeaturedCard key={f.id} item={f} />)}
-        </div>
-      </section>
-
-      <section className="mt-8 mb-4 animate-fade-up">
-        <Section kicker="Authentic Andhra" title="South Indian Starters" action={{ to: "/menu", label: "See more" }} />
-        <div className="grid grid-cols-2 min-[400px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3 mt-2">
-          {andhra.map((f) => <FeaturedCard key={f.id} item={f} />)}
-        </div>
-      </section>
-    </AppShell>
+      {/* Checkout Modal */}
+      <WokCheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+      />
+    </div>
   );
 }

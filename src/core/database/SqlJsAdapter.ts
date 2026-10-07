@@ -10,9 +10,9 @@ export class SqlJsAdapter implements DatabaseAdapter {
   public async initialize(): Promise<void> {
     try {
       logger.info("database", "Initializing WebAssembly sql.js database adapter...");
-      // Initialize sql.js. In browser environment, load WASM from cdn.jsdelivr.net fallback for simple config
+      // Initialize sql.js. In browser environment, load WASM locally first, fallback to CDN
       this.SQL = await initSqlJs({
-        locateFile: (file) => `https://sql.js.org/dist/${file}`
+        locateFile: (file) => `/${file}`
       });
 
       // Load saved binary state from LocalStorage if present

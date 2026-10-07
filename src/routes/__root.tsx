@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -77,17 +78,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Paakashala — Premium South Indian Fine Dining" },
-      { name: "description", content: "Paakashala — a premium South Indian dining experience. Explore signature biryanis, tandoori classics and Andhra specials, and order via WhatsApp." },
-      { name: "author", content: "Paakashala" },
-      { property: "og:title", content: "Paakashala — Premium South Indian Fine Dining" },
-      { property: "og:description", content: "Paakashala — a premium South Indian dining experience. Explore signature biryanis, tandoori classics and Andhra specials, and order via WhatsApp." },
+      { title: "WOKMAWA — Master Wok & Fiery Spices" },
+      { name: "description", content: "WOKMAWA — Authentic Asian street woks blasted on 400°C open flame with signature volcano spice levels." },
+      { name: "author", content: "WOKMAWA" },
+      { property: "og:title", content: "WOKMAWA — Master Wok & Fiery Spices" },
+      { property: "og:description", content: "WOKMAWA — Authentic Asian street woks blasted on 400°C open flame with signature volcano spice levels." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Paakashala — Premium South Indian Fine Dining" },
-      { name: "twitter:description", content: "Paakashala — a premium South Indian dining experience. Explore signature biryanis, tandoori classics and Andhra specials, and order via WhatsApp." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/e2ce1358-24af-41e8-aac5-f7d929c1957a" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/e2ce1358-24af-41e8-aac5-f7d929c1957a" },
+      { name: "twitter:title", content: "WOKMAWA — Master Wok & Fiery Spices" },
+      { name: "twitter:description", content: "WOKMAWA — Authentic Asian street woks blasted on 400°C open flame with signature volcano spice levels." },
     ],
     links: [
       {
@@ -98,7 +97,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@300;400;500;600;700&family=Noto+Serif+Telugu:wght@400;500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap",
       },
     ],
   }),
@@ -130,6 +129,12 @@ import { crashReporter } from "../modules/desktop/CrashReporter";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const location = useLocation();
+
+  // Smooth scroll to top whenever route / page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }, [location.pathname]);
 
   useEffect(() => {
     // Initialise local crash listeners
@@ -154,8 +159,17 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Global Background Texture (2.5% Opacity) across all pages */}
+      <div
+        className="fixed inset-0 pointer-events-none z-[1] bg-repeat bg-center bg-cover opacity-[0.025] select-none"
+        style={{ backgroundImage: `url('/assets/sitbg.png')` }}
+        aria-hidden="true"
+      />
+
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="relative z-0 min-h-screen">
+        <Outlet />
+      </div>
       
       {/* Global Desktop overlays */}
       <CommandPalette />

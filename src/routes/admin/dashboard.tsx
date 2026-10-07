@@ -329,5 +329,3 @@ function MetricCard({ title, value, icon: Icon, desc }: any) {
     </div>
   );
 }
-
-export default AdminDashboard;

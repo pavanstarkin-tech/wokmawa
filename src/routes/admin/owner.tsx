@@ -300,4 +300,3 @@ function OwnerDashboardPage() {
     </div>
   );
 }
-export default OwnerDashboardPage;

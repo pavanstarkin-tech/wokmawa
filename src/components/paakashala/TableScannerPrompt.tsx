@@ -127,11 +127,18 @@ export function TableScannerPrompt() {
           }}
         >
           <div className="h-20 w-[240px] mb-4 mt-2">
-            <img src="/logo-new.png" alt="Logo" className="h-full w-full object-contain mix-blend-multiply" />
+            <img
+              src="https://aietta.ac.in/assets/images/departments/WOKMAWA%20Gold%20Flame%20Logo%20_1_.png"
+              alt="WOKMAWA"
+              className="h-full w-full object-contain"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/wokmawa/logo.png';
+              }}
+            />
           </div>
           
-          <p className="text-muted-foreground leading-relaxed text-sm max-w-[280px] mx-auto relative z-10 font-medium mb-4">
-            Scan the QR code on your table to view the menu and place your order.
+          <p className="text-[#A1A1AA] leading-relaxed text-sm max-w-[280px] mx-auto relative z-10 font-medium mb-4">
+            Scan the QR code on your table to view the WOKMAWA menu and place your order.
           </p>
 
           <div className="relative z-10 w-full max-w-[280px] mx-auto flex gap-2">
@@ -141,12 +148,12 @@ export function TableScannerPrompt() {
               value={manualTable}
               onChange={(e) => setManualTable(e.target.value.toUpperCase())}
               onKeyDown={(e) => e.key === "Enter" && handleManualSubmit()}
-              className="flex-1 rounded-xl border border-border/80 bg-background/50 px-4 py-3 text-sm font-bold text-brown-deep uppercase outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all"
+              className="flex-1 rounded-xl border border-[#27272A] bg-[#1C1C1C] px-4 py-3 text-sm font-bold text-[#D4AF37] uppercase outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] transition-all"
             />
             <button
               onClick={handleManualSubmit}
               disabled={!manualTable.trim()}
-              className="bg-brown-gradient px-5 py-3 rounded-xl text-cream font-bold text-sm shadow-sm active:scale-95 transition disabled:opacity-50"
+              className="bg-gradient-to-r from-[#E8C547] to-[#D4AF37] px-5 py-3 rounded-xl text-black font-extrabold text-sm shadow-gold-glow active:scale-95 transition disabled:opacity-50"
             >
               Go
             </button>

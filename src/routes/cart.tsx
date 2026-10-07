@@ -1,549 +1,506 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ShoppingBag, Minus, Plus, Trash2, Ticket, CheckCircle2, Heart } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { AppShell } from "@/components/paakashala/AppShell";
-import { EmptyState } from "@/components/paakashala/EmptyState";
-import { VegBadge } from "@/components/paakashala/MenuCard";
-import { CustomerWelcome } from "@/components/paakashala/CustomerWelcome";
-import { useCart, useCustomer, useTable, useOrders, useSettings, useMenu } from "@/lib/paakashala-store";
-import { WHATSAPP_NUMBER, MENU } from "@/lib/paakashala-menu";
-import { useOffers, logPromotionUsage } from "@/lib/promotions";
-import { calculateCartPromotions } from "@/lib/promotions-engine";
+import {
+  ShoppingBag,
+  ArrowRight,
+  Trash2,
+  Plus,
+  Minus,
+  Tag,
+  Check,
+  ShieldCheck,
+  ChevronLeft,
+} from "lucide-react";
+import { useWokStore, LiveOrder } from "@/lib/wokmawa-store";
+import { WokHeader } from "@/components/wokmawa/WokHeader";
+import { VegBadge } from "@/components/wokmawa/WokBadge";
+import { UpsellCarousel } from "@/components/wokmawa/UpsellCarousel";
 
 export const Route = createFileRoute("/cart")({
-  component: CartPage,
+  component: WokCartPage,
 });
 
-const loadRazorpayScript = () => {
-  return new Promise((resolve) => {
-    if ((window as any).Razorpay) {
-      resolve(true);
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
-
-function CartPage() {
-  const { items, setQty, remove, clear, total, count } = useCart();
-  const { customer } = useCustomer();
-  const { table } = useTable();
-  const { push } = useOrders();
-  const settings = useSettings();
+function WokCartPage() {
   const navigate = useNavigate();
-  const menuItems = useMenu();
-  const { offers } = useOffers();
+  const { cart, totals, tableNumber, appliedCoupon, customer, actions } = useWokStore();
+  const [mounted, setMounted] = useState(false);
 
-  const [showCustomerPrompt, setShowCustomerPrompt] = useState(false);
-  const [couponInput, setCouponInput] = useState("");
-  const [appliedCoupon, setAppliedCoupon] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("paakashala_applied_coupon") || "";
-    }
-    return "";
-  });
-  const [couponError, setCouponError] = useState("");
-  const [couponSuccess, setCouponSuccess] = useState("");
-
-  const [tipAmount, setTipAmount] = useState<number>(0);
-  const [customTipInput, setCustomTipInput] = useState("");
-  const [isCustomTip, setIsCustomTip] = useState(false);
-
-  const hasPriceOnRequest = items.some((i) => i.price == null);
-
-  // Compute calculated promotions
-  const promoResult = calculateCartPromotions(items, offers, appliedCoupon || undefined, menuItems);
-
-  // If customer completes the prompt, automatically process checkout
   useEffect(() => {
-    if (showCustomerPrompt && customer) {
-      setShowCustomerPrompt(false);
-      processCheckout();
-    }
-  }, [customer, showCustomerPrompt]);
+    setMounted(true);
+  }, []);
 
-  const applyCouponCode = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCouponError("");
-    setCouponSuccess("");
-    
-    if (!couponInput.trim()) return;
-    
-    const code = couponInput.trim().toUpperCase();
-    const couponOffer = offers.find(
-      (o) => o.type === "coupon" && o.couponCode?.toUpperCase() === code && o.status === "active"
+  // Top Stepper State: 1 = Review Items, 2 = Diner Details
+  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+
+  // Diner Info
+  const [dinerName, setDinerName] = useState(customer.name || 'Guest Diner');
+  const [dinerPhone, setDinerPhone] = useState(customer.phone || '');
+
+  // Coupon
+  const [couponCode, setCouponCode] = useState('');
+  const [couponRes, setCouponRes] = useState<{ text: string; success: boolean } | null>(null);
+
+  // Processing state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleApplyCoupon = () => {
+    if (!couponCode) return;
+    const res = actions.applyCoupon(couponCode);
+    setCouponRes({ text: res.message, success: res.success });
+  };
+
+  const handleConfirmAndPay = () => {
+    setIsSubmitting(true);
+
+    const newOrder: LiveOrder = {
+      orderId: `WOK-${Math.floor(1000 + Math.random() * 9000)}`,
+      tableNumber,
+      items: [...cart],
+      itemTotal: totals.itemTotal,
+      taxGst: totals.taxGst,
+      packagingCharge: totals.packagingCharge,
+      discount: totals.discount,
+      grandTotal: totals.grandTotal,
+      paymentMethod: 'counter',
+      status: 'received',
+      createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      prepTimeMinutes: 12,
+      customer: {
+        name: dinerName.trim() || 'Guest Diner',
+        phone: dinerPhone.trim(),
+        email: '',
+        isGuest: !dinerPhone.trim(),
+      },
+    };
+
+    setTimeout(() => {
+      actions.setActiveOrder(newOrder);
+      actions.clearCart();
+      setIsSubmitting(false);
+      navigate({ to: '/orders' });
+    }, 600);
+  };
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-transparent text-white pb-36">
+        <WokHeader title="Your Wok" showBack backTo="/" />
+      </div>
     );
+  }
 
-    if (couponOffer) {
-      // Validate minimum cart value
-      const minVal = couponOffer.conditions?.minCartValue || 0;
-      if (promoResult.subtotal < minVal) {
-        setCouponError(`Min purchase of ₹${minVal} required for this coupon.`);
-        return;
-      }
+  if (cart.length === 0) {
+    return (
+      <div className="min-h-screen bg-transparent text-white flex flex-col justify-between p-4">
+        <WokHeader title="Your Wok" showBack backTo="/" />
 
-      setAppliedCoupon(code);
-      localStorage.setItem("paakashala_applied_coupon", code);
-      setCouponSuccess(`Coupon "${code}" applied successfully!`);
-      setCouponInput("");
-    } else {
-      setCouponError("Invalid or expired coupon code.");
-    }
-  };
+        <div className="max-w-md mx-auto text-center space-y-4 my-auto p-6 bg-[#141414] border border-[#27272A] rounded-3xl shadow-card-luxe">
+          <div className="w-20 h-20 rounded-full bg-[#1C1C1C] border border-[#D4AF37]/30 flex items-center justify-center mx-auto text-[#D4AF37]">
+            <ShoppingBag className="w-9 h-9 stroke-[1.8]" />
+          </div>
+          <h2 className="font-display font-black text-2xl text-white">
+            Your Wok is Empty!
+          </h2>
+          <p className="text-xs text-[#A1A1AA] leading-relaxed">
+            You haven't added any fiery noodles, sizzling platters, or crispy baos yet.
+          </p>
+          <Link
+            to="/"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#E8C547] via-[#D4AF37] to-[#C9A227] text-black font-extrabold text-sm shadow-gold-glow hover:brightness-110"
+          >
+            <span>EXPLORE MENU</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
 
-  const removeCouponCode = () => {
-    setAppliedCoupon("");
-    localStorage.removeItem("paakashala_applied_coupon");
-    setCouponSuccess("");
-    setCouponError("");
-  };
-
-  const processCheckout = async () => {
-    if (!items.length || !customer || !table) return;
-
-    const isScriptLoaded = await loadRazorpayScript();
-    if (!isScriptLoaded) {
-      alert("Failed to load payment gateway. Please check your internet connection.");
-      return;
-    }
-
-    try {
-      // Use promotional grand total plus servant tip
-      const finalGrandTotal = promoResult.grandTotal + tipAmount;
-      const amountInPaise = Math.round(finalGrandTotal * 100);
-      const receiptId = Math.floor(1000 + Math.random() * 9000).toString();
-
-      const response = await fetch("/api/create-order.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: amountInPaise,
-          receipt: receiptId,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create order on server");
-      }
-
-      const rzpOrder = await response.json();
-      const rzpOrderId = rzpOrder.id;
-
-      const options = {
-        key: "rzp_live_StBUehIpeULYuL",
-        amount: amountInPaise,
-        currency: "INR",
-        name: "Paakashala",
-        description: `Order at Table ${table}`,
-        order_id: rzpOrderId,
-        handler: function (paymentResponse: any) {
-          // Combine normal items and auto-added free items
-          const finalItems = [...items, ...promoResult.freeItems];
-
-          const order = {
-            id: receiptId,
-            mobile: customer.phone,
-            customerName: customer.name,
-            uid: customer.uid || "",
-            tableId: table,
-            createdAt: new Date().toISOString(),
-            items: finalItems,
-            subtotal: promoResult.subtotal,
-            discount: promoResult.discount,
-            tax: promoResult.tax,
-            tip: tipAmount,
-            total: finalGrandTotal,
-            appliedCoupon: appliedCoupon || null,
-            appliedOffers: promoResult.appliedOffers.map((o) => o.offer.name),
-            paymentId: paymentResponse.razorpay_payment_id,
-            status: "pending",
-          };
-          
-          push(order);
-
-          // Log promotion usage statistics in database
-          promoResult.appliedOffers.forEach((o) => {
-            logPromotionUsage(receiptId, customer.uid || customer.phone, o.offer.id, o.discountAmount);
-          });
-
-          // Clean up coupon cache
-          localStorage.removeItem("paakashala_applied_coupon");
-          
-          clear();
-          navigate({ to: "/orders" });
-        },
-        prefill: {
-          name: customer.name,
-          contact: customer.phone,
-          email: "shesettipavankumarswamy@gmail.com",
-        },
-        theme: {
-          color: "#C89B3C", // Gold theme
-        },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-
-    } catch (err) {
-      console.error(err);
-      alert("Error initiating payment. Please try again.");
-    }
-  };
-
-  const handleCheckoutClick = () => {
-    if (!customer) {
-      setShowCustomerPrompt(true);
-    } else {
-      processCheckout();
-    }
-  };
+        <div className="text-center text-[11px] text-[#A1A1AA]/60 pb-4">
+          WOKMAWA • Table #{tableNumber}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <AppShell>
-      {showCustomerPrompt && <CustomerWelcome tableId={table} />}
-      <div className="animate-fade-up">
-        <div className="text-[10px] tracking-[0.4em] uppercase text-gold">Your Table</div>
-        <h1 className="mt-1 text-3xl font-semibold text-brown-deep">Cart</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {count > 0 ? "Your order is ready to be placed." : "Curate your table from our menu."}
-        </p>
-      </div>
+    <div className="min-h-screen bg-transparent text-white pb-36">
+      <WokHeader title="Your Wok" showBack backTo="/" />
 
-      {items.length === 0 ? (
-        <EmptyState
-          icon={<ShoppingBag className="h-6 w-6" />}
-          title="Your cart is empty"
-          description="Add signature biryanis, tandoori classics or Andhra specials from the menu."
-          actionLabel="Browse Menu"
-          to="/menu"
-        />
-      ) : (
-        <>
-          {/* Cart item listing */}
-          <ul className="mt-5 space-y-3">
-            {items.map((it) => (
-              <li key={it.id} className="flex gap-3 rounded-2xl bg-card p-3 border border-border/60 shadow-luxe">
-                <img src={it.image} alt={it.name} loading="lazy" className="h-20 w-20 shrink-0 rounded-xl object-cover" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <VegBadge type={it.type} />
-                        <h3 className="truncate text-sm font-semibold text-brown-deep">{it.name}</h3>
-                      </div>
-                      <div className="mt-0.5 text-[10px] uppercase tracking-widest text-gold">{it.category}</div>
-                    </div>
-                    <button
-                      onClick={() => remove(it.id)}
-                      aria-label="Remove"
-                      className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:text-destructive transition"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <div className="flex items-center gap-2 rounded-md border border-gold/50 bg-cream px-1 py-1">
-                      <button onClick={() => setQty(it.id, it.quantity - 1)} className="grid h-7 w-7 place-items-center rounded bg-gold/10 text-brown-deep active:scale-90 transition" aria-label="Decrease">
-                        <Minus className="h-3.5 w-3.5" />
-                      </button>
-                      <span className="min-w-4 text-center text-sm font-semibold text-brown-deep">{it.quantity}</span>
-                      <button onClick={() => setQty(it.id, it.quantity + 1)} className="grid h-7 w-7 place-items-center rounded bg-gold-gradient text-brown-deep active:scale-90 transition" aria-label="Increase">
-                        <Plus className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    
-                    <div className="flex items-center gap-1.5 justify-end">
-                      {(() => {
-                        const price = it.price ?? 0;
-                        // Deterministic fake discount percentage between 10% and 30% based on item id
-                        const getFakeDiscountPct = (id: string) => {
-                          let hash = 0;
-                          for (let i = 0; i < id.length; i++) {
-                            hash = id.charCodeAt(i) + ((hash << 5) - hash);
-                          }
-                          return 10 + Math.abs(hash % 21); // 10 to 30
-                        };
+      <main className="max-w-xl mx-auto px-4 space-y-5 pt-3">
+        {/* Top Stepper for Order Placement */}
+        <div className="bg-[#121212] border border-[#27272A] rounded-2xl p-3.5 space-y-2.5 shadow-sm">
+          <div className="flex items-center justify-between">
+            {/* Step 1 Pill */}
+            <button
+              type="button"
+              onClick={() => setCurrentStep(1)}
+              className={`flex items-center gap-2 text-xs font-bold transition-colors ${
+                currentStep === 1
+                  ? 'text-[#F3D362]'
+                  : 'text-[#A1A1AA] hover:text-white'
+              }`}
+            >
+              <span
+                className={`w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center border ${
+                  currentStep === 1
+                    ? 'bg-[#F3D362] text-black border-[#F3D362]'
+                    : currentStep > 1
+                    ? 'bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/40'
+                    : 'bg-[#1E1E1E] text-[#71717A] border-[#333333]'
+                }`}
+              >
+                {currentStep > 1 ? <Check className="w-3 h-3 stroke-[3]" /> : '1'}
+              </span>
+              <span>1. REVIEW ITEMS</span>
+            </button>
 
-                        const discountPct = it.mrp && price > 0 && it.mrp > price
-                          ? Math.round(((it.mrp - price) / it.mrp) * 100)
-                          : getFakeDiscountPct(it.id);
-
-                        const mrp = it.mrp || (price > 0 ? Math.round(price / (1 - discountPct / 100)) : 0);
-                        const hasDiscount = mrp > price;
-
-                        return (
-                          <>
-                            {hasDiscount && (
-                              <span className="text-[10px] line-through text-muted-foreground font-normal">
-                                ₹{(mrp * it.quantity).toFixed(0)}
-                              </span>
-                            )}
-                            <div className={`text-sm font-bold ${it.price == null ? "italic text-muted-foreground" : "text-brown-deep"}`}>
-                              {it.price == null ? "On request" : `₹${(it.price * it.quantity).toFixed(0)}`}
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                </div>
-              </li>
-            ))}
-
-            {/* Render Auto-added Free Promo Items */}
-            {promoResult.freeItems.map((it, idx) => (
-              <li key={`free-${it.id}-${idx}`} className="flex gap-3 rounded-2xl bg-card/65 p-3 border border-dashed border-green-500/50 shadow-sm animate-fade-in">
-                <img src={it.image} alt={it.name} loading="lazy" className="h-20 w-20 shrink-0 rounded-xl object-cover opacity-85" />
-                <div className="min-w-0 flex-1 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <VegBadge type={it.type} />
-                      <h3 className="truncate text-sm font-semibold text-brown-deep">{it.name}</h3>
-                      <span className="bg-green-600 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded shadow-sm">
-                        FREE GIFT
-                      </span>
-                    </div>
-                    <div className="mt-0.5 text-[10px] uppercase tracking-widest text-gold">{it.category}</div>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-muted-foreground/75">Qty: {it.quantity}</span>
-                    <div className="text-sm font-extrabold text-green-600">
-                      ₹0 <span className="text-[10px] line-through text-muted-foreground/50 font-normal">₹{MENU.find((m: any) => m.id === it.id)?.price || 99}</span>
-                    </div>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-
-          {/* Promotion Offers & Coupon entry section */}
-          <div className="mt-5 space-y-4">
-            
-            {/* Coupon Entry Form */}
-            <div className="rounded-2xl bg-card p-4 border border-border/60 shadow-sm">
-              <div className="flex items-center gap-2 text-brown-deep font-bold text-xs mb-3">
-                <Ticket className="h-4 w-4 text-gold" /> Add Coupon Code
-              </div>
-              
-              {appliedCoupon ? (
-                <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-700 animate-in fade-in duration-200">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                    <span>Coupon <strong>{appliedCoupon}</strong> Applied!</span>
-                  </div>
-                  <button 
-                    onClick={removeCouponCode}
-                    className="font-bold text-red-500 hover:text-red-700 px-2 py-1 rounded hover:bg-red-50 transition-colors"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={applyCouponCode} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={couponInput}
-                    onChange={(e) => setCouponInput(e.target.value)}
-                    placeholder="e.g. WELCOME20"
-                    className="flex-1 rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold uppercase"
-                  />
-                  <button
-                    type="submit"
-                    className="bg-brown-gradient text-cream px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all"
-                  >
-                    Apply
-                  </button>
-                </form>
-              )}
-              {couponError && <p className="text-[10px] font-bold text-red-500 mt-2 ml-1">{couponError}</p>}
-              {couponSuccess && <p className="text-[10px] font-bold text-green-600 mt-2 ml-1">{couponSuccess}</p>}
+            {/* Stepper Divider */}
+            <div className="flex-1 mx-3 h-[2px] bg-[#222222] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#F3D362] to-[#D4AF37] transition-all duration-300"
+                style={{ width: currentStep === 1 ? '50%' : '100%' }}
+              />
             </div>
 
-            {/* Dynamic Offers Status & Progress Bars */}
-            {(promoResult.appliedOffers.length > 0 || promoResult.lockedOffers.length > 0) && (
-              <div className="rounded-2xl bg-card p-4 border border-border/60 shadow-sm space-y-3">
-                <h3 className="text-xs font-bold text-brown-deep mb-2">Available Promotions</h3>
-                
-                {/* Applied automatic offers */}
-                {promoResult.appliedOffers.map((appl, idx) => (
-                  <div key={idx} className="flex items-start gap-2 text-xs text-green-700">
-                    <span className="text-green-600 mt-0.5">✔</span>
-                    <div>
-                      <p className="font-bold">{appl.offer.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{appl.description} (-₹{appl.discountAmount.toFixed(0)})</p>
-                    </div>
-                  </div>
-                ))}
+            {/* Step 2 Pill */}
+            <button
+              type="button"
+              onClick={() => setCurrentStep(2)}
+              className={`flex items-center gap-2 text-xs font-bold transition-colors ${
+                currentStep === 2
+                  ? 'text-[#F3D362]'
+                  : 'text-[#A1A1AA] hover:text-white'
+              }`}
+            >
+              <span
+                className={`w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center border ${
+                  currentStep === 2
+                    ? 'bg-[#F3D362] text-black border-[#F3D362]'
+                    : 'bg-[#1E1E1E] text-[#71717A] border-[#333333]'
+                }`}
+              >
+                2
+              </span>
+              <span>2. DINER DETAILS</span>
+            </button>
+          </div>
+        </div>
 
-                {/* Locked Offers with progress bars */}
-                {promoResult.lockedOffers.map((lock, idx) => (
-                  <div key={idx} className="text-xs text-brown-deep/80 space-y-1 pt-1 border-t border-border/40 first:border-0 first:pt-0">
-                    <p className="font-semibold">{lock.offer.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{lock.message}</p>
-                    <div className="w-full bg-muted rounded-full h-1.5 mt-1.5 overflow-hidden">
-                      <div 
-                        className="bg-gold-gradient h-full transition-all duration-300 rounded-full" 
-                        style={{ width: `${lock.progress}%` }} 
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {/* Servant Tip Section */}
-            <div className="rounded-md bg-card p-4 border border-border/60 shadow-sm space-y-3">
+        {/* ================= STEP 1: REVIEW ITEMS ================= */}
+        {currentStep === 1 && (
+          <div className="space-y-5 animate-fade-in">
+            {/* Cart Item Cards */}
+            <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-brown-deep font-bold text-xs">
-                  <Heart className="h-4 w-4 text-red-500 fill-red-500/25 animate-pulse" /> Support the Servant (Tip)
-                </div>
-                {tipAmount > 0 && (
-                  <button 
-                    onClick={() => {
-                      setTipAmount(0);
-                      setCustomTipInput("");
-                      setIsCustomTip(false);
-                    }}
-                    className="text-[10px] font-bold text-red-500 hover:text-red-700 bg-red-50 px-2 py-1 rounded transition-colors cursor-pointer"
-                  >
-                    Clear Tip
-                  </button>
-                )}
-              </div>
-              <p className="text-[10px] text-muted-foreground leading-snug">
-                Thank your waiter with a tip. 100% of the tips are directly transferred to the service staff.
-              </p>
-              
-              <div className="flex gap-2">
-                {[20, 30, 50].map((amt) => {
-                  const isActive = tipAmount === amt && !isCustomTip;
-                  return (
-                    <button
-                      key={amt}
-                      type="button"
-                      onClick={() => {
-                        setTipAmount(amt);
-                        setIsCustomTip(false);
-                        setCustomTipInput("");
-                      }}
-                      className={`flex-1 py-2.5 rounded-md text-xs font-bold transition-all border cursor-pointer ${
-                        isActive 
-                          ? "bg-brown-gradient text-cream border-transparent" 
-                          : "bg-background hover:bg-gold/5 text-brown-deep border-border/80"
-                      }`}
-                    >
-                      ₹{amt}
-                    </button>
-                  );
-                })}
+                <h3 className="font-display font-bold text-base text-white">
+                  Selected Items ({totals.totalItemCount})
+                </h3>
                 <button
                   type="button"
-                  onClick={() => {
-                    setIsCustomTip(true);
-                    setTipAmount(0);
-                  }}
-                  className={`flex-1 py-2.5 rounded-md text-xs font-bold transition-all border cursor-pointer ${
-                    isCustomTip 
-                      ? "bg-brown-gradient text-cream border-transparent" 
-                      : "bg-background hover:bg-gold/5 text-brown-deep border-border/80"
-                  }`}
+                  onClick={() => actions.clearCart()}
+                  className="text-xs text-[#FF3B3B] hover:underline font-semibold"
                 >
-                  {isCustomTip && customTipInput ? `₹${customTipInput}` : "Other"}
+                  Clear All
                 </button>
               </div>
 
-              {isCustomTip && (
-                <div className="flex gap-2 items-center animate-in fade-in duration-200 mt-2">
+              <div className="space-y-3">
+                {cart.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-3.5 bg-[#141414] border border-[#27272A] rounded-2xl flex flex-col gap-3 shadow-card-luxe"
+                  >
+                    <div className="flex gap-3">
+                      <div className="w-20 h-20 rounded-xl overflow-hidden bg-[#1C1C1C] shrink-0 border border-[#27272A]">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <div className="flex-1 flex flex-col justify-between min-w-0">
+                        <div>
+                          <div className="flex items-start justify-between gap-1">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <VegBadge isVeg={item.isVeg} size="sm" />
+                              <h4 className="font-display font-extrabold text-sm text-white truncate">
+                                {item.name}
+                              </h4>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => actions.removeCartItem(item.id)}
+                              className="text-[#A1A1AA] hover:text-[#FF3B3B] transition-colors p-1 shrink-0"
+                              title="Remove item"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          <div className="text-[11px] text-[#D4AF37] font-semibold mt-0.5">
+                            {item.portionName} • {item.spiceLevel.name} Spice
+                          </div>
+
+                          {item.extras.length > 0 && (
+                            <div className="text-[10px] text-[#A1A1AA] mt-0.5 truncate">
+                              Extras: {item.extras.map((e) => e.name).join(', ')}
+                            </div>
+                          )}
+
+                          {item.instructions && (
+                            <div className="text-[10px] text-[#E8C547] italic mt-0.5 truncate">
+                              Note: "{item.instructions}"
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Quantity controls and item total */}
+                        <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#27272A]">
+                          <span className="text-sm font-black text-white">
+                            ₹{item.totalPrice}
+                          </span>
+
+                          <div className="flex items-center gap-2 bg-[#1C1C1C] border border-[#27272A] rounded-lg p-1">
+                            <button
+                              type="button"
+                              onClick={() => actions.updateCartQuantity(item.id, -1)}
+                              className="w-6 h-6 rounded flex items-center justify-center text-white hover:bg-[#27272A]"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="text-xs font-bold text-white w-4 text-center">
+                              {item.quantity}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => actions.updateCartQuantity(item.id, 1)}
+                              className="w-6 h-6 rounded flex items-center justify-center text-white hover:bg-[#27272A]"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Add More Items Button */}
+            <Link
+              to="/"
+              className="w-full py-3 px-4 rounded-xl bg-[#141414] border border-[#27272A] hover:border-[#D4AF37] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all"
+            >
+              <Plus className="w-4 h-4 text-[#D4AF37]" />
+              <span>+ ADD MORE DISHES</span>
+            </Link>
+
+            {/* Complete Your Wok (Filtered by Cart Category) */}
+            <UpsellCarousel />
+
+            {/* Promo Code Section */}
+            <div className="p-3.5 bg-[#141414] border border-[#27272A] rounded-2xl space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-white flex items-center gap-1.5">
+                  <Tag className="w-4 h-4 text-[#D4AF37]" />
+                  Promo Code
+                </span>
+                <span className="text-[10px] text-[#D4AF37] font-bold">Use code MAWA10</span>
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  placeholder="e.g. MAWA10"
+                  className="flex-1 bg-[#1C1C1C] border border-[#27272A] rounded-xl px-3 py-2 text-xs text-white uppercase font-bold focus:outline-none focus:border-[#D4AF37]"
+                />
+                <button
+                  type="button"
+                  onClick={handleApplyCoupon}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#E8C547] to-[#D4AF37] text-black font-extrabold text-xs shadow-gold-glow"
+                >
+                  APPLY
+                </button>
+              </div>
+
+              {couponRes && (
+                <div
+                  className={`text-xs font-bold ${
+                    couponRes.success ? 'text-[#22C55E]' : 'text-[#FF3B3B]'
+                  }`}
+                >
+                  {couponRes.text}
+                </div>
+              )}
+            </div>
+
+            {/* Detailed Bill Breakdown */}
+            <div className="p-4 bg-[#141414] border border-[#27272A] rounded-2xl space-y-2.5 text-xs shadow-card-luxe">
+              <h4 className="font-display font-bold text-sm text-white border-b border-[#27272A] pb-2">
+                Bill Details
+              </h4>
+
+              <div className="flex justify-between text-[#A1A1AA]">
+                <span>Item Subtotal</span>
+                <span className="text-white font-semibold">₹{totals.itemTotal}</span>
+              </div>
+
+              <div className="flex justify-between text-[#A1A1AA]">
+                <span>GST & Restaurant Taxes (5%)</span>
+                <span className="text-white font-semibold">₹{totals.taxGst}</span>
+              </div>
+
+              <div className="flex justify-between text-[#A1A1AA]">
+                <span>Service & Eco Packaging</span>
+                <span className="text-white font-semibold">₹{totals.packagingCharge}</span>
+              </div>
+
+              {totals.discount > 0 && (
+                <div className="flex justify-between text-[#22C55E] font-bold">
+                  <span>Coupon Discount ({appliedCoupon})</span>
+                  <span>-₹{totals.discount}</span>
+                </div>
+              )}
+
+              <div className="pt-2.5 border-t border-[#27272A] flex justify-between text-sm font-extrabold text-white">
+                <span>To Pay</span>
+                <span className="text-[#D4AF37] text-lg">₹{totals.grandTotal}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ================= STEP 2: DINER INFO & PAYMENT (IN-PAGE) ================= */}
+        {currentStep === 2 && (
+          <div className="space-y-5 animate-fade-in">
+            {/* Top Diner Details Banner */}
+            <div className="w-full rounded-2xl overflow-hidden border border-[#D4AF37]/35 shadow-[0_4px_20px_rgba(0,0,0,0.6)] bg-black">
+              <img
+                src="/wokmawa/chk.png"
+                alt="Almost There! Share Your Details"
+                className="w-full h-auto object-cover block"
+              />
+            </div>
+
+            {/* Diner Info Section */}
+            <div className="p-4 bg-[#141414] border border-[#27272A] rounded-2xl space-y-3.5 shadow-card-luxe">
+              <div>
+                <h4 className="font-display font-bold text-xs uppercase tracking-wider text-white">
+                  DINER INFO (FOR SMS / WHATSAPP LIVE TRACKING)
+                </h4>
+                <p className="text-[11px] text-[#A1A1AA] mt-0.5">
+                  Table #{tableNumber} • Dine In
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#A1A1AA]">Your Name</label>
                   <input
-                    type="number"
-                    value={customTipInput}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setCustomTipInput(val);
-                      const num = Number(val);
-                      setTipAmount(num > 0 ? num : 0);
-                    }}
-                    placeholder="Enter tip amount in ₹"
-                    className="flex-1 rounded-md border border-border bg-background px-3 py-2 text-xs focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold"
-                    min="1"
+                    type="text"
+                    value={dinerName}
+                    onChange={(e) => setDinerName(e.target.value)}
+                    placeholder="Guest Diner"
+                    className="w-full bg-[#1C1C1C] border border-[#27272A] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#D4AF37]"
                   />
                 </div>
-              )}
-            </div>
-          </div>
- 
-          {/* Pricing Summary Block */}
-          <div className="mt-5 rounded-2xl bg-card p-5 border border-border/60 shadow-luxe space-y-2.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span className="font-semibold text-brown-deep">₹{promoResult.subtotal.toFixed(0)}</span>
-            </div>
 
-            {promoResult.discount > 0 && (
-              <div className="flex items-center justify-between text-xs text-green-700 font-medium">
-                <span>Discounts Applied</span>
-                <span>-₹{promoResult.discount.toFixed(0)}</span>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-[#A1A1AA]">Mobile Number (Optional)</label>
+                  <input
+                    type="tel"
+                    value={dinerPhone}
+                    onChange={(e) => setDinerPhone(e.target.value)}
+                    placeholder="e.g. 9876543210"
+                    className="w-full bg-[#1C1C1C] border border-[#27272A] rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#D4AF37]"
+                  />
+                </div>
               </div>
-            )}
 
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">GST (5%)</span>
-              <span className="font-semibold text-brown-deep">₹{promoResult.tax.toFixed(0)}</span>
+              <div className="p-2.5 rounded-xl bg-[#171510] border border-[#D4AF37]/30 flex items-center gap-2 text-[11px] text-[#D4AF37]">
+                <ShieldCheck className="w-4 h-4 shrink-0" />
+                <span>You can skip diner info and continue directly as guest.</span>
+              </div>
             </div>
 
-            {tipAmount > 0 && (
-              <div className="flex items-center justify-between text-xs text-green-700 font-semibold">
-                <span>Servant Tip</span>
-                <span>₹{tipAmount.toFixed(0)}</span>
+            {/* Quick Order Snapshot */}
+            <div className="p-4 bg-[#141414] border border-[#27272A] rounded-2xl space-y-2 text-xs">
+              <div className="flex items-center justify-between text-[#A1A1AA]">
+                <span>Total Items ({totals.totalItemCount})</span>
+                <span className="text-white font-bold">₹{totals.itemTotal}</span>
               </div>
-            )}
- 
-            {customer && (
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Contact</span>
-                <span className="font-semibold text-brown-deep">+91 {customer.phone}</span>
+              <div className="flex items-center justify-between text-[#A1A1AA]">
+                <span>Taxes & Charges</span>
+                <span className="text-white font-bold">₹{totals.taxGst + totals.packagingCharge}</span>
               </div>
-            )}
- 
-            <div className="my-3 h-px bg-gold-gradient opacity-40" />
-            
-            <div className="flex items-end justify-between">
-              <div>
-                <div className="text-[10px] tracking-[0.35em] uppercase text-gold">Grand Total</div>
-                <div className="mt-1 text-3xl font-bold text-brown-deep">₹{(promoResult.grandTotal + tipAmount).toFixed(0)}</div>
-              </div>
-              {hasPriceOnRequest && (
-                <div className="max-w-[140px] text-right text-[10px] leading-tight text-muted-foreground">
-                  Some items priced on request — confirmed at restaurant.
+              {totals.discount > 0 && (
+                <div className="flex items-center justify-between text-[#22C55E] font-bold">
+                  <span>Discount</span>
+                  <span>-₹{totals.discount}</span>
                 </div>
               )}
-            </div>
-
-            {/* Savings Banner */}
-            {promoResult.savings > 0 && (
-              <div className="bg-green-50 border border-green-200/50 rounded-xl p-3 text-center text-xs text-green-700 font-bold mt-3">
-                🎉 You are saving ₹{promoResult.savings.toFixed(0)} on this order!
+              <div className="pt-2 border-t border-[#27272A] flex items-center justify-between text-sm font-extrabold text-white">
+                <span>Final Payable</span>
+                <span className="text-[#D4AF37] text-base">₹{totals.grandTotal}</span>
               </div>
-            )}
-
-            <button
-              onClick={handleCheckoutClick}
-              className="mt-5 w-full rounded-xl bg-brown-gradient py-3.5 text-sm font-semibold uppercase tracking-widest text-cream shadow-luxe active:scale-[0.98] transition"
-            >
-              Proceed to Checkout
-            </button>
-            <p className="mt-2 text-center text-[11px] text-muted-foreground">
-              You will be prompted to confirm your table & details.
-            </p>
+            </div>
           </div>
-        </>
-      )}
-    </AppShell>
+        )}
+      </main>
+
+      {/* Sticky Bottom Action */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0A0A0A]/95 backdrop-blur-lg border-t border-x border-[#D4AF37]/35 rounded-t-[26px] sm:rounded-t-[30px] shadow-[0_-8px_30px_rgba(0,0,0,0.85)] px-4 py-3.5 sm:py-4">
+        <div className="max-w-xl mx-auto flex items-center justify-between gap-3">
+          {/* Step 1 Footer Action: Proceed to Diner Info */}
+          {currentStep === 1 && (
+            <>
+              <div className="flex flex-col">
+                <span className="text-[10px] text-[#A1A1AA] uppercase font-bold tracking-wider">
+                  Total Amount
+                </span>
+                <span className="text-xl font-black text-white">
+                  ₹{totals.grandTotal}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCurrentStep(2)}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-gradient-to-r from-[#F7D360] via-[#E5B83B] to-[#D4A328] text-black font-display font-black text-sm uppercase tracking-wider shadow-gold-glow hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer"
+              >
+                <span>CONTINUE</span>
+                <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            </>
+          )}
+
+          {/* Step 2 Footer Action: Direct Confirm & Place Order */}
+          {currentStep === 2 && (
+            <>
+              <button
+                type="button"
+                onClick={() => setCurrentStep(1)}
+                className="py-3.5 px-4 rounded-full bg-[#1C1C1C] border border-[#27272A] text-white font-display font-bold text-xs uppercase tracking-wider hover:bg-[#252525] active:scale-95 transition-all flex items-center gap-1"
+              >
+                <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+                <span>BACK</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmAndPay}
+                disabled={isSubmitting}
+                className="flex-1 flex items-center justify-center gap-2 py-3.5 px-6 rounded-full bg-gradient-to-r from-[#F7D360] via-[#E5B83B] to-[#D4A328] text-black font-display font-black text-sm uppercase tracking-wider shadow-gold-glow hover:brightness-110 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+              >
+                <span>{isSubmitting ? 'PLACING ORDER...' : `CONFIRM ORDER • ₹${totals.grandTotal}`}</span>
+                {!isSubmitting && <ArrowRight className="w-4 h-4 stroke-[2.5]" />}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
-

@@ -1,48 +1,31 @@
-import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ref, get } from "firebase/database";
-import { db } from "@/lib/firebase";
-import { useTable } from "@/lib/paakashala-store";
-import { QrCode, AlertTriangle } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { useWokStore } from "@/lib/wokmawa-store";
 
 export const Route = createFileRoute("/t/$tableId")({
-  component: TableEntry,
+  component: TableRedirect,
 });
 
-function TableEntry() {
+function TableRedirect() {
   const { tableId } = Route.useParams();
   const navigate = useNavigate();
-  const { setTable } = useTable();
-  const [error, setError] = useState<string | null>(null);
+  const { actions } = useWokStore();
 
   useEffect(() => {
     if (tableId) {
-      // Set the table ID directly to allow fast offline/dev scanning
-      setTable(tableId.toUpperCase());
-      navigate({ to: "/", replace: true });
+      actions.setTableNumber(tableId.toUpperCase());
     }
-  }, [tableId, setTable, navigate]);
-
-  if (error) {
-    return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-6 text-center">
-        <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-[2rem] bg-red-500/10 shadow-luxe ring-1 ring-red-500/20">
-          <AlertTriangle className="h-12 w-12 text-red-500" />
-        </div>
-        <h1 className="mb-2 text-2xl font-bold tracking-tight text-brown-deep">
-          Verification Failed
-        </h1>
-        <p className="text-muted-foreground">{error}</p>
-      </div>
-    );
-  }
+    // Navigate straight to WokMawa home
+    navigate({ to: "/" });
+  }, [tableId, actions, navigate]);
 
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-background px-6">
-      <div className="animate-pulse flex flex-col items-center">
-        <QrCode className="h-16 w-16 text-gold mb-4" />
-        <h2 className="text-xl font-bold text-brown-deep">Connecting to Table {tableId}...</h2>
-        <p className="text-muted-foreground text-sm mt-2">Setting up your menu</p>
+    <div className="min-h-screen bg-[#080808] flex items-center justify-center p-4 text-center">
+      <div className="space-y-3">
+        <div className="w-12 h-12 rounded-full border-2 border-[#D4AF37] border-t-transparent animate-spin mx-auto" />
+        <p className="text-sm font-bold text-white">
+          Setting Table #{tableId}...
+        </p>
       </div>
     </div>
   );

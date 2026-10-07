@@ -16,6 +16,7 @@ import { Route as CartRouteImport } from './routes/cart'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TTableIdRouteImport } from './routes/t.$tableId'
+import { Route as ItemIdRouteImport } from './routes/item.$id'
 import { Route as AdminUpdatesRouteImport } from './routes/admin/updates'
 import { Route as AdminTablesRouteImport } from './routes/admin/tables'
 import { Route as AdminStaffRouteImport } from './routes/admin/staff'
@@ -67,6 +68,11 @@ const IndexRoute = IndexRouteImport.update({
 const TTableIdRoute = TTableIdRouteImport.update({
   id: '/t/$tableId',
   path: '/t/$tableId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ItemIdRoute = ItemIdRouteImport.update({
+  id: '/item/$id',
+  path: '/item/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminUpdatesRoute = AdminUpdatesRouteImport.update({
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/admin/staff': typeof AdminStaffRoute
   '/admin/tables': typeof AdminTablesRoute
   '/admin/updates': typeof AdminUpdatesRoute
+  '/item/$id': typeof ItemIdRoute
   '/t/$tableId': typeof TTableIdRoute
 }
 export interface FileRoutesByTo {
@@ -205,6 +212,7 @@ export interface FileRoutesByTo {
   '/admin/staff': typeof AdminStaffRoute
   '/admin/tables': typeof AdminTablesRoute
   '/admin/updates': typeof AdminUpdatesRoute
+  '/item/$id': typeof ItemIdRoute
   '/t/$tableId': typeof TTableIdRoute
 }
 export interface FileRoutesById {
@@ -232,6 +240,7 @@ export interface FileRoutesById {
   '/admin/staff': typeof AdminStaffRoute
   '/admin/tables': typeof AdminTablesRoute
   '/admin/updates': typeof AdminUpdatesRoute
+  '/item/$id': typeof ItemIdRoute
   '/t/$tableId': typeof TTableIdRoute
 }
 export interface FileRouteTypes {
@@ -260,6 +269,7 @@ export interface FileRouteTypes {
     | '/admin/staff'
     | '/admin/tables'
     | '/admin/updates'
+    | '/item/$id'
     | '/t/$tableId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -286,6 +296,7 @@ export interface FileRouteTypes {
     | '/admin/staff'
     | '/admin/tables'
     | '/admin/updates'
+    | '/item/$id'
     | '/t/$tableId'
   id:
     | '__root__'
@@ -312,6 +323,7 @@ export interface FileRouteTypes {
     | '/admin/staff'
     | '/admin/tables'
     | '/admin/updates'
+    | '/item/$id'
     | '/t/$tableId'
   fileRoutesById: FileRoutesById
 }
@@ -322,6 +334,7 @@ export interface RootRouteChildren {
   ImagePickerRoute: typeof ImagePickerRoute
   MenuRoute: typeof MenuRoute
   OrdersRoute: typeof OrdersRoute
+  ItemIdRoute: typeof ItemIdRoute
   TTableIdRoute: typeof TTableIdRoute
 }
 
@@ -374,6 +387,13 @@ declare module '@tanstack/react-router' {
       path: '/t/$tableId'
       fullPath: '/t/$tableId'
       preLoaderRoute: typeof TTableIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/item/$id': {
+      id: '/item/$id'
+      path: '/item/$id'
+      fullPath: '/item/$id'
+      preLoaderRoute: typeof ItemIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin/updates': {
@@ -547,6 +567,7 @@ const rootRouteChildren: RootRouteChildren = {
   ImagePickerRoute: ImagePickerRoute,
   MenuRoute: MenuRoute,
   OrdersRoute: OrdersRoute,
+  ItemIdRoute: ItemIdRoute,
   TTableIdRoute: TTableIdRoute,
 }
 export const routeTree = rootRouteImport

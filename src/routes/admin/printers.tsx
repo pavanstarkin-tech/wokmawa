@@ -485,5 +485,3 @@ function PrinterManagementPage() {
     </div>
   );
 }
-
-export default PrinterManagementPage;

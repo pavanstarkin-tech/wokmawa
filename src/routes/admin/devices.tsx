@@ -172,4 +172,3 @@ function DevicesPage() {
     </div>
   );
 }
-export default DevicesPage;

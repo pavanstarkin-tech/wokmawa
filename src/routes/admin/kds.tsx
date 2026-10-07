@@ -200,4 +200,3 @@ function KDSPage() {
     </div>
   );
 }
-export default KDSPage;
