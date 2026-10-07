@@ -9,17 +9,23 @@ interface WokHeaderProps {
   showBack?: boolean;
   backTo?: string;
   showSearch?: boolean;
+  showCart?: boolean;
   onLogout?: () => void;
 }
 
 export const WokHeader: React.FC<WokHeaderProps> = ({
   showBack = false,
   backTo,
+  showCart,
   onLogout,
 }) => {
   const navigate = useNavigate();
   const { tableNumber, totals, actions, isDrawerOpen } = useWokStore();
   const [mounted, setMounted] = useState(false);
+
+  // Check if currently on cart page
+  const isCartPage = typeof window !== 'undefined' && window.location.pathname.includes('/cart');
+  const shouldShowCart = showCart !== undefined ? showCart : !isCartPage;
 
   useEffect(() => {
     setMounted(true);
@@ -77,7 +83,7 @@ export const WokHeader: React.FC<WokHeaderProps> = ({
           </div>
 
           {/* Center: WOKMAWA Logo (Unchanged top position) */}
-          <div className="flex-1 flex items-center justify-center pl-[10px]">
+          <div className="flex-1 flex items-center justify-center pl-[6px]">
             <Link to="/" onClick={() => actions.setDrawerOpen(false)} className="flex items-center justify-center overflow-hidden">
               <img
                 src={WOKMAWA_ASSETS.LOGO}
@@ -91,29 +97,31 @@ export const WokHeader: React.FC<WokHeaderProps> = ({
             </Link>
           </div>
 
-          {/* Right Side: TABLE Badge (View Only) & Shopping Cart (10px Top Gap) */}
+          {/* Right Side: TABLE Badge (View Only) & Optional Shopping Cart (10px Top Gap) */}
           <div className="flex items-center gap-2.5 shrink-0 mt-[10px]">
             {/* Gold-outlined TABLE Pill (View Only) */}
-            <div className="flex items-center justify-center px-3.5 py-2 rounded-full border border-[#D4AF37] bg-transparent shadow-sm select-none">
+            <div className="flex items-center justify-center px-3.5 sm:px-4 py-2 rounded-full border border-[#D4AF37] bg-transparent shadow-sm select-none">
               <span className="font-display font-black text-xs sm:text-sm text-white tracking-wider uppercase">
                 TABLE {tableNumber.padStart(2, '0')}
               </span>
             </div>
 
-            {/* Shopping Cart Icon with Corner Red Bubble */}
-            <Link
-              to="/cart"
-              onClick={() => actions.setDrawerOpen(false)}
-              className="relative w-11 h-11 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-90 text-white hover:text-[#D4AF37] border border-white/10 hover:border-[#D4AF37]/50 shadow-sm transition-all duration-200 cursor-pointer group"
-              aria-label="Shopping Cart"
-            >
-              <ShoppingCart className="w-5 h-5 stroke-[2.2] group-hover:scale-110 transition-transform duration-200" />
-              {mounted && totals.totalItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-[#FF3B3B] text-white text-[10px] font-black flex items-center justify-center shadow-flame-glow border-2 border-[#080808] animate-pulse">
-                  {totals.totalItemCount}
-                </span>
-              )}
-            </Link>
+            {/* Shopping Cart Icon with Corner Red Bubble (Hidden on Cart Page) */}
+            {shouldShowCart && (
+              <Link
+                to="/cart"
+                onClick={() => actions.setDrawerOpen(false)}
+                className="relative w-11 h-11 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-90 text-white hover:text-[#D4AF37] border border-white/10 hover:border-[#D4AF37]/50 shadow-sm transition-all duration-200 cursor-pointer group"
+                aria-label="Shopping Cart"
+              >
+                <ShoppingCart className="w-5 h-5 stroke-[2.2] group-hover:scale-110 transition-transform duration-200" />
+                {mounted && totals.totalItemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-[#FF3B3B] text-white text-[10px] font-black flex items-center justify-center shadow-flame-glow border-2 border-[#080808] animate-pulse">
+                    {totals.totalItemCount}
+                  </span>
+                )}
+              </Link>
+            )}
           </div>
         </div>
       </header>

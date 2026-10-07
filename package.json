@@ -8,6 +8,7 @@
     "dev": "vite dev",
     "build": "vite build && node scripts/build-hostinger.js && node scripts/generate-index.js",
     "build:dev": "vite build --mode development && node scripts/build-hostinger.js && node scripts/generate-index.js",
+    "deploy": "node scripts/prepare-gh-pages.js && node scripts/deploy-gh-pages.js",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",

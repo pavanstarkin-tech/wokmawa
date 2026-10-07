@@ -51,6 +51,31 @@ const EXTRAS_3_ROWS: ExtraWithImage[] = [
   },
 ];
 
+// Crisp Red Vector Chilli Icon
+const RedChilliIcon: React.FC<{ className?: string }> = ({
+  className = 'w-4 h-4 sm:w-5 sm:h-5',
+}) => (
+  <svg
+    className={`${className} inline-block shrink-0 drop-shadow-[0_0_6px_rgba(255,40,40,0.65)]`}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    {/* Tiny green top stem */}
+    <path
+      d="M14.5 3.5C15.2 2.5 16.5 2 17.5 2C17.8 2 18 2.3 17.7 2.7C16.8 3.8 15.8 4.4 14.8 5"
+      stroke="#4ADE80"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+    />
+    {/* Hot Red Chilli Body */}
+    <path
+      d="M15.5 5.5C14.5 4.5 12.8 4.2 11.2 4.8C8.8 5.7 7.2 8.2 6.8 10.8C6.2 14.5 8.2 18.2 11.8 21.2C12.3 21.6 13 21.2 13.2 20.6C14.8 16.2 17.8 11.8 17.5 8C17.4 6.8 16.6 5.8 15.5 5.5Z"
+      fill="#FF2626"
+    />
+  </svg>
+);
+
 export const WokItemModal: React.FC<WokItemModalProps> = ({
   item,
   isOpen,
@@ -166,45 +191,58 @@ export const WokItemModal: React.FC<WokItemModalProps> = ({
         className="w-full max-w-lg max-h-[92vh] sm:max-h-[88vh] bg-[#0C0C0C] border-t sm:border border-[#27272A] rounded-t-[28px] sm:rounded-3xl flex flex-col overflow-hidden shadow-2xl animate-sheet-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Mobile Pull Handle */}
-        <div className="sm:hidden pt-2 pb-1 flex justify-center bg-[#0C0C0C]">
-          <div className="w-12 h-1 bg-white/20 rounded-full" />
-        </div>
+        {/* Large Hero Product Banner */}
+        <div className="relative w-full h-60 sm:h-72 bg-[#141414] overflow-hidden flex-shrink-0">
+          {/* Main Product Image */}
+          <img
+            src={item.image}
+            alt={item.name}
+            className="w-full h-full object-cover scale-[1.02] hover:scale-105 transition-transform duration-500"
+          />
 
-        {/* Compact Dish Summary Header (Always Visible) */}
-        <div className="px-4 py-3 border-b border-[#27272A] bg-[#121212]/90 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#1E1E1E] flex-shrink-0 border border-[#27272A]">
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="min-w-0">
-              <h3 className="font-display font-extrabold text-sm sm:text-base text-white truncate leading-tight">
-                {item.name}
-              </h3>
-              <div className="flex items-center gap-2 mt-0.5">
-                <VegBadge isVeg={item.isVeg} size="sm" />
-                <span className="text-[10px] text-[#A1A1AA] uppercase font-bold tracking-wider">
-                  {item.categoryName || 'Wok Special'}
-                </span>
-                <span className="text-[10px] text-[#D4AF37] font-extrabold">
-                  ₹{item.price}
-                </span>
-              </div>
-            </div>
+          {/* Luxury Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0C0C0C] via-[#0C0C0C]/35 to-black/40 pointer-events-none" />
+
+          {/* Mobile Drag Indicator */}
+          <div className="sm:hidden absolute top-2.5 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+            <div className="w-12 h-1 bg-white/40 rounded-full shadow-sm" />
           </div>
 
+          {/* Floating Close Button */}
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="w-8 h-8 rounded-full bg-[#1F1F1F] text-[#A1A1AA] hover:text-white flex items-center justify-center border border-[#333333] transition-colors flex-shrink-0"
+            className="absolute top-3 right-3 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-black/65 backdrop-blur-md text-white/90 hover:text-white flex items-center justify-center border border-white/20 transition-all active:scale-95 shadow-lg cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-4 h-4 stroke-[2.5]" />
           </button>
+
+          {/* Dish Details on Bottom of Image */}
+          <div className="absolute bottom-3 left-4 right-4 z-10 flex items-end justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <VegBadge isVeg={item.isVeg} size="sm" />
+                <span className="text-[11px] text-[#D4AF37] font-extrabold uppercase tracking-wider">
+                  {item.categoryName || 'Wok Special'}
+                </span>
+              </div>
+              <h3 className="font-display font-black text-xl sm:text-2xl text-white tracking-wide leading-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
+                {item.name}
+              </h3>
+              {item.description && (
+                <p className="text-xs text-white/80 line-clamp-1 mt-0.5 font-medium drop-shadow-sm">
+                  {item.description}
+                </p>
+              )}
+            </div>
+            <div className="flex-shrink-0 text-right">
+              <span className="text-[10px] text-white/60 font-bold block leading-none">Starting at</span>
+              <span className="font-display font-black text-lg sm:text-xl text-[#F3D362] drop-shadow-md">
+                ₹{item.price}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* 2-Step Progress Stepper Bar */}
@@ -385,7 +423,7 @@ export const WokItemModal: React.FC<WokItemModalProps> = ({
                   </p>
                 </div>
 
-                {/* 4 Single-Line Full-Width Rows with Chilli Emojis */}
+                {/* 4 Single-Line Full-Width Rows with Chilli Emojis & Fiery Selected Frame */}
                 <div className="space-y-2.5">
                   {SPICE_LEVELS.map((spice) => {
                     const isSelected = selectedSpice.id === spice.id;
@@ -393,13 +431,22 @@ export const WokItemModal: React.FC<WokItemModalProps> = ({
                       <div
                         key={spice.id}
                         onClick={() => setSelectedSpice(spice)}
-                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer relative flex items-center justify-between gap-3 ${
+                        className={`p-3.5 rounded-2xl border transition-all cursor-pointer relative flex items-center justify-between gap-3 select-none ${
                           isSelected
                             ? 'bg-[#18150D] border-[#D4AF37] ring-1 ring-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.22)]'
                             : 'bg-[#121212] border-[#242424] hover:border-[#383838]'
                         }`}
                       >
-                        <div className="flex items-center gap-3 min-w-0">
+                        {/* Fiery Frame Image Overlay on Selected Card (Larger & Wider with Overflowing Flame Effects) */}
+                        {isSelected && (
+                          <img
+                            src={WOKMAWA_ASSETS.FIERY_FRAME}
+                            alt="Fiery Frame"
+                            className="absolute -top-[21px] -bottom-[15px] -left-3.5 -right-3.5 w-[calc(100%+28px)] h-[calc(100%+36px)] max-w-none object-fill pointer-events-none z-30 drop-shadow-[0_0_22px_rgba(255,140,0,0.85)] scale-[1.03]"
+                          />
+                        )}
+
+                        <div className="flex items-center gap-3 min-w-0 z-10">
                           {/* Radio Selector */}
                           <div
                             className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 transition-all ${
@@ -429,12 +476,10 @@ export const WokItemModal: React.FC<WokItemModalProps> = ({
                           </div>
                         </div>
 
-                        {/* Right Side: Chilli Emojis */}
-                        <div className="flex items-center gap-0.5 shrink-0 text-base sm:text-lg select-none pl-2">
+                        {/* Right Side: Red Chilli Vector Icons */}
+                        <div className="flex items-center gap-1 shrink-0 select-none pl-2 z-10">
                           {Array.from({ length: spice.chillies }).map((_, i) => (
-                            <span key={i} className="inline-block transition-transform hover:scale-125">
-                              🌶️
-                            </span>
+                            <RedChilliIcon key={i} className="w-4 h-4 sm:w-[18px] sm:h-[18px] transition-transform hover:scale-125" />
                           ))}
                         </div>
                       </div>
@@ -452,77 +497,77 @@ export const WokItemModal: React.FC<WokItemModalProps> = ({
                   </h4>
                 </div>
 
-                {/* 3 Addon Rows */}
-                <div className="space-y-2.5">
+                {/* 3 Addon Cards in Same Row */}
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {EXTRAS_3_ROWS.map((addon) => {
                     const qty = extraQuantities[addon.id] || 0;
                     const isAdded = qty > 0;
                     return (
                       <div
                         key={addon.id}
-                        className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                        onClick={() => handleIncrementExtra(addon.id)}
+                        className={`p-2.5 sm:p-3 rounded-2xl border transition-all flex flex-col items-center justify-between text-center relative cursor-pointer select-none min-h-[136px] sm:min-h-[148px] ${
                           isAdded
-                            ? 'bg-[#15120A] border-[#D4AF37] ring-1 ring-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.2)]'
-                            : 'bg-[#101010] border-[#222222] hover:border-[#333333]'
+                            ? 'bg-[#18140B] border-[#D4AF37] ring-1 ring-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.25)]'
+                            : 'bg-[#101010] border-[#222222] hover:border-[#383838]'
                         }`}
                       >
-                        {/* Left: Transparent Cutout Image & Info */}
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                          <div className="w-16 h-16 sm:w-18 sm:h-18 shrink-0 flex items-center justify-center">
-                            <img
-                              src={addon.image}
-                              alt={addon.name}
-                              className="w-full h-full object-contain filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.6)]"
-                            />
-                          </div>
-
-                          <div className="space-y-0.5 min-w-0">
-                            <h5 className="font-display font-black text-xs sm:text-sm text-white truncate">
-                              {addon.name}
-                            </h5>
-                            <p className="text-[10px] sm:text-[11px] text-[#888888] leading-tight line-clamp-2">
-                              {addon.description}
-                            </p>
-                            <div className="font-display font-black text-xs sm:text-sm text-[#E5A93C] pt-0.5">
-                              + ₹{addon.price}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Right: Quantity Pill / Plus Button */}
-                        <div className="shrink-0">
+                        {/* Top-Right Corner: Add / Quantity Icon Button */}
+                        <div
+                          className="absolute top-2 right-2 z-10"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {isAdded ? (
-                            <div className="flex items-center gap-2 bg-[#0A0A0A] border border-[#D4AF37] rounded-full p-1 shadow-sm">
+                            <div className="flex items-center gap-1 bg-[#0A0A0A] border border-[#D4AF37] rounded-full p-0.5 shadow-md">
                               <button
                                 type="button"
                                 onClick={() => handleDecrementExtra(addon.id)}
-                                className="w-7 h-7 rounded-full bg-[#1F1F1F] hover:bg-[#2A2A2A] text-[#D4AF37] flex items-center justify-center transition-colors active:scale-90"
+                                className="w-5 h-5 rounded-full bg-[#1F1F1F] hover:bg-[#2A2A2A] text-[#D4AF37] flex items-center justify-center transition-colors active:scale-90"
                                 aria-label="Decrease quantity"
                               >
-                                <Minus className="w-3.5 h-3.5 stroke-[3]" />
+                                <Minus className="w-2.5 h-2.5 stroke-[3]" />
                               </button>
-                              <span className="font-display font-black text-xs sm:text-sm text-white w-4 text-center">
+                              <span className="font-display font-black text-[10px] sm:text-xs text-white px-0.5 min-w-[10px] text-center">
                                 {qty}
                               </span>
                               <button
                                 type="button"
                                 onClick={() => handleIncrementExtra(addon.id)}
-                                className="w-7 h-7 rounded-full bg-[#D4AF37] text-black hover:bg-[#F3D362] flex items-center justify-center transition-colors font-bold active:scale-90"
+                                className="w-5 h-5 rounded-full bg-[#D4AF37] text-black hover:bg-[#F3D362] flex items-center justify-center transition-colors font-bold active:scale-90"
                                 aria-label="Increase quantity"
                               >
-                                <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                                <Plus className="w-2.5 h-2.5 stroke-[3]" />
                               </button>
                             </div>
                           ) : (
                             <button
                               type="button"
                               onClick={() => handleIncrementExtra(addon.id)}
-                              className="w-9 h-9 rounded-full border-2 border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center transition-all active:scale-90"
+                              className="w-6 h-6 rounded-full border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center transition-all active:scale-90 shadow-sm"
                               aria-label={`Add ${addon.name}`}
                             >
-                              <Plus className="w-4 h-4 stroke-[3]" />
+                              <Plus className="w-3.5 h-3.5 stroke-[3]" />
                             </button>
                           )}
+                        </div>
+
+                        {/* Center: Cutout Image */}
+                        <div className="w-13 h-13 sm:w-16 sm:h-16 flex items-center justify-center mt-3 mb-1.5">
+                          <img
+                            src={addon.image}
+                            alt={addon.name}
+                            className="w-full h-full object-contain filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.7)]"
+                          />
+                        </div>
+
+                        {/* Bottom: Name & Price */}
+                        <div className="w-full">
+                          <h5 className="font-display font-black text-[11px] sm:text-xs text-white leading-tight line-clamp-1">
+                            {addon.name}
+                          </h5>
+                          <div className="font-display font-black text-[11px] sm:text-xs text-[#E5A93C] mt-0.5">
+                            + ₹{addon.price}
+                          </div>
                         </div>
                       </div>
                     );

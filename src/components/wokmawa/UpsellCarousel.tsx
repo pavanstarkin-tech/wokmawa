@@ -52,7 +52,6 @@ export const UpsellCarousel: React.FC = () => {
     <div className="bg-[#121212] border border-[#27272A] rounded-2xl p-4 space-y-3 shadow-card-luxe">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <Sparkles className="w-4 h-4 text-[#D4AF37]" />
         <h3 className="font-display font-extrabold text-sm sm:text-base text-white">
           Complete Your Wok (Pairs Best)
         </h3>

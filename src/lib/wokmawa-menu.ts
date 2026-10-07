@@ -7,6 +7,7 @@ export const WOKMAWA_ASSETS = {
   ADDON_EGG: '/assets/ADDONS/OMLET.png',
   ADDON_CHICKEN: '/assets/ADDONS/EXTRAC-CHIKEN.png',
   ADDON_SAUCE: '/assets/ADDONS/SOUSE.png',
+  FIERY_FRAME: '/assets/fiery-frame.png',
 };
 
 export interface SpiceLevel {

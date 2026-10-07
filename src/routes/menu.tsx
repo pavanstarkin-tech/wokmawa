@@ -95,24 +95,6 @@ function WokMenuPage() {
           })}
         </section>
 
-        {/* Category Header Banner */}
-        {activeCategoryObj && (
-          <div className="p-4 bg-gradient-to-r from-[#1A1A1A] to-[#121212] border border-[#27272A] rounded-2xl flex items-center justify-between shadow-card-luxe">
-            <div>
-              <h2 className="font-display font-black text-xl text-white flex items-center gap-2">
-                <span>{activeCategoryObj.icon}</span>
-                <span>{activeCategoryObj.name}</span>
-              </h2>
-              <p className="text-xs text-[#D4AF37] mt-0.5">
-                {activeCategoryObj.tagline}
-              </p>
-            </div>
-            <span className="text-xs font-extrabold text-[#A1A1AA] bg-[#0A0A0A] px-2.5 py-1 rounded-full border border-[#27272A]">
-              {filteredItems.length} Dishes
-            </span>
-          </div>
-        )}
-
         {/* Item Cards (2 Cards Per Row) */}
         <div className="grid grid-cols-2 gap-3">
           {filteredItems.map((item) => (

@@ -1,5 +1,5 @@
 import React from 'react';
-import { SPICE_LEVELS, SpiceLevel } from '../../lib/wokmawa-menu';
+import { SPICE_LEVELS, SpiceLevel, WOKMAWA_ASSETS } from '../../lib/wokmawa-menu';
 
 interface SpiceSelectorProps {
   selectedSpice: SpiceLevel;
@@ -81,12 +81,18 @@ export const SpiceSelector: React.FC<SpiceSelectorProps> = ({
               onClick={() => onSelectSpice(level)}
               className={`relative flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border transition-all duration-300 cursor-pointer group ${
                 isSelected
-                  ? isMawaHot
-                    ? 'bg-gradient-to-r from-[#3D0A0A] via-[#240606] to-[#140202] border-[#FF3B3B] ring-2 ring-[#FF3B3B]/60 shadow-[0_0_25px_rgba(255,59,59,0.35)] scale-[1.01]'
-                    : 'bg-gradient-to-r from-[#211B0C] via-[#17140A] to-[#0F0D06] border-[#D4AF37] ring-2 ring-[#D4AF37]/60 shadow-gold-glow scale-[1.01]'
+                  ? 'bg-[#18150D] border-[#D4AF37] ring-1 ring-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.22)]'
                   : 'bg-[#101010] border-[#27272A] hover:border-[#D4AF37]/50 hover:bg-[#151515]'
               }`}
             >
+              {/* Fiery Frame Image Overlay on Selected Card (Larger & Wider with Overflowing Flame Effects) */}
+              {isSelected && (
+                <img
+                  src={WOKMAWA_ASSETS.FIERY_FRAME}
+                  alt="Fiery Frame"
+                  className="absolute -top-[21px] -bottom-[15px] -left-3.5 -right-3.5 w-[calc(100%+28px)] h-[calc(100%+36px)] max-w-none object-fill pointer-events-none z-30 drop-shadow-[0_0_22px_rgba(255,140,0,0.85)] scale-[1.03]"
+                />
+              )}
               {/* Card Details */}
               <div className="space-y-1 pr-2 flex-1 min-w-0">
                 {/* Title */}

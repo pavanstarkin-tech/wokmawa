@@ -39,10 +39,16 @@ function processDir(dir) {
   }
 }
 
-// 1. Process all files
+// 1. Copy all assets from public/ into public_html to ensure 100% asset completeness
+const publicDir = path.resolve(__dirname, '../public');
+if (fs.existsSync(publicDir)) {
+  fs.cpSync(publicDir, publicHtml, { recursive: true, force: true });
+}
+
+// 2. Process all files for GitHub Pages subpath replacement
 processDir(publicHtml);
 
-// 2. Ensure WASM files are copied to public_html
+// 3. Ensure WASM files are copied to public_html
 const sqlJsDist = path.resolve(__dirname, '../node_modules/sql.js/dist');
 if (fs.existsSync(sqlJsDist)) {
   const wasmFiles = fs.readdirSync(sqlJsDist).filter(f => f.endsWith('.wasm'));
@@ -54,22 +60,11 @@ if (fs.existsSync(sqlJsDist)) {
     } catch (e) {}
   }
 }
-const publicDir = path.resolve(__dirname, '../public');
-if (fs.existsSync(publicDir)) {
-  const publicWasm = fs.readdirSync(publicDir).filter(f => f.endsWith('.wasm'));
-  for (const pw of publicWasm) {
-    try {
-      const src = path.join(publicDir, pw);
-      const dst = path.join(publicHtml, pw);
-      if (src !== dst) fs.copyFileSync(src, dst);
-    } catch (e) {}
-  }
-}
 
-// 3. Ensure .nojekyll exists
+// 4. Ensure .nojekyll exists
 fs.writeFileSync(path.join(publicHtml, '.nojekyll'), '', 'utf8');
 
-// 3. Ensure 404.html matches updated index.html for SPA routing
+// 5. Ensure 404.html matches updated index.html for SPA routing
 if (fs.existsSync(path.join(publicHtml, 'index.html'))) {
   const indexHtml = fs.readFileSync(path.join(publicHtml, 'index.html'), 'utf8');
   fs.writeFileSync(path.join(publicHtml, '404.html'), indexHtml, 'utf8');
