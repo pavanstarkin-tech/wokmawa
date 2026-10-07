@@ -47,14 +47,22 @@ const sqlJsDist = path.resolve(__dirname, '../node_modules/sql.js/dist');
 if (fs.existsSync(sqlJsDist)) {
   const wasmFiles = fs.readdirSync(sqlJsDist).filter(f => f.endsWith('.wasm'));
   for (const wf of wasmFiles) {
-    fs.copyFileSync(path.join(sqlJsDist, wf), path.join(publicHtml, wf));
+    try {
+      const src = path.join(sqlJsDist, wf);
+      const dst = path.join(publicHtml, wf);
+      if (src !== dst) fs.copyFileSync(src, dst);
+    } catch (e) {}
   }
 }
 const publicDir = path.resolve(__dirname, '../public');
 if (fs.existsSync(publicDir)) {
   const publicWasm = fs.readdirSync(publicDir).filter(f => f.endsWith('.wasm'));
   for (const pw of publicWasm) {
-    fs.copyFileSync(path.join(publicDir, pw), path.join(publicHtml, pw));
+    try {
+      const src = path.join(publicDir, pw);
+      const dst = path.join(publicHtml, pw);
+      if (src !== dst) fs.copyFileSync(src, dst);
+    } catch (e) {}
   }
 }
 
