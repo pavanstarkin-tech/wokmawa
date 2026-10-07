@@ -16,20 +16,24 @@ server.stdout.on('data', (data) => {
     if (extracted) return;
     extracted = true;
     
-    // Server is ready, fetch the index.html
-    setTimeout(() => {
-      http.get('http://localhost:3000/', (res) => {
+    const fetchHtml = (urlPath = '/wokmawa/') => {
+      http.get(`http://localhost:3000${urlPath}`, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          fetchHtml(res.headers.location);
+          return;
+        }
         let html = '';
         res.on('data', chunk => html += chunk);
         res.on('end', () => {
-          // Ensure it's not empty
           if (html.length > 500) {
             fs.writeFileSync(path.resolve('public_html', 'index.html'), html);
             console.log('✅ Successfully extracted index.html to public_html!');
+          } else if (urlPath !== '/') {
+            fetchHtml('/');
+            return;
           } else {
-            console.error('❌ Extracted HTML was too short, something went wrong.');
+            console.error('❌ Extracted HTML was too short, length:', html.length);
           }
-          // Kill the server
           server.kill();
           process.exit(0);
         });
@@ -38,7 +42,11 @@ server.stdout.on('data', (data) => {
         server.kill();
         process.exit(1);
       });
-    }, 1000); // give it a second to boot completely
+    };
+
+    setTimeout(() => {
+      fetchHtml('/wokmawa/');
+    }, 1000);
   }
 });
 

@@ -7,6 +7,7 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  base: "/wokmawa/",
   tanstackStart: {
     // Disable SSR to output a pure static SPA with an index.html file for Hostinger.
     ssr: false,
@@ -16,6 +17,7 @@ export default defineConfig({
     preset: "node-server"
   },
   vite: {
+    base: "/wokmawa/",
     server: {
       port: 8081,
       strictPort: true,
