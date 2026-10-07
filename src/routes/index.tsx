@@ -142,10 +142,10 @@ function WokMawaApp() {
           <button
             type="button"
             onClick={() => setCurrentScreen('scanner')}
-            className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#E8C547] via-[#D4AF37] to-[#C9A227] text-black font-display font-black text-base uppercase tracking-wider shadow-gold-glow-lg hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer"
+            className="w-full py-3.5 px-8 rounded-full bg-gradient-to-r from-[#DF9B2B] via-[#FDE992] to-[#DF9B2B] text-black font-sans font-extrabold text-lg uppercase tracking-wider shadow-[0_8px_30px_rgba(223,155,43,0.45)] hover:brightness-105 active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer border-t border-[#FFF5C0]/80"
           >
             <span>START ORDER</span>
-            <ArrowRight className="w-5 h-5 stroke-[2.5]" />
+            <ChevronRight className="w-6 h-6 stroke-[3] text-black" />
           </button>
 
           {/* 3 Step Features below START ORDER */}
