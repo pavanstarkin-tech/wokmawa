@@ -55,11 +55,20 @@ export const Route = createFileRoute("/orders")({
 
 function WokOrdersPage() {
   const navigate = useNavigate();
-  const { activeOrder, tableNumber } = useWokStore();
+  const { activeOrder, orderHistory, tableNumber, actions } = useWokStore();
   const [showReceiptModal, setShowReceiptModal] = useState(false);
 
-  // Fallback demo order if none is active
-  const order = activeOrder || {
+  // Poll for real-time status updates from Restocare
+  useEffect(() => {
+    actions.syncAllOrdersStatus();
+    const interval = setInterval(() => {
+      actions.syncAllOrdersStatus();
+    }, 2500);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Current order to display
+  const order = activeOrder || (orderHistory && orderHistory.length > 0 ? orderHistory[0] : null) || {
     orderId: "WM-1042",
     tableNumber: tableNumber || "08",
     items: [
@@ -78,32 +87,25 @@ function WokOrdersPage() {
         unitPrice: 209,
         totalPrice: 209,
       },
-      {
-        id: "demo-2",
-        menuItemId: "dm-02",
-        name: "Kurkure Momos",
-        categoryName: "Dimsums",
-        image: "https://images.unsplash.com/photo-1541696432-82c6da8ce7bf?w=500&auto=format&fit=crop&q=80",
-        isVeg: true,
-        portionName: "6 Pcs",
-        portionPrice: 159,
-        spiceLevel: { id: "medium", name: "Medium", subtitle: "Classic Spicy", chillies: 2, color: "#F59E0B" },
-        extras: [],
-        quantity: 1,
-        unitPrice: 159,
-        totalPrice: 159,
-      },
     ],
-    itemTotal: 368,
-    taxGst: 18,
-    packagingCharge: 0,
+    itemTotal: 189,
+    taxGst: 10,
+    packagingCharge: 25,
     discount: 0,
-    grandTotal: 386,
+    grandTotal: 224,
     paymentMethod: "upi",
     status: "cooking",
-    createdAt: "30 Sep 2026, 12:51 PM",
+    createdAt: new Date().toISOString(),
     prepTimeMinutes: 10,
   };
+
+  const isCooking = order.status === 'cooking' || order.status === 'preparing';
+  const isReady = order.status === 'ready';
+  const isServed = order.status === 'served' || order.status === 'completed';
+
+  const orderTimeStr = order.createdAt 
+    ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : 'Just now';
 
   const paymentLabel =
     order.paymentMethod === 'upi'
@@ -131,6 +133,9 @@ function WokOrdersPage() {
           src="/assets/logo.png"
           alt="WokMawa"
           className="h-8 w-auto object-contain"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = '/wokmawa/assets/logo.png';
+          }}
         />
 
         <div className="px-3 py-1.5 rounded-full bg-[#18150D] border border-[#D4AF37]/40 flex items-center gap-1.5 text-xs text-[#D4AF37] font-bold">
@@ -140,6 +145,44 @@ function WokOrdersPage() {
       </header>
 
       <main className="max-w-md mx-auto px-4 space-y-4 pt-4 relative z-10">
+        {/* Multiple Orders Selector Tabs */}
+        {orderHistory && orderHistory.length > 1 && (
+          <div className="p-2.5 bg-[#121212] border border-[#27272A] rounded-2xl space-y-2">
+            <div className="flex items-center justify-between text-[11px] font-bold text-[#A1A1AA]">
+              <span className="uppercase tracking-wider">Your Active Orders ({orderHistory.length})</span>
+              <span className="text-[#D4AF37]">Table {order.tableNumber}</span>
+            </div>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+              {orderHistory.map((ord, idx) => {
+                const isSelected = order.orderId === ord.orderId;
+                const statusBadge =
+                  ord.status === 'ready' ? 'Ready' :
+                  ord.status === 'served' ? 'Served' :
+                  'Preparing';
+                return (
+                  <button
+                    key={ord.orderId || idx}
+                    type="button"
+                    onClick={() => actions.selectOrder(ord.orderId)}
+                    className={`px-3 py-1.5 rounded-xl border text-xs font-black transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+                      isSelected
+                        ? 'bg-gradient-to-r from-[#F7D360] via-[#E5B83B] to-[#D4A328] text-black border-transparent shadow-[0_0_12px_rgba(212,175,55,0.4)]'
+                        : 'bg-[#181818] border-[#2A2A2A] text-white hover:border-[#D4AF37]/50'
+                    }`}
+                  >
+                    <span>#{ord.orderId}</span>
+                    <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${
+                      isSelected ? 'bg-black/20 text-black' : 'bg-white/10 text-[#D4AF37]'
+                    }`}>
+                      {statusBadge}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Title Header */}
         <div className="text-center space-y-0.5">
           <div className="text-[10px] sm:text-[11px] font-black tracking-[0.25em] text-[#D4AF37] uppercase">
@@ -156,7 +199,7 @@ function WokOrdersPage() {
         {/* 3-Step Live Progress Tracker */}
         <div className="p-3.5 bg-[#121212]/90 border border-[#27272A] rounded-2xl shadow-card-luxe backdrop-blur-md">
           <div className="flex items-center justify-between relative">
-            {/* Step 1: Order Received (Completed) */}
+            {/* Step 1: Order Received (Always Checked) */}
             <div className="flex flex-col items-center flex-1 z-10 min-w-0 px-1 text-center">
               <div className="w-9 h-9 rounded-full bg-[#10B981]/20 border-2 border-[#10B981] text-[#10B981] flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.4)]">
                 <Check className="w-4 h-4 stroke-[3.5]" />
@@ -165,39 +208,73 @@ function WokOrdersPage() {
                 Order Received
               </span>
               <span className="text-[9px] text-[#71717A] mt-0.5 truncate w-full">
-                12:51 PM
+                {orderTimeStr}
               </span>
             </div>
 
             {/* Connector Line 1 */}
-            <div className="flex-1 -mx-2 h-[2.5px] self-start mt-4.5 bg-gradient-to-r from-[#10B981] to-[#F3D362] shadow-[0_0_6px_rgba(243,211,98,0.5)]" />
+            <div className={`flex-1 -mx-2 h-[2.5px] self-start mt-4.5 transition-all ${
+              isCooking || isReady || isServed
+                ? 'bg-gradient-to-r from-[#10B981] to-[#F3D362] shadow-[0_0_6px_rgba(243,211,98,0.5)]'
+                : 'bg-[#27272A]'
+            }`} />
 
-            {/* Step 2: Preparing (Active) */}
+            {/* Step 2: Preparing */}
             <div className="flex flex-col items-center flex-1 z-10 min-w-0 px-1 text-center">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#F7D360] via-[#E5B83B] to-[#D4A328] text-black flex items-center justify-center shadow-[0_0_15px_rgba(243,211,98,0.7)] border-2 border-[#F3D362]">
-                <Flame className="w-4 h-4 stroke-[2.5] fill-black" />
-              </div>
-              <span className="text-[10px] mt-1.5 font-black text-[#F3D362] leading-tight truncate w-full">
+              {isReady || isServed ? (
+                <div className="w-9 h-9 rounded-full bg-[#10B981]/20 border-2 border-[#10B981] text-[#10B981] flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.4)]">
+                  <Check className="w-4 h-4 stroke-[3.5]" />
+                </div>
+              ) : isCooking ? (
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#F7D360] via-[#E5B83B] to-[#D4A328] text-black flex items-center justify-center shadow-[0_0_15px_rgba(243,211,98,0.7)] border-2 border-[#F3D362] animate-pulse">
+                  <Flame className="w-4 h-4 stroke-[2.5] fill-black" />
+                </div>
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-[#181818] border-2 border-[#333333] text-[#71717A] flex items-center justify-center">
+                  <Flame className="w-4 h-4" />
+                </div>
+              )}
+              <span className={`text-[10px] mt-1.5 font-bold leading-tight truncate w-full ${
+                isCooking ? 'text-[#F3D362] font-black' : isReady || isServed ? 'text-white' : 'text-[#71717A]'
+              }`}>
                 Preparing
               </span>
               <span className="text-[9px] text-[#D4AF37] mt-0.5 font-medium italic truncate w-full">
-                Firing up!
+                {isReady || isServed ? 'Cooked' : isCooking ? 'Firing up!' : 'Queued'}
               </span>
             </div>
 
             {/* Connector Line 2 */}
-            <div className="flex-1 -mx-2 h-[2.5px] self-start mt-4.5 bg-[#27272A]" />
+            <div className={`flex-1 -mx-2 h-[2.5px] self-start mt-4.5 transition-all ${
+              isReady || isServed
+                ? 'bg-gradient-to-r from-[#F3D362] to-[#10B981] shadow-[0_0_6px_rgba(16,185,129,0.5)]'
+                : 'bg-[#27272A]'
+            }`} />
 
-            {/* Step 3: Ready (Upcoming) */}
+            {/* Step 3: Ready / Served */}
             <div className="flex flex-col items-center flex-1 z-10 min-w-0 px-1 text-center">
-              <div className="w-9 h-9 rounded-full bg-[#181818] border-2 border-[#333333] text-[#71717A] flex items-center justify-center">
-                <UtensilsCrossed className="w-4 h-4" />
-              </div>
-              <span className="text-[10px] mt-1.5 font-medium text-[#71717A] leading-tight truncate w-full">
-                Ready
+              {isServed ? (
+                <div className="w-9 h-9 rounded-full bg-[#10B981]/20 border-2 border-[#10B981] text-[#10B981] flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.4)]">
+                  <Check className="w-4 h-4 stroke-[3.5]" />
+                </div>
+              ) : isReady ? (
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#10B981] via-[#059669] to-[#047857] text-white flex items-center justify-center shadow-[0_0_18px_rgba(16,185,129,0.8)] border-2 border-[#34D399] animate-bounce">
+                  <UtensilsCrossed className="w-4 h-4 stroke-[2.5]" />
+                </div>
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-[#181818] border-2 border-[#333333] text-[#71717A] flex items-center justify-center">
+                  <UtensilsCrossed className="w-4 h-4" />
+                </div>
+              )}
+              <span className={`text-[10px] mt-1.5 font-medium leading-tight truncate w-full ${
+                isReady ? 'text-[#34D399] font-black' : isServed ? 'text-white font-bold' : 'text-[#71717A]'
+              }`}>
+                {isServed ? 'Served' : 'Ready'}
               </span>
-              <span className="text-[9px] text-[#52525B] mt-0.5 truncate w-full">
-                Serving at table
+              <span className={`text-[9px] mt-0.5 truncate w-full ${
+                isReady ? 'text-[#34D399] font-bold' : 'text-[#52525B]'
+              }`}>
+                {isServed ? 'Enjoy your meal!' : isReady ? 'Serving at table' : 'Next'}
               </span>
             </div>
           </div>

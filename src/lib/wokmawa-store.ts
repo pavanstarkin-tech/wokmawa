@@ -27,6 +27,7 @@ export interface CustomerDetails {
 
 export interface LiveOrder {
   orderId: string;
+  restocareId?: number | string;
   tableNumber: string;
   items: CartItem[];
   itemTotal: number;
@@ -151,11 +152,25 @@ async function syncOrderToRestocare(order: LiveOrder) {
       ? '/api/orders'
       : 'http://localhost:5001/api/orders';
 
-    await fetch(endpoint, {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }).catch(() => null);
+
+    if (res && res.ok) {
+      const data = await res.json();
+      if (data.success && data.order && data.order.id) {
+        order.restocareId = data.order.id;
+        if (globalState.activeOrder?.orderId === order.orderId) {
+          globalState.activeOrder.restocareId = data.order.id;
+        }
+        globalState.orderHistory = globalState.orderHistory.map(o =>
+          o.orderId === order.orderId ? { ...o, restocareId: data.order.id } : o
+        );
+        notify();
+      }
+    }
   } catch (err) {
     // Non-blocking fallback
   }
@@ -486,6 +501,68 @@ export const wokStore = {
       activeOrder: { ...globalState.activeOrder, status },
     };
     notify();
+  },
+
+  selectOrder(orderId: string) {
+    const found = (globalState.orderHistory || []).find((o) => o.orderId === orderId);
+    if (found) {
+      globalState = {
+        ...globalState,
+        activeOrder: found,
+      };
+      notify();
+    }
+  },
+
+  async syncAllOrdersStatus() {
+    if (typeof window === 'undefined') return;
+    const history = globalState.orderHistory || [];
+    let hasChanges = false;
+    const updatedHistory = [...history];
+
+    for (let i = 0; i < updatedHistory.length; i++) {
+      const ord = updatedHistory[i];
+      const targetId = ord.restocareId;
+      if (!targetId) continue;
+
+      try {
+        const endpoint = window.location.port === '8081'
+          ? `/api/orders/${targetId}/status`
+          : `http://localhost:5001/api/orders/${targetId}/status`;
+
+        const res = await fetch(endpoint).catch(() => null);
+        if (res && res.ok) {
+          const data = await res.json();
+          if (data.success && data.status) {
+            const rawStatus = String(data.status).toLowerCase();
+            const mappedStatus: LiveOrder['status'] =
+              rawStatus === 'ready'
+                ? 'ready'
+                : rawStatus === 'completed' || rawStatus === 'served'
+                ? 'served'
+                : rawStatus === 'preparing' || rawStatus === 'cooking'
+                ? 'cooking'
+                : 'received';
+
+            if (ord.status !== mappedStatus) {
+              updatedHistory[i] = { ...ord, status: mappedStatus };
+              hasChanges = true;
+            }
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (hasChanges) {
+      const currentActiveId = globalState.activeOrder?.orderId;
+      const newActive = updatedHistory.find((o) => o.orderId === currentActiveId) || updatedHistory[0] || null;
+      globalState = {
+        ...globalState,
+        orderHistory: updatedHistory,
+        activeOrder: newActive,
+      };
+      notify();
+    }
   },
 };
 
