@@ -335,9 +335,9 @@ function WokMawaApp() {
       <main className="max-w-xl mx-auto px-4 space-y-6 pt-3">
         {/* Top Story Category Circles (Sticky on scroll to top, blurred only when stuck) */}
         <section
-          className={`sticky top-0 z-40 -mx-4 px-4 py-2.5 flex gap-3.5 overflow-x-auto no-scrollbar snap-x transition-all duration-300 ${
+          className={`sticky top-0 z-40 -mx-4 px-5 sm:px-6 py-2.5 flex gap-3.5 sm:gap-4 overflow-x-auto no-scrollbar snap-x scroll-pl-5 transition-all duration-300 ${
             isSticky
-              ? 'bg-[#080808]/80 backdrop-blur-md border-b border-white/10 rounded-b-[25px] shadow-[0_8px_25px_rgba(0,0,0,0.6)]'
+              ? 'bg-[#080808]/85 backdrop-blur-md border-b border-white/10 rounded-b-[25px] shadow-[0_8px_25px_rgba(0,0,0,0.6)]'
               : 'bg-transparent border-transparent rounded-none shadow-none'
           }`}
         >
