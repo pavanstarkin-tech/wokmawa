@@ -135,6 +135,18 @@ export const WokItemModal: React.FC<WokItemModalProps> = ({
   const unitPrice = portionToUse.price + extrasTotal;
   const currentTotal = unitPrice * quantity;
 
+  const handleToggleExtra = (id: string) => {
+    setExtraQuantities((prev) => {
+      const next = { ...prev };
+      if (next[id]) {
+        delete next[id];
+      } else {
+        next[id] = 1;
+      }
+      return next;
+    });
+  };
+
   const handleIncrementExtra = (id: string) => {
     setExtraQuantities((prev) => ({
       ...prev,
@@ -491,54 +503,27 @@ export const WokItemModal: React.FC<WokItemModalProps> = ({
                 {/* 3 Addon Cards in Same Row */}
                 <div className="grid grid-cols-3 gap-2 sm:gap-3">
                   {EXTRAS_3_ROWS.map((addon) => {
-                    const qty = extraQuantities[addon.id] || 0;
-                    const isAdded = qty > 0;
+                    const isAdded = (extraQuantities[addon.id] || 0) > 0;
                     return (
                       <div
                         key={addon.id}
-                        onClick={() => handleIncrementExtra(addon.id)}
+                        onClick={() => handleToggleExtra(addon.id)}
                         className={`p-2.5 sm:p-3 rounded-2xl border transition-all flex flex-col items-center justify-between text-center relative cursor-pointer select-none min-h-[136px] sm:min-h-[148px] ${
                           isAdded
                             ? 'bg-[#18140B] border-[#D4AF37] ring-1 ring-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.25)]'
                             : 'bg-[#101010] border-[#222222] hover:border-[#383838]'
                         }`}
                       >
-                        {/* Top-Right Corner: Add / Quantity Icon Button */}
-                        <div
-                          className="absolute top-2 right-2 z-10"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        {/* Top-Right Corner: Toggle Badge */}
+                        <div className="absolute top-2 right-2 z-10 pointer-events-none">
                           {isAdded ? (
-                            <div className="flex items-center gap-1 bg-[#0A0A0A] border border-[#D4AF37] rounded-full p-0.5 shadow-md">
-                              <button
-                                type="button"
-                                onClick={() => handleDecrementExtra(addon.id)}
-                                className="w-5 h-5 rounded-full bg-[#1F1F1F] hover:bg-[#2A2A2A] text-[#D4AF37] flex items-center justify-center transition-colors active:scale-90"
-                                aria-label="Decrease quantity"
-                              >
-                                <Minus className="w-2.5 h-2.5 stroke-[3]" />
-                              </button>
-                              <span className="font-display font-black text-[10px] sm:text-xs text-white px-0.5 min-w-[10px] text-center">
-                                {qty}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => handleIncrementExtra(addon.id)}
-                                className="w-5 h-5 rounded-full bg-[#D4AF37] text-black hover:bg-[#F3D362] flex items-center justify-center transition-colors font-bold active:scale-90"
-                                aria-label="Increase quantity"
-                              >
-                                <Plus className="w-2.5 h-2.5 stroke-[3]" />
-                              </button>
+                            <div className="w-6 h-6 rounded-full bg-[#D4AF37] text-black flex items-center justify-center font-bold shadow-md">
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
                             </div>
                           ) : (
-                            <button
-                              type="button"
-                              onClick={() => handleIncrementExtra(addon.id)}
-                              className="w-6 h-6 rounded-full border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center transition-all active:scale-90 shadow-sm"
-                              aria-label={`Add ${addon.name}`}
-                            >
+                            <div className="w-6 h-6 rounded-full border border-[#D4AF37] text-[#D4AF37] flex items-center justify-center shadow-sm">
                               <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                            </button>
+                            </div>
                           )}
                         </div>
 
