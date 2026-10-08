@@ -437,15 +437,6 @@ export const WokItemModal: React.FC<WokItemModalProps> = ({
                             : 'bg-[#121212] border-[#242424] hover:border-[#383838]'
                         }`}
                       >
-                        {/* Fiery Frame Image Overlay on Selected Card (Larger & Wider with Overflowing Flame Effects) */}
-                        {isSelected && (
-                          <img
-                            src={WOKMAWA_ASSETS.FIERY_FRAME}
-                            alt="Fiery Frame"
-                            className="absolute -top-[21px] -bottom-[15px] -left-3.5 -right-3.5 w-[calc(100%+28px)] h-[calc(100%+36px)] max-w-none object-fill pointer-events-none z-30 drop-shadow-[0_0_22px_rgba(255,140,0,0.85)] scale-[1.03]"
-                          />
-                        )}
-
                         <div className="flex items-center gap-3 min-w-0 z-10">
                           {/* Radio Selector */}
                           <div
@@ -557,6 +548,21 @@ export const WokItemModal: React.FC<WokItemModalProps> = ({
                             src={addon.image}
                             alt={addon.name}
                             className="w-full h-full object-contain filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.7)]"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              const currentSrc = target.src;
+                              if (currentSrc.includes('/addons/')) {
+                                target.src = currentSrc.replace('/addons/', '/ADDONS/');
+                              } else if (currentSrc.includes('/ADDONS/')) {
+                                target.src = currentSrc.replace('/assets/ADDONS/', '/addons/');
+                              } else if (addon.id === 'ex-fried-egg') {
+                                target.src = 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=150&auto=format&fit=crop&q=80';
+                              } else if (addon.id === 'ex-extra-chicken') {
+                                target.src = 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=150&auto=format&fit=crop&q=80';
+                              } else {
+                                target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&auto=format&fit=crop&q=80';
+                              }
+                            }}
                           />
                         </div>
 

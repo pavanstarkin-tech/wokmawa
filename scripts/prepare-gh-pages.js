@@ -136,4 +136,27 @@ for (const mf of mediaFiles) {
   }
 }
 
+// 9. Mirror addons / ADDONS directories everywhere
+const addonsSource = fs.existsSync(path.join(publicDir, 'assets', 'ADDONS'))
+  ? path.join(publicDir, 'assets', 'ADDONS')
+  : (fs.existsSync(path.join(publicDir, 'addons')) ? path.join(publicDir, 'addons') : null);
+
+if (addonsSource) {
+  [
+    path.join(publicHtml, 'addons'),
+    path.join(publicHtml, 'ADDONS'),
+    path.join(publicHtml, 'assets', 'addons'),
+    path.join(publicHtml, 'assets', 'ADDONS'),
+    path.join(wokmawaSubdir, 'addons'),
+    path.join(wokmawaSubdir, 'ADDONS'),
+    path.join(wokmawaSubdir, 'assets', 'addons'),
+    path.join(wokmawaSubdir, 'assets', 'ADDONS'),
+  ].forEach(destDir => {
+    try {
+      fs.mkdirSync(destDir, { recursive: true });
+      fs.cpSync(addonsSource, destDir, { recursive: true, force: true });
+    } catch (e) {}
+  });
+}
+
 console.log('✅ Successfully prepared public_html for GitHub Pages subpath /wokmawa/!');
