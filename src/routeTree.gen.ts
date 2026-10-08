@@ -13,27 +13,9 @@ import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as ImagePickerRouteImport } from './routes/image-picker'
 import { Route as CartRouteImport } from './routes/cart'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TTableIdRouteImport } from './routes/t.$tableId'
 import { Route as ItemIdRouteImport } from './routes/item.$id'
-import { Route as AdminUpdatesRouteImport } from './routes/admin/updates'
-import { Route as AdminTablesRouteImport } from './routes/admin/tables'
-import { Route as AdminStaffRouteImport } from './routes/admin/staff'
-import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
-import { Route as AdminPrintersRouteImport } from './routes/admin/printers'
-import { Route as AdminPosBillingRouteImport } from './routes/admin/pos-billing'
-import { Route as AdminOwnerRouteImport } from './routes/admin/owner'
-import { Route as AdminOrdersRouteImport } from './routes/admin/orders'
-import { Route as AdminOffersRouteImport } from './routes/admin/offers'
-import { Route as AdminMenuRouteImport } from './routes/admin/menu'
-import { Route as AdminLoginRouteImport } from './routes/admin/login'
-import { Route as AdminKdsRouteImport } from './routes/admin/kds'
-import { Route as AdminErpRouteImport } from './routes/admin/erp'
-import { Route as AdminDevicesRouteImport } from './routes/admin/devices'
-import { Route as AdminDatabaseRouteImport } from './routes/admin/database'
-import { Route as AdminDashboardRouteImport } from './routes/admin/dashboard'
-import { Route as AdminAnalysisRouteImport } from './routes/admin/analysis'
 
 const OrdersRoute = OrdersRouteImport.update({
   id: '/orders',
@@ -55,11 +37,6 @@ const CartRoute = CartRouteImport.update({
   path: '/cart',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -75,171 +52,32 @@ const ItemIdRoute = ItemIdRouteImport.update({
   path: '/item/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminUpdatesRoute = AdminUpdatesRouteImport.update({
-  id: '/updates',
-  path: '/updates',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminTablesRoute = AdminTablesRouteImport.update({
-  id: '/tables',
-  path: '/tables',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminStaffRoute = AdminStaffRouteImport.update({
-  id: '/staff',
-  path: '/staff',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminSettingsRoute = AdminSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPrintersRoute = AdminPrintersRouteImport.update({
-  id: '/printers',
-  path: '/printers',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminPosBillingRoute = AdminPosBillingRouteImport.update({
-  id: '/pos-billing',
-  path: '/pos-billing',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminOwnerRoute = AdminOwnerRouteImport.update({
-  id: '/owner',
-  path: '/owner',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminOrdersRoute = AdminOrdersRouteImport.update({
-  id: '/orders',
-  path: '/orders',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminOffersRoute = AdminOffersRouteImport.update({
-  id: '/offers',
-  path: '/offers',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminMenuRoute = AdminMenuRouteImport.update({
-  id: '/menu',
-  path: '/menu',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminKdsRoute = AdminKdsRouteImport.update({
-  id: '/kds',
-  path: '/kds',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminErpRoute = AdminErpRouteImport.update({
-  id: '/erp',
-  path: '/erp',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDevicesRoute = AdminDevicesRouteImport.update({
-  id: '/devices',
-  path: '/devices',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDatabaseRoute = AdminDatabaseRouteImport.update({
-  id: '/database',
-  path: '/database',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDashboardRoute = AdminDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAnalysisRoute = AdminAnalysisRouteImport.update({
-  id: '/analysis',
-  path: '/analysis',
-  getParentRoute: () => AdminRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
   '/image-picker': typeof ImagePickerRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
-  '/admin/analysis': typeof AdminAnalysisRoute
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/database': typeof AdminDatabaseRoute
-  '/admin/devices': typeof AdminDevicesRoute
-  '/admin/erp': typeof AdminErpRoute
-  '/admin/kds': typeof AdminKdsRoute
-  '/admin/login': typeof AdminLoginRoute
-  '/admin/menu': typeof AdminMenuRoute
-  '/admin/offers': typeof AdminOffersRoute
-  '/admin/orders': typeof AdminOrdersRoute
-  '/admin/owner': typeof AdminOwnerRoute
-  '/admin/pos-billing': typeof AdminPosBillingRoute
-  '/admin/printers': typeof AdminPrintersRoute
-  '/admin/settings': typeof AdminSettingsRoute
-  '/admin/staff': typeof AdminStaffRoute
-  '/admin/tables': typeof AdminTablesRoute
-  '/admin/updates': typeof AdminUpdatesRoute
   '/item/$id': typeof ItemIdRoute
   '/t/$tableId': typeof TTableIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
   '/image-picker': typeof ImagePickerRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
-  '/admin/analysis': typeof AdminAnalysisRoute
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/database': typeof AdminDatabaseRoute
-  '/admin/devices': typeof AdminDevicesRoute
-  '/admin/erp': typeof AdminErpRoute
-  '/admin/kds': typeof AdminKdsRoute
-  '/admin/login': typeof AdminLoginRoute
-  '/admin/menu': typeof AdminMenuRoute
-  '/admin/offers': typeof AdminOffersRoute
-  '/admin/orders': typeof AdminOrdersRoute
-  '/admin/owner': typeof AdminOwnerRoute
-  '/admin/pos-billing': typeof AdminPosBillingRoute
-  '/admin/printers': typeof AdminPrintersRoute
-  '/admin/settings': typeof AdminSettingsRoute
-  '/admin/staff': typeof AdminStaffRoute
-  '/admin/tables': typeof AdminTablesRoute
-  '/admin/updates': typeof AdminUpdatesRoute
   '/item/$id': typeof ItemIdRoute
   '/t/$tableId': typeof TTableIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRouteWithChildren
   '/cart': typeof CartRoute
   '/image-picker': typeof ImagePickerRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
-  '/admin/analysis': typeof AdminAnalysisRoute
-  '/admin/dashboard': typeof AdminDashboardRoute
-  '/admin/database': typeof AdminDatabaseRoute
-  '/admin/devices': typeof AdminDevicesRoute
-  '/admin/erp': typeof AdminErpRoute
-  '/admin/kds': typeof AdminKdsRoute
-  '/admin/login': typeof AdminLoginRoute
-  '/admin/menu': typeof AdminMenuRoute
-  '/admin/offers': typeof AdminOffersRoute
-  '/admin/orders': typeof AdminOrdersRoute
-  '/admin/owner': typeof AdminOwnerRoute
-  '/admin/pos-billing': typeof AdminPosBillingRoute
-  '/admin/printers': typeof AdminPrintersRoute
-  '/admin/settings': typeof AdminSettingsRoute
-  '/admin/staff': typeof AdminStaffRoute
-  '/admin/tables': typeof AdminTablesRoute
-  '/admin/updates': typeof AdminUpdatesRoute
   '/item/$id': typeof ItemIdRoute
   '/t/$tableId': typeof TTableIdRoute
 }
@@ -247,89 +85,34 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/admin'
     | '/cart'
     | '/image-picker'
     | '/menu'
     | '/orders'
-    | '/admin/analysis'
-    | '/admin/dashboard'
-    | '/admin/database'
-    | '/admin/devices'
-    | '/admin/erp'
-    | '/admin/kds'
-    | '/admin/login'
-    | '/admin/menu'
-    | '/admin/offers'
-    | '/admin/orders'
-    | '/admin/owner'
-    | '/admin/pos-billing'
-    | '/admin/printers'
-    | '/admin/settings'
-    | '/admin/staff'
-    | '/admin/tables'
-    | '/admin/updates'
     | '/item/$id'
     | '/t/$tableId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/admin'
     | '/cart'
     | '/image-picker'
     | '/menu'
     | '/orders'
-    | '/admin/analysis'
-    | '/admin/dashboard'
-    | '/admin/database'
-    | '/admin/devices'
-    | '/admin/erp'
-    | '/admin/kds'
-    | '/admin/login'
-    | '/admin/menu'
-    | '/admin/offers'
-    | '/admin/orders'
-    | '/admin/owner'
-    | '/admin/pos-billing'
-    | '/admin/printers'
-    | '/admin/settings'
-    | '/admin/staff'
-    | '/admin/tables'
-    | '/admin/updates'
     | '/item/$id'
     | '/t/$tableId'
   id:
     | '__root__'
     | '/'
-    | '/admin'
     | '/cart'
     | '/image-picker'
     | '/menu'
     | '/orders'
-    | '/admin/analysis'
-    | '/admin/dashboard'
-    | '/admin/database'
-    | '/admin/devices'
-    | '/admin/erp'
-    | '/admin/kds'
-    | '/admin/login'
-    | '/admin/menu'
-    | '/admin/offers'
-    | '/admin/orders'
-    | '/admin/owner'
-    | '/admin/pos-billing'
-    | '/admin/printers'
-    | '/admin/settings'
-    | '/admin/staff'
-    | '/admin/tables'
-    | '/admin/updates'
     | '/item/$id'
     | '/t/$tableId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRouteWithChildren
   CartRoute: typeof CartRoute
   ImagePickerRoute: typeof ImagePickerRoute
   MenuRoute: typeof MenuRoute
@@ -368,13 +151,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -396,173 +172,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ItemIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/updates': {
-      id: '/admin/updates'
-      path: '/updates'
-      fullPath: '/admin/updates'
-      preLoaderRoute: typeof AdminUpdatesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/tables': {
-      id: '/admin/tables'
-      path: '/tables'
-      fullPath: '/admin/tables'
-      preLoaderRoute: typeof AdminTablesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/staff': {
-      id: '/admin/staff'
-      path: '/staff'
-      fullPath: '/admin/staff'
-      preLoaderRoute: typeof AdminStaffRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/settings': {
-      id: '/admin/settings'
-      path: '/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AdminSettingsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/printers': {
-      id: '/admin/printers'
-      path: '/printers'
-      fullPath: '/admin/printers'
-      preLoaderRoute: typeof AdminPrintersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/pos-billing': {
-      id: '/admin/pos-billing'
-      path: '/pos-billing'
-      fullPath: '/admin/pos-billing'
-      preLoaderRoute: typeof AdminPosBillingRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/owner': {
-      id: '/admin/owner'
-      path: '/owner'
-      fullPath: '/admin/owner'
-      preLoaderRoute: typeof AdminOwnerRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/orders': {
-      id: '/admin/orders'
-      path: '/orders'
-      fullPath: '/admin/orders'
-      preLoaderRoute: typeof AdminOrdersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/offers': {
-      id: '/admin/offers'
-      path: '/offers'
-      fullPath: '/admin/offers'
-      preLoaderRoute: typeof AdminOffersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/menu': {
-      id: '/admin/menu'
-      path: '/menu'
-      fullPath: '/admin/menu'
-      preLoaderRoute: typeof AdminMenuRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/login': {
-      id: '/admin/login'
-      path: '/login'
-      fullPath: '/admin/login'
-      preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/kds': {
-      id: '/admin/kds'
-      path: '/kds'
-      fullPath: '/admin/kds'
-      preLoaderRoute: typeof AdminKdsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/erp': {
-      id: '/admin/erp'
-      path: '/erp'
-      fullPath: '/admin/erp'
-      preLoaderRoute: typeof AdminErpRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/devices': {
-      id: '/admin/devices'
-      path: '/devices'
-      fullPath: '/admin/devices'
-      preLoaderRoute: typeof AdminDevicesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/database': {
-      id: '/admin/database'
-      path: '/database'
-      fullPath: '/admin/database'
-      preLoaderRoute: typeof AdminDatabaseRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/dashboard': {
-      id: '/admin/dashboard'
-      path: '/dashboard'
-      fullPath: '/admin/dashboard'
-      preLoaderRoute: typeof AdminDashboardRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/analysis': {
-      id: '/admin/analysis'
-      path: '/analysis'
-      fullPath: '/admin/analysis'
-      preLoaderRoute: typeof AdminAnalysisRouteImport
-      parentRoute: typeof AdminRoute
-    }
   }
 }
 
-interface AdminRouteChildren {
-  AdminAnalysisRoute: typeof AdminAnalysisRoute
-  AdminDashboardRoute: typeof AdminDashboardRoute
-  AdminDatabaseRoute: typeof AdminDatabaseRoute
-  AdminDevicesRoute: typeof AdminDevicesRoute
-  AdminErpRoute: typeof AdminErpRoute
-  AdminKdsRoute: typeof AdminKdsRoute
-  AdminLoginRoute: typeof AdminLoginRoute
-  AdminMenuRoute: typeof AdminMenuRoute
-  AdminOffersRoute: typeof AdminOffersRoute
-  AdminOrdersRoute: typeof AdminOrdersRoute
-  AdminOwnerRoute: typeof AdminOwnerRoute
-  AdminPosBillingRoute: typeof AdminPosBillingRoute
-  AdminPrintersRoute: typeof AdminPrintersRoute
-  AdminSettingsRoute: typeof AdminSettingsRoute
-  AdminStaffRoute: typeof AdminStaffRoute
-  AdminTablesRoute: typeof AdminTablesRoute
-  AdminUpdatesRoute: typeof AdminUpdatesRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminAnalysisRoute: AdminAnalysisRoute,
-  AdminDashboardRoute: AdminDashboardRoute,
-  AdminDatabaseRoute: AdminDatabaseRoute,
-  AdminDevicesRoute: AdminDevicesRoute,
-  AdminErpRoute: AdminErpRoute,
-  AdminKdsRoute: AdminKdsRoute,
-  AdminLoginRoute: AdminLoginRoute,
-  AdminMenuRoute: AdminMenuRoute,
-  AdminOffersRoute: AdminOffersRoute,
-  AdminOrdersRoute: AdminOrdersRoute,
-  AdminOwnerRoute: AdminOwnerRoute,
-  AdminPosBillingRoute: AdminPosBillingRoute,
-  AdminPrintersRoute: AdminPrintersRoute,
-  AdminSettingsRoute: AdminSettingsRoute,
-  AdminStaffRoute: AdminStaffRoute,
-  AdminTablesRoute: AdminTablesRoute,
-  AdminUpdatesRoute: AdminUpdatesRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRouteWithChildren,
   CartRoute: CartRoute,
   ImagePickerRoute: ImagePickerRoute,
   MenuRoute: MenuRoute,
