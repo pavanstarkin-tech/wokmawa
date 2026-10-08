@@ -527,12 +527,12 @@ export const WokItemModal: React.FC<WokItemModalProps> = ({
                           )}
                         </div>
 
-                        {/* Center: Cutout Image */}
-                        <div className="w-13 h-13 sm:w-16 sm:h-16 flex items-center justify-center mt-3 mb-1.5">
+                        {/* Center: Bigger Cutout Image */}
+                        <div className="w-[72px] h-[72px] sm:w-[84px] sm:h-[84px] flex items-center justify-center mt-1 mb-1">
                           <img
                             src={addon.image}
                             alt={addon.name}
-                            className="w-full h-full object-contain filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.7)]"
+                            className="w-full h-full object-contain filter drop-shadow-[0_4px_10px_rgba(0,0,0,0.75)] hover:scale-105 transition-transform"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               const currentSrc = target.src;
@@ -551,14 +551,14 @@ export const WokItemModal: React.FC<WokItemModalProps> = ({
                           />
                         </div>
 
-                        {/* Bottom: Name & Price */}
-                        <div className="w-full">
-                          <h5 className="font-display font-black text-[11px] sm:text-xs text-white leading-tight line-clamp-1">
+                        {/* Bottom: Name (Left) & Price (Right) in Same Row */}
+                        <div className="w-full flex items-center justify-between gap-1 px-0.5 mt-auto">
+                          <span className="font-display font-bold text-[10px] sm:text-xs text-white truncate text-left" title={addon.name}>
                             {addon.name}
-                          </h5>
-                          <div className="font-display font-black text-[11px] sm:text-xs text-[#E5A93C] mt-0.5">
-                            + ₹{addon.price}
-                          </div>
+                          </span>
+                          <span className="font-display font-black text-[10px] sm:text-xs text-[#E5A93C] shrink-0 whitespace-nowrap text-right">
+                            +₹{addon.price}
+                          </span>
                         </div>
                       </div>
                     );
