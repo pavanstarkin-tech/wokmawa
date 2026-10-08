@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Plus, Check, Sparkles } from 'lucide-react';
-import { MENU_ITEMS, MenuItem } from '../../lib/wokmawa-menu';
+import { MenuItem } from '../../lib/wokmawa-menu';
+import { useLiveMenu } from '../../lib/wokmawa-api-menu';
 import { useWokStore } from '../../lib/wokmawa-store';
 import { VegBadge } from './WokBadge';
 
 export const UpsellCarousel: React.FC = () => {
   const { cart, actions } = useWokStore();
+  const { items: MENU_ITEMS } = useLiveMenu();
   const [addedIds, setAddedIds] = useState<Record<string, boolean>>({});
 
   // 1. Get the category slugs of all items in the cart

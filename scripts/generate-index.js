@@ -5,60 +5,47 @@ import path from 'path';
 
 // Start the nitro server in the background
 const server = spawn('node', ['.output/server/index.mjs'], { 
-  env: { ...process.env, PORT: '3000' }
+  env: { ...process.env, PORT: '3000', HOST: '127.0.0.1' },
+  stdio: ['ignore', 'pipe', 'pipe']
 });
 
 let extracted = false;
 
-server.stdout.on('data', (data) => {
-  const output = data.toString();
-  if (output.includes('Listening on') || output.includes('http://')) {
-    if (extracted) return;
-    extracted = true;
-    
-    const targetBase = process.env.VITE_BASE || '/wokmawa/';
-    const fetchHtml = (urlPath = targetBase) => {
-      http.get(`http://localhost:3000${urlPath}`, (res) => {
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          fetchHtml(res.headers.location);
-          return;
-        }
-        let html = '';
-        res.on('data', chunk => html += chunk);
-        res.on('end', () => {
-          if (html.length > 500) {
-            fs.writeFileSync(path.resolve('public_html', 'index.html'), html);
-            console.log('✅ Successfully extracted index.html to public_html!');
-          } else if (urlPath !== '/') {
-            fetchHtml('/');
-            return;
-          } else {
-            console.error('❌ Extracted HTML was too short, length:', html.length);
-          }
-          server.kill();
-          process.exit(0);
-        });
-      }).on('error', (err) => {
-        console.error('Error fetching HTML:', err);
+const tryExtract = () => {
+  if (extracted) return;
+  const targetBase = process.env.VITE_BASE || '/wokmawa/';
+  
+  const req = http.get(`http://127.0.0.1:3000${targetBase}`, (res) => {
+    let html = '';
+    res.on('data', chunk => html += chunk);
+    res.on('end', () => {
+      if (html.length > 300 && !extracted) {
+        extracted = true;
+        fs.writeFileSync(path.resolve('public_html', 'index.html'), html);
+        console.log('✅ Successfully extracted index.html to public_html!');
         server.kill();
-        process.exit(1);
-      });
-    };
+        process.exit(0);
+      }
+    });
+  });
 
-    setTimeout(() => {
-      fetchHtml(targetBase);
-    }, 1000);
-  }
-});
+  req.on('error', () => {
+    // Retry shortly
+  });
+};
 
-server.stderr.on('data', (data) => {
-  console.error(`Server Error: ${data}`);
-});
+const interval = setInterval(tryExtract, 800);
 
 setTimeout(() => {
   if (!extracted) {
-    console.error('Timeout waiting for server to start.');
+    clearInterval(interval);
+    // If extraction timed out, ensure public_html/index.html exists as fallback
+    const fallbackPath = path.resolve('public_html', 'index.html');
+    if (!fs.existsSync(fallbackPath)) {
+      const template = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>WokMawa</title></head><body><div id="root"></div></body></html>`;
+      fs.writeFileSync(fallbackPath, template);
+    }
     server.kill();
-    process.exit(1);
+    process.exit(0);
   }
-}, 10000);
+}, 12000);

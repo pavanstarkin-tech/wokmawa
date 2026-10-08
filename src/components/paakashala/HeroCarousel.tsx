@@ -9,23 +9,11 @@ import {
 const SLIDES = [
   {
     title: "Slide 1",
-    image: "https://i.ibb.co/bMBcFL4D/hero-1-clean.png",
+    image: "/assets/hero1.png",
   },
   {
     title: "Slide 2",
-    image: "https://i.ibb.co/QvRqBRDW/hero-2-clean.png",
-  },
-  {
-    title: "Slide 3",
-    image: "https://i.ibb.co/bgpnR6Sk/hero-3-clean.png",
-  },
-  {
-    title: "Slide 4",
-    image: "https://i.ibb.co/PG3brMJv/hero-4-clean.png",
-  },
-  {
-    title: "Slide 5",
-    image: "https://i.ibb.co/Fqc9pcTK/hero-5-clean.png",
+    image: "/assets/hero2.png",
   },
 ];
 

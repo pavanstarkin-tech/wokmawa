@@ -17,6 +17,7 @@ import {
   Tag,
   Share2,
 } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
 import { useWokStore, LiveOrder } from '../../lib/wokmawa-store';
 import { VegBadge } from './WokBadge';
 
@@ -40,6 +41,7 @@ export const WokCheckoutModal: React.FC<WokCheckoutModalProps> = ({
   onClose,
   onOrderComplete,
 }) => {
+  const navigate = useNavigate();
   const { cart, totals, tableNumber, customer, appliedCoupon, activeOrder, actions } = useWokStore();
 
   const [step, setStep] = useState<CheckoutStep>('review');
@@ -52,12 +54,22 @@ export const WokCheckoutModal: React.FC<WokCheckoutModalProps> = ({
   const [confirmingProgress, setConfirmingProgress] = useState(0);
   const [liveStatusIndex, setLiveStatusIndex] = useState(0);
 
+  // Poll for real-time status sync whenever checkout modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+    actions.syncAllOrdersStatus();
+    const interval = setInterval(() => {
+      actions.syncAllOrdersStatus();
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   // Handle coupon apply
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     if (!couponInput) return;
-    const res = actions.applyCoupon(couponInput);
+    const res = await actions.applyCoupon(couponInput);
     setCouponMessage({ text: res.message, success: res.success });
   };
 
@@ -93,11 +105,32 @@ export const WokCheckoutModal: React.FC<WokCheckoutModalProps> = ({
         if (prev >= 100) {
           clearInterval(interval);
           setStep('confirmed');
+          // Automatically route to the full real-time live order tracking page
+          setTimeout(() => {
+            onClose();
+            navigate({ to: '/orders' });
+          }, 1200);
           return 100;
         }
         return prev + 25;
       });
     }, 600);
+  };
+
+  // Helper to map order status to step index
+  const getStatusStepIndex = (status?: string) => {
+    switch (status) {
+      case 'cooking':
+        return 1;
+      case 'plated':
+      case 'ready':
+        return 2;
+      case 'served':
+        return 3;
+      case 'received':
+      default:
+        return 0;
+    }
   };
 
   // Status progression for Live Tracker (Step 15)
@@ -544,8 +577,9 @@ export const WokCheckoutModal: React.FC<WokCheckoutModalProps> = ({
               {/* 4-Stage Progress Tracker */}
               <div className="space-y-4 relative pl-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-[#27272A]">
                 {statusSteps.map((st, idx) => {
-                  const isCurrent = idx === 1; // e.g. Cooking in Wok
-                  const isDone = idx < 1;
+                  const currentStepIdx = getStatusStepIndex(activeOrder?.status);
+                  const isDone = idx < currentStepIdx;
+                  const isCurrent = idx === currentStepIdx;
                   const Icon = st.icon;
 
                   return (
@@ -568,7 +602,7 @@ export const WokCheckoutModal: React.FC<WokCheckoutModalProps> = ({
                             isCurrent ? 'text-[#D4AF37]' : isDone ? 'text-white' : 'text-[#A1A1AA]'
                           }`}
                         >
-                          {st.title} {isCurrent && '🔥 (Active)'}
+                          {st.title} {isCurrent && (activeOrder?.status === 'served' ? '✨' : '🔥 (Active)')}
                         </div>
                         <div className="text-xs text-[#A1A1AA]">{st.desc}</div>
                       </div>
@@ -656,8 +690,11 @@ export const WokCheckoutModal: React.FC<WokCheckoutModalProps> = ({
           {step === 'confirmed' && (
             <button
               type="button"
-              onClick={() => setStep('live_tracker')}
-              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#E8C547] via-[#D4AF37] to-[#C9A227] text-black font-extrabold text-sm shadow-gold-glow"
+              onClick={() => {
+                onClose();
+                navigate({ to: '/orders' });
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#E8C547] via-[#D4AF37] to-[#C9A227] text-black font-extrabold text-sm shadow-gold-glow cursor-pointer"
             >
               <span>TRACK LIVE ORDER STATUS</span>
               <ArrowRight className="w-4 h-4" />
@@ -667,10 +704,14 @@ export const WokCheckoutModal: React.FC<WokCheckoutModalProps> = ({
           {step === 'live_tracker' && (
             <button
               type="button"
-              onClick={onClose}
-              className="w-full py-3.5 px-4 rounded-xl bg-[#1A1A1A] border border-[#27272A] hover:border-[#D4AF37] text-white font-bold text-xs"
+              onClick={() => {
+                onClose();
+                navigate({ to: '/orders' });
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-[#E8C547] via-[#D4AF37] to-[#C9A227] text-black font-extrabold text-sm shadow-gold-glow cursor-pointer"
             >
-              ORDER MORE DISHES 🍜
+              <span>VIEW FULL LIVE TRACKER</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           )}
         </div>

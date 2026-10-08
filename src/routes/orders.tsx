@@ -99,9 +99,18 @@ function WokOrdersPage() {
     prepTimeMinutes: 10,
   };
 
+  const isCancelled = order.status === 'cancelled';
   const isCooking = order.status === 'cooking' || order.status === 'preparing';
   const isReady = order.status === 'ready';
   const isServed = order.status === 'served' || order.status === 'completed';
+
+  const totalItemsCount = order.items.length;
+  const activeItems = order.items.filter((i) => !i.isCancelled && i.status !== 'cancelled');
+  const readyItems = activeItems.filter((i) => i.isCompleted || i.status === 'ready' || i.status === 'served');
+  const cancelledItems = order.items.filter((i) => i.isCancelled || i.status === 'cancelled');
+
+  const allItemsReady = activeItems.length > 0 && readyItems.length === activeItems.length;
+  const isPartiallyReady = readyItems.length > 0 && readyItems.length < activeItems.length;
 
   const orderTimeStr = order.createdAt 
     ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -156,6 +165,7 @@ function WokOrdersPage() {
               {orderHistory.map((ord, idx) => {
                 const isSelected = order.orderId === ord.orderId;
                 const statusBadge =
+                  ord.status === 'cancelled' ? 'Cancelled' :
                   ord.status === 'ready' ? 'Ready' :
                   ord.status === 'served' ? 'Served' :
                   'Preparing';
@@ -172,7 +182,11 @@ function WokOrdersPage() {
                   >
                     <span>#{ord.orderId}</span>
                     <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full ${
-                      isSelected ? 'bg-black/20 text-black' : 'bg-white/10 text-[#D4AF37]'
+                      isSelected
+                        ? 'bg-black/20 text-black'
+                        : ord.status === 'cancelled'
+                        ? 'bg-red-500/20 text-red-400'
+                        : 'bg-white/10 text-[#D4AF37]'
                     }`}>
                       {statusBadge}
                     </span>
@@ -189,96 +203,154 @@ function WokOrdersPage() {
             LIVE ORDER STATUS
           </div>
           <h1 className="font-display font-black text-2xl sm:text-3xl text-white tracking-tight">
-            ORDER <span className="text-[#F3D362]">#{order.orderId}</span>
+            ORDER <span className={isCancelled ? 'text-[#EF4444]' : 'text-[#F3D362]'}>#{order.orderId}</span>
           </h1>
           <div className="text-xs text-[#A1A1AA] font-semibold">
             TABLE {order.tableNumber} • DINE-IN
           </div>
         </div>
 
-        {/* 3-Step Live Progress Tracker */}
-        <div className="p-3.5 bg-[#121212]/90 border border-[#27272A] rounded-2xl shadow-card-luxe backdrop-blur-md">
-          <div className="flex items-center justify-between relative">
-            {/* Step 1: Order Received (Always Checked) */}
-            <div className="flex flex-col items-center flex-1 z-10 min-w-0 px-1 text-center">
-              <div className="w-9 h-9 rounded-full bg-[#10B981]/20 border-2 border-[#10B981] text-[#10B981] flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.4)]">
-                <Check className="w-4 h-4 stroke-[3.5]" />
+        {/* ORDER CANCELLED BANNER */}
+        {isCancelled && (
+          <div className="p-4 bg-gradient-to-r from-[#240C0C] via-[#1A0808] to-[#240C0C] border-2 border-[#EF4444] rounded-2xl space-y-2 shadow-[0_4px_25px_rgba(239,68,68,0.35)] animate-fade-in">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#EF4444]/20 border border-[#EF4444] flex items-center justify-center text-[#EF4444] shrink-0 font-black text-base">
+                ✕
               </div>
-              <span className="text-[10px] mt-1.5 font-bold text-white leading-tight truncate w-full">
-                Order Received
-              </span>
-              <span className="text-[9px] text-[#71717A] mt-0.5 truncate w-full">
-                {orderTimeStr}
-              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-black text-[#F87171] uppercase tracking-wider">
+                  Order Cancelled by Restaurant
+                </div>
+                <p className="text-xs text-[#E5E7EB] mt-0.5 leading-relaxed">
+                  The restaurant manager has cancelled this order. Table #{order.tableNumber} is now available.
+                </p>
+              </div>
             </div>
-
-            {/* Connector Line 1 */}
-            <div className={`flex-1 -mx-2 h-[2.5px] self-start mt-4.5 transition-all ${
-              isCooking || isReady || isServed
-                ? 'bg-gradient-to-r from-[#10B981] to-[#F3D362] shadow-[0_0_6px_rgba(243,211,98,0.5)]'
-                : 'bg-[#27272A]'
-            }`} />
-
-            {/* Step 2: Preparing */}
-            <div className="flex flex-col items-center flex-1 z-10 min-w-0 px-1 text-center">
-              {isReady || isServed ? (
-                <div className="w-9 h-9 rounded-full bg-[#10B981]/20 border-2 border-[#10B981] text-[#10B981] flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.4)]">
-                  <Check className="w-4 h-4 stroke-[3.5]" />
-                </div>
-              ) : isCooking ? (
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#F7D360] via-[#E5B83B] to-[#D4A328] text-black flex items-center justify-center shadow-[0_0_15px_rgba(243,211,98,0.7)] border-2 border-[#F3D362] animate-pulse">
-                  <Flame className="w-4 h-4 stroke-[2.5] fill-black" />
-                </div>
-              ) : (
-                <div className="w-9 h-9 rounded-full bg-[#181818] border-2 border-[#333333] text-[#71717A] flex items-center justify-center">
-                  <Flame className="w-4 h-4" />
-                </div>
-              )}
-              <span className={`text-[10px] mt-1.5 font-bold leading-tight truncate w-full ${
-                isCooking ? 'text-[#F3D362] font-black' : isReady || isServed ? 'text-white' : 'text-[#71717A]'
-              }`}>
-                Preparing
-              </span>
-              <span className="text-[9px] text-[#D4AF37] mt-0.5 font-medium italic truncate w-full">
-                {isReady || isServed ? 'Cooked' : isCooking ? 'Firing up!' : 'Queued'}
-              </span>
-            </div>
-
-            {/* Connector Line 2 */}
-            <div className={`flex-1 -mx-2 h-[2.5px] self-start mt-4.5 transition-all ${
-              isReady || isServed
-                ? 'bg-gradient-to-r from-[#F3D362] to-[#10B981] shadow-[0_0_6px_rgba(16,185,129,0.5)]'
-                : 'bg-[#27272A]'
-            }`} />
-
-            {/* Step 3: Ready / Served */}
-            <div className="flex flex-col items-center flex-1 z-10 min-w-0 px-1 text-center">
-              {isServed ? (
-                <div className="w-9 h-9 rounded-full bg-[#10B981]/20 border-2 border-[#10B981] text-[#10B981] flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.4)]">
-                  <Check className="w-4 h-4 stroke-[3.5]" />
-                </div>
-              ) : isReady ? (
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#10B981] via-[#059669] to-[#047857] text-white flex items-center justify-center shadow-[0_0_18px_rgba(16,185,129,0.8)] border-2 border-[#34D399] animate-bounce">
-                  <UtensilsCrossed className="w-4 h-4 stroke-[2.5]" />
-                </div>
-              ) : (
-                <div className="w-9 h-9 rounded-full bg-[#181818] border-2 border-[#333333] text-[#71717A] flex items-center justify-center">
-                  <UtensilsCrossed className="w-4 h-4" />
-                </div>
-              )}
-              <span className={`text-[10px] mt-1.5 font-medium leading-tight truncate w-full ${
-                isReady ? 'text-[#34D399] font-black' : isServed ? 'text-white font-bold' : 'text-[#71717A]'
-              }`}>
-                {isServed ? 'Served' : 'Ready'}
-              </span>
-              <span className={`text-[9px] mt-0.5 truncate w-full ${
-                isReady ? 'text-[#34D399] font-bold' : 'text-[#52525B]'
-              }`}>
-                {isServed ? 'Enjoy your meal!' : isReady ? 'Serving at table' : 'Next'}
-              </span>
+            <div className="pt-2 border-t border-[#EF4444]/30 flex items-center justify-between">
+              <span className="text-[11px] text-[#A1A1AA]">Status: <strong className="text-[#F87171]">CANCELLED</strong></span>
+              <button
+                type="button"
+                onClick={() => navigate({ to: '/' })}
+                className="px-3 py-1.5 rounded-xl bg-[#EF4444] text-white font-black text-xs uppercase tracking-wider hover:brightness-110 active:scale-95 transition cursor-pointer"
+              >
+                Place New Order →
+              </button>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* 3-Step Live Progress Tracker (Only when not cancelled) */}
+        {!isCancelled && (
+          <div className="p-3.5 bg-[#121212]/90 border border-[#27272A] rounded-2xl shadow-card-luxe backdrop-blur-md">
+            <div className="flex items-center justify-between relative">
+              {/* Step 1: Order Received (Always Checked) */}
+              <div className="flex flex-col items-center flex-1 z-10 min-w-0 px-1 text-center">
+                <div className="w-9 h-9 rounded-full bg-[#10B981]/20 border-2 border-[#10B981] text-[#10B981] flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.4)]">
+                  <Check className="w-4 h-4 stroke-[3.5]" />
+                </div>
+                <span className="text-[10px] mt-1.5 font-bold text-white leading-tight truncate w-full">
+                  Order Received
+                </span>
+                <span className="text-[9px] text-[#71717A] mt-0.5 truncate w-full">
+                  {orderTimeStr}
+                </span>
+              </div>
+
+              {/* Connector Line 1 */}
+              <div className={`flex-1 -mx-2 h-[2.5px] self-start mt-4.5 transition-all ${
+                isCooking || isReady || isServed
+                  ? 'bg-gradient-to-r from-[#10B981] to-[#F3D362] shadow-[0_0_6px_rgba(243,211,98,0.5)]'
+                  : 'bg-[#27272A]'
+              }`} />
+
+              {/* Step 2: Preparing */}
+              <div className="flex flex-col items-center flex-1 z-10 min-w-0 px-1 text-center">
+                {isReady || isServed ? (
+                  <div className="w-9 h-9 rounded-full bg-[#10B981]/20 border-2 border-[#10B981] text-[#10B981] flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.4)]">
+                    <Check className="w-4 h-4 stroke-[3.5]" />
+                  </div>
+                ) : isCooking ? (
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#F7D360] via-[#E5B83B] to-[#D4A328] text-black flex items-center justify-center shadow-[0_0_15px_rgba(243,211,98,0.7)] border-2 border-[#F3D362] animate-pulse">
+                    <Flame className="w-4 h-4 stroke-[2.5] fill-black" />
+                  </div>
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-[#181818] border-2 border-[#333333] text-[#71717A] flex items-center justify-center">
+                    <Flame className="w-4 h-4" />
+                  </div>
+                )}
+                <span className={`text-[10px] mt-1.5 font-bold leading-tight truncate w-full ${
+                  isCooking ? 'text-[#F3D362] font-black' : isReady || isServed ? 'text-white' : 'text-[#71717A]'
+                }`}>
+                  Preparing
+                </span>
+                <span className="text-[9px] text-[#D4AF37] mt-0.5 font-medium italic truncate w-full">
+                  {isReady || isServed ? 'Cooked' : isCooking ? 'Firing up!' : 'Queued'}
+                </span>
+              </div>
+
+              {/* Connector Line 2 */}
+              <div className={`flex-1 -mx-2 h-[2.5px] self-start mt-4.5 transition-all ${
+                isReady || isServed
+                  ? 'bg-gradient-to-r from-[#F3D362] to-[#10B981] shadow-[0_0_6px_rgba(16,185,129,0.5)]'
+                  : 'bg-[#27272A]'
+              }`} />
+
+              {/* Step 3: Ready / Served */}
+              <div className="flex flex-col items-center flex-1 z-10 min-w-0 px-1 text-center">
+                {isServed ? (
+                  <div className="w-9 h-9 rounded-full bg-[#10B981]/20 border-2 border-[#10B981] text-[#10B981] flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.4)]">
+                    <Check className="w-4 h-4 stroke-[3.5]" />
+                  </div>
+                ) : isReady ? (
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#10B981] via-[#059669] to-[#047857] text-white flex items-center justify-center shadow-[0_0_18px_rgba(16,185,129,0.8)] border-2 border-[#34D399] animate-bounce">
+                    <UtensilsCrossed className="w-4 h-4 stroke-[2.5]" />
+                  </div>
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-[#181818] border-2 border-[#333333] text-[#71717A] flex items-center justify-center">
+                    <UtensilsCrossed className="w-4 h-4" />
+                  </div>
+                )}
+                <span className={`text-[10px] mt-1.5 font-medium leading-tight truncate w-full ${
+                  isReady ? 'text-[#34D399] font-black' : isServed ? 'text-white font-bold' : 'text-[#71717A]'
+                }`}>
+                  {isServed ? 'Served' : 'Ready'}
+                </span>
+                <span className={`text-[9px] mt-0.5 truncate w-full ${
+                  isReady ? 'text-[#34D399] font-bold' : 'text-[#52525B]'
+                }`}>
+                  {isServed ? 'Enjoy your meal!' : isReady ? 'Serving at table' : 'Next'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PARTIAL KITCHEN ITEM READINESS BAR */}
+        {!isCancelled && isPartiallyReady && (
+          <div className="p-3.5 bg-gradient-to-r from-[#18150D] via-[#241E10] to-[#18150D] border border-[#D4AF37] rounded-2xl space-y-2 shadow-[0_4px_18px_rgba(212,175,55,0.22)] animate-fade-in">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-base animate-bounce">🔔</span>
+                <span className="text-xs font-black text-[#F3D362] uppercase tracking-wide">
+                  {readyItems.length} of {activeItems.length} Dishes Ready & Plated!
+                </span>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#10B981]/20 text-[#10B981] font-black uppercase border border-[#10B981]/30">
+                Partially Ready
+              </span>
+            </div>
+            {/* Progress Bar */}
+            <div className="w-full h-2 bg-[#1F1F1F] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-[#F3D362] to-[#10B981] transition-all duration-500 rounded-full"
+                style={{ width: `${(readyItems.length / activeItems.length) * 100}%` }}
+              />
+            </div>
+            <p className="text-[11px] text-[#A1A1AA] italic">
+              The kitchen is finishing the remaining {activeItems.length - readyItems.length} items in the wok now.
+            </p>
+          </div>
+        )}
 
         {/* Hero Banner with Calligraphy "Good Food Takes a Little Time" */}
         <div className="relative w-full rounded-2xl overflow-hidden border border-[#D4AF37]/35 shadow-[0_6px_25px_rgba(0,0,0,0.8)] bg-black min-h-[140px] flex items-center justify-between p-4">
@@ -293,10 +365,10 @@ function WokOrdersPage() {
           {/* Left / Center Content */}
           <div className="relative z-10 space-y-1">
             <span className="text-[10px] font-black uppercase tracking-widest text-[#F3D362]">
-              KITCHEN MASTER AT WORK
+              {isCancelled ? 'ORDER CANCELLED' : isServed ? 'ORDER COMPLETE' : 'KITCHEN MASTER AT WORK'}
             </span>
             <div className="font-display font-black text-xl sm:text-2xl text-white italic drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-              Fresh & Sizzling
+              {isCancelled ? 'Cancelled' : isServed ? 'Freshly Served' : 'Fresh & Sizzling'}
             </div>
           </div>
 
@@ -309,63 +381,99 @@ function WokOrdersPage() {
           </div>
         </div>
 
-        {/* ORDER ITEMS Card */}
+        {/* ORDER ITEMS Card with Real-time item badges */}
         <div className="p-4 bg-[#121212] border border-[#27272A] rounded-2xl space-y-3 shadow-card-luxe">
           <div className="flex items-center justify-between border-b border-[#222222] pb-2">
             <h3 className="font-display font-black text-xs sm:text-sm uppercase tracking-wider text-white">
               ORDER ITEMS
             </h3>
             <span className="text-xs text-[#A1A1AA] font-bold">
-              {order.items.length} Items
+              {order.items.length} Items {readyItems.length > 0 && !isCancelled && !isServed && `(${readyItems.length} ready)`}
             </span>
           </div>
 
           <div className="space-y-3 divide-y divide-[#1F1F1F]">
-            {order.items.map((item, idx) => (
-              <div key={idx} className={`flex items-start justify-between gap-3 ${idx > 0 ? 'pt-3' : ''}`}>
-                <div className="flex items-start gap-3">
-                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#1C1C1C] border border-[#2A2A2A] shrink-0 shadow-sm">
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+            {order.items.map((item, idx) => {
+              const itemCancelled = Boolean(item.isCancelled || item.status === 'cancelled');
+              const itemReady = Boolean(item.isCompleted || item.status === 'ready' || item.status === 'served' || isReady || isServed);
+              const itemCooking = Boolean(item.status === 'cooking' || isCooking);
 
-                  <div>
-                    <h4 className="font-display font-bold text-xs sm:text-sm text-white">
-                      {item.name}
-                    </h4>
-                    <div className="text-[11px] text-[#A1A1AA] font-semibold mt-0.5">
-                      x{item.quantity}
+              return (
+                <div key={idx} className={`flex items-start justify-between gap-3 ${idx > 0 ? 'pt-3' : ''}`}>
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#1C1C1C] border border-[#2A2A2A] shrink-0 shadow-sm relative">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className={`w-full h-full object-cover ${itemCancelled ? 'grayscale opacity-50' : ''}`}
+                      />
+                      {itemCancelled && (
+                        <div className="absolute inset-0 bg-red-950/70 flex items-center justify-center text-red-400 font-black text-xs">
+                          ✕
+                        </div>
+                      )}
                     </div>
 
-                    {/* Spice Level Row */}
-                    {item.spiceLevel && (
-                      <div className="flex items-center gap-1 text-[11px] text-[#A1A1AA] mt-0.5">
-                        <span>{item.spiceLevel.name}</span>
-                        <div className="flex items-center gap-0.5">
-                          {Array.from({ length: item.spiceLevel.chillies || 1 }).map((_, i) => (
-                            <RedChilliIcon key={i} className="w-3 h-3" />
-                          ))}
-                        </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className={`font-display font-bold text-xs sm:text-sm truncate ${itemCancelled ? 'text-[#71717A] line-through' : 'text-white'}`}>
+                        {item.name}
+                      </h4>
+                      <div className="text-[11px] text-[#A1A1AA] font-semibold mt-0.5">
+                        x{item.quantity}
                       </div>
-                    )}
 
-                    {/* Extras */}
-                    {item.extras && item.extras.length > 0 && item.extras.map((extra) => (
-                      <div key={extra.id} className="text-[10px] text-[#D4AF37] font-medium mt-0.5">
-                        {extra.name} +₹{extra.price}
+                      {/* Item Status Badge */}
+                      <div className="mt-1">
+                        {itemCancelled ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#EF4444]/15 border border-[#EF4444]/40 text-[#EF4444] text-[10px] font-extrabold uppercase">
+                            <span>✕</span>
+                            <span>Cancelled</span>
+                          </span>
+                        ) : itemReady ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#10B981]/15 border border-[#10B981]/40 text-[#10B981] text-[10px] font-extrabold uppercase">
+                            <span>✓</span>
+                            <span>Ready & Sizzling</span>
+                          </span>
+                        ) : itemCooking ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F3D362]/15 border border-[#F3D362]/40 text-[#F3D362] text-[10px] font-extrabold uppercase">
+                            <span className="animate-pulse">🔥</span>
+                            <span>Cooking in Wok</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#27272A] text-[#A1A1AA] text-[10px] font-bold uppercase">
+                            <span>⏳</span>
+                            <span>Queued in Kitchen</span>
+                          </span>
+                        )}
                       </div>
-                    ))}
+
+                      {/* Spice Level Row */}
+                      {item.spiceLevel && (
+                        <div className="flex items-center gap-1 text-[11px] text-[#A1A1AA] mt-1">
+                          <span>{item.spiceLevel.name}</span>
+                          <div className="flex items-center gap-0.5">
+                            {Array.from({ length: item.spiceLevel.chillies || 1 }).map((_, i) => (
+                              <RedChilliIcon key={i} className="w-3 h-3" />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Extras */}
+                      {item.extras && item.extras.length > 0 && item.extras.map((extra) => (
+                        <div key={extra.id} className="text-[10px] text-[#D4AF37] font-medium mt-0.5">
+                          {extra.name} +₹{extra.price}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={`font-display font-black text-xs sm:text-sm shrink-0 ${itemCancelled ? 'text-[#71717A] line-through' : 'text-white'}`}>
+                    ₹{item.totalPrice}
                   </div>
                 </div>
-
-                <div className="font-display font-black text-xs sm:text-sm text-white shrink-0">
-                  ₹{item.totalPrice}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -482,99 +590,124 @@ function WokOrdersPage() {
               </div>
 
               <div className="space-y-3">
-                {order.items.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3.5 bg-[#141414] border border-[#222222] rounded-2xl flex gap-3.5 shadow-sm"
-                  >
-                    {/* Left Image */}
-                    <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-xl overflow-hidden bg-[#1C1C1C] shrink-0 border border-[#27272A]">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+                {order.items.map((item, idx) => {
+                  const itemCancelled = Boolean(item.isCancelled || item.status === 'cancelled');
+                  const itemReady = Boolean(item.isCompleted || item.status === 'ready' || item.status === 'served' || isReady || isServed);
+                  const itemCooking = Boolean(item.status === 'cooking' || isCooking);
 
-                    {/* Right Details */}
-                    <div className="flex-1 flex flex-col justify-between min-w-0">
-                      <div>
-                        {/* Dish Name + Base Price */}
-                        <div className="flex items-start justify-between gap-2">
-                          <h4 className="font-display font-black text-sm text-white truncate">
-                            {item.name}
-                          </h4>
-                          <span className="font-display font-black text-sm text-white shrink-0">
-                            ₹{item.portionPrice || Math.round(item.unitPrice)}
-                          </span>
-                        </div>
-
-                        {/* Veg / Non-Veg */}
-                        <div className="flex items-center gap-1.5 mt-0.5 mb-1">
-                          <div className={`w-3 h-3 rounded-[3px] border flex items-center justify-center p-[2px] ${item.isVeg ? 'border-[#10B981]' : 'border-[#EF4444]'}`}>
-                            <div className={`w-1 h-1 rounded-full ${item.isVeg ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`} />
-                          </div>
-                          <span className="text-[9px] font-black text-[#D4D4D8] uppercase tracking-wider">
-                            {item.isVeg ? 'VEG' : 'NON-VEG'}
-                          </span>
-                        </div>
-
-                        {/* Spice Level */}
-                        {item.spiceLevel && (
-                          <div className="flex items-center justify-between text-[11px] my-1">
-                            <div className="flex items-center gap-1.5">
-                              <RedChilliIcon className="w-3.5 h-3.5 shrink-0" />
-                              <span className="text-[#A1A1AA]">Spice Level:</span>
-                              <span className="text-white font-bold">{item.spiceLevel.name}</span>
-                            </div>
-                            <div className="flex items-center gap-0.5">
-                              {Array.from({ length: item.spiceLevel.chillies || 1 }).map((_, i) => (
-                                <RedChilliIcon key={i} className="w-3.5 h-3.5 shrink-0" />
-                              ))}
-                            </div>
+                  return (
+                    <div
+                      key={idx}
+                      className="p-3.5 bg-[#141414] border border-[#222222] rounded-2xl flex gap-3.5 shadow-sm"
+                    >
+                      {/* Left Image */}
+                      <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-xl overflow-hidden bg-[#1C1C1C] shrink-0 border border-[#27272A] relative">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className={`w-full h-full object-cover ${itemCancelled ? 'grayscale opacity-50' : ''}`}
+                        />
+                        {itemCancelled && (
+                          <div className="absolute inset-0 bg-red-950/70 flex items-center justify-center text-red-400 font-black text-xs">
+                            ✕
                           </div>
                         )}
+                      </div>
 
-                        {/* Extras Add-ons with Real Image */}
-                        {item.extras && item.extras.length > 0 && item.extras.map((extra) => {
-                          const extraImg = getExtraImage(extra);
-                          return (
-                            <div key={extra.id} className="flex items-center justify-between text-[11px] my-1">
-                              <div className="flex items-center gap-1.5">
-                                <img
-                                  src={extraImg}
-                                  alt={extra.name}
-                                  className="w-4.5 h-4.5 object-cover rounded-full border border-[#333333] shrink-0"
-                                />
-                                <span className="text-white font-medium">{extra.name}</span>
-                              </div>
-                              <span className="font-bold text-[#F3D362]">
-                                + ₹{extra.price}
+                      {/* Right Details */}
+                      <div className="flex-1 flex flex-col justify-between min-w-0">
+                        <div>
+                          {/* Dish Name + Base Price */}
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className={`font-display font-black text-sm truncate ${itemCancelled ? 'text-[#71717A] line-through' : 'text-white'}`}>
+                              {item.name}
+                            </h4>
+                            <span className={`font-display font-black text-sm shrink-0 ${itemCancelled ? 'text-[#71717A] line-through' : 'text-white'}`}>
+                              ₹{item.portionPrice || Math.round(item.unitPrice)}
+                            </span>
+                          </div>
+
+                          {/* Veg / Non-Veg + Status Badge */}
+                          <div className="flex items-center gap-2 mt-0.5 mb-1">
+                            <div className={`w-3 h-3 rounded-[3px] border flex items-center justify-center p-[2px] ${item.isVeg ? 'border-[#10B981]' : 'border-[#EF4444]'}`}>
+                              <div className={`w-1 h-1 rounded-full ${item.isVeg ? 'bg-[#10B981]' : 'bg-[#EF4444]'}`} />
+                            </div>
+                            <span className="text-[9px] font-black text-[#D4D4D8] uppercase tracking-wider">
+                              {item.isVeg ? 'VEG' : 'NON-VEG'}
+                            </span>
+
+                            {itemCancelled ? (
+                              <span className="px-1.5 py-0.2 rounded bg-red-500/20 text-red-400 text-[9px] font-extrabold uppercase">
+                                Cancelled
                               </span>
-                            </div>
-                          );
-                        })}
-
-                        {/* Instructions Note */}
-                        {item.instructions && (
-                          <div className="text-[10px] text-[#E8C547] italic mt-1 line-clamp-1">
-                            Note: "{item.instructions}"
+                            ) : itemReady ? (
+                              <span className="px-1.5 py-0.2 rounded bg-green-500/20 text-green-400 text-[9px] font-extrabold uppercase">
+                                ✓ Ready
+                              </span>
+                            ) : itemCooking ? (
+                              <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 text-[9px] font-extrabold uppercase">
+                                🔥 Cooking
+                              </span>
+                            ) : null}
                           </div>
-                        )}
-                      </div>
 
-                      {/* Quantity & Item Grand Total */}
-                      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-[#1F1F1F]">
-                        <span className="text-[11px] text-[#A1A1AA] font-bold">
-                          Qty: <span className="text-white font-black">{item.quantity}</span>
-                        </span>
-                        <span className="font-display font-black text-base text-[#F3D362]">
-                          ₹{item.totalPrice}
-                        </span>
+                          {/* Spice Level */}
+                          {item.spiceLevel && (
+                            <div className="flex items-center justify-between text-[11px] my-1">
+                              <div className="flex items-center gap-1.5">
+                                <RedChilliIcon className="w-3.5 h-3.5 shrink-0" />
+                                <span className="text-[#A1A1AA]">Spice Level:</span>
+                                <span className="text-white font-bold">{item.spiceLevel.name}</span>
+                              </div>
+                              <div className="flex items-center gap-0.5">
+                                {Array.from({ length: item.spiceLevel.chillies || 1 }).map((_, i) => (
+                                  <RedChilliIcon key={i} className="w-3.5 h-3.5 shrink-0" />
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Extras Add-ons with Real Image */}
+                          {item.extras && item.extras.length > 0 && item.extras.map((extra) => {
+                            const extraImg = getExtraImage(extra);
+                            return (
+                              <div key={extra.id} className="flex items-center justify-between text-[11px] my-1">
+                                <div className="flex items-center gap-1.5">
+                                  <img
+                                    src={extraImg}
+                                    alt={extra.name}
+                                    className="w-4.5 h-4.5 object-cover rounded-full border border-[#333333] shrink-0"
+                                  />
+                                  <span className="text-white font-medium">{extra.name}</span>
+                                </div>
+                                <span className="font-bold text-[#F3D362]">
+                                  + ₹{extra.price}
+                                </span>
+                              </div>
+                            );
+                          })}
+
+                          {/* Instructions Note */}
+                          {item.instructions && (
+                            <div className="text-[10px] text-[#E8C547] italic mt-1 line-clamp-1">
+                              Note: "{item.instructions}"
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Quantity & Item Grand Total */}
+                        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-[#1F1F1F]">
+                          <span className="text-[11px] text-[#A1A1AA] font-bold">
+                            Qty: <span className="text-white font-black">{item.quantity}</span>
+                          </span>
+                          <span className={`font-display font-black text-base ${itemCancelled ? 'text-[#71717A] line-through' : 'text-[#F3D362]'}`}>
+                            ₹{item.totalPrice}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 

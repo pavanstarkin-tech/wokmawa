@@ -1,7 +1,8 @@
 import { createFileRoute, useNavigate, useParams, Link } from '@tanstack/react-router';
 import React, { useState, useEffect } from 'react';
 import { Minus, Plus, ChevronRight, Check } from 'lucide-react';
-import { MENU_ITEMS, SPICE_LEVELS, SpiceLevel, PortionSize, ExtraOption, EXTRAS_OPTIONS } from '@/lib/wokmawa-menu';
+import { SPICE_LEVELS, SpiceLevel, PortionSize, ExtraOption, EXTRAS_OPTIONS } from '@/lib/wokmawa-menu';
+import { useLiveMenu } from '@/lib/wokmawa-api-menu';
 import { useWokStore } from '@/lib/wokmawa-store';
 import { WokHeader } from '@/components/wokmawa/WokHeader';
 import { VegBadge } from '@/components/wokmawa/WokBadge';
@@ -15,6 +16,7 @@ function ProductDetailPage() {
   const { id } = useParams({ from: '/item/$id' });
   const navigate = useNavigate();
   const { actions, totals } = useWokStore();
+  const { items: MENU_ITEMS } = useLiveMenu();
 
   const item = MENU_ITEMS.find((m) => m.id === id || m.slug === id) || MENU_ITEMS[0];
 
@@ -85,6 +87,9 @@ function ProductDetailPage() {
             src={item.image}
             alt={item.name}
             className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/assets/categories/vej.png';
+            }}
           />
         </div>
 
@@ -129,42 +134,6 @@ function ProductDetailPage() {
             {item.description}
           </p>
         </div>
-
-        {/* Portion Selector (if multiple sizes exist) */}
-        {item.availableSizes && item.availableSizes.length > 1 && (
-          <div className="bg-[#101010] border border-[#27272A] rounded-2xl p-4 space-y-2.5">
-            <span className="font-display font-extrabold text-xs text-[#A1A1AA] uppercase tracking-wider">
-              SELECT PORTION SIZE
-            </span>
-            <div className="grid grid-cols-2 gap-2.5">
-              {item.availableSizes.map((portion) => {
-                const isSelected = selectedPortion.name === portion.name;
-                return (
-                  <button
-                    key={portion.name}
-                    type="button"
-                    onClick={() => setSelectedPortion(portion)}
-                    className={`flex items-center justify-between p-3.5 rounded-xl border transition-all text-left cursor-pointer ${
-                      isSelected
-                        ? 'bg-[#1C180C] border-[#D4AF37] ring-1 ring-[#D4AF37] shadow-gold-glow'
-                        : 'bg-[#141414] border-[#27272A] hover:border-[#3F3F46]'
-                    }`}
-                  >
-                    <div>
-                      <div className={`font-bold text-xs ${isSelected ? 'text-[#D4AF37]' : 'text-white'}`}>
-                        {portion.name}
-                      </div>
-                      <div className="text-[10px] text-[#A1A1AA]">{portion.serves}</div>
-                    </div>
-                    <div className="text-xs font-black text-white">
-                      ₹{portion.price}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Interactive Spice Level Selection (HOW HOT CAN YOU HANDLE?) */}
         <div className="bg-[#101010] border border-[#27272A] rounded-2xl p-4 sm:p-5">

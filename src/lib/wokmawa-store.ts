@@ -8,14 +8,17 @@ export interface CartItem {
   categoryName: string;
   image: string;
   isVeg: boolean;
-  portionName: string;
-  portionPrice: number;
-  spiceLevel: SpiceLevel;
-  extras: ExtraOption[];
+  portionName?: string;
+  portionPrice?: number;
+  spiceLevel?: SpiceLevel;
+  extras?: ExtraOption[];
   quantity: number;
   instructions?: string;
   unitPrice: number; // base + extras
   totalPrice: number; // unitPrice * quantity
+  status?: 'pending' | 'cooking' | 'ready' | 'served' | 'cancelled';
+  isCompleted?: boolean;
+  isCancelled?: boolean;
 }
 
 export interface CustomerDetails {
@@ -36,7 +39,8 @@ export interface LiveOrder {
   discount: number;
   grandTotal: number;
   paymentMethod: 'upi' | 'card' | 'counter';
-  status: 'received' | 'cooking' | 'plated' | 'ready' | 'served';
+  status: 'received' | 'cooking' | 'plated' | 'ready' | 'served' | 'cancelled';
+  cancelReason?: string;
   createdAt: string;
   prepTimeMinutes: number;
   customer?: CustomerDetails;
@@ -67,7 +71,7 @@ interface WokMawaState {
 const STORAGE_KEY = 'wokmawa_state_v1';
 
 const defaultState: WokMawaState = {
-  tableNumber: '04',
+  tableNumber: '',
   cart: [],
   draft: null,
   customer: {
@@ -112,6 +116,16 @@ function notify() {
   listeners.forEach((l) => l());
 }
 
+export function getClientSessionId(): string {
+  if (typeof window === 'undefined') return '';
+  let id = localStorage.getItem('wokmawa_client_session_id');
+  if (!id) {
+    id = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    localStorage.setItem('wokmawa_client_session_id', id);
+  }
+  return id;
+}
+
 async function syncOrderToRestocare(order: LiveOrder) {
   try {
     const payload = {
@@ -119,27 +133,34 @@ async function syncOrderToRestocare(order: LiveOrder) {
       orderType: 'dine-in',
       tableNumber: order.tableNumber,
       tableId: order.tableNumber,
+      sessionId: getClientSessionId(),
       customerName: order.customer?.name || 'Guest Diner',
       customerPhone: order.customer?.phone || '',
       paymentMethod: order.paymentMethod,
       status: 'preparing',
-      items: order.items.map(i => {
+      couponCode: globalState.appliedCoupon || undefined,
+      discountAmount: order.discount || 0,
+      items: order.items.map((i) => {
         const details = [
           i.portionName ? `Portion: ${i.portionName}` : null,
           i.spiceLevel?.name ? `Spice: ${i.spiceLevel.name}` : null,
-          i.extras && i.extras.length > 0 ? `Addons: ${i.extras.map(e => e.name).join(', ')}` : null,
+          i.extras && i.extras.length > 0 ? `Addons: ${i.extras.map((e) => e.name).join(', ')}` : null,
           i.instructions ? `Note: ${i.instructions}` : null,
         ].filter(Boolean).join(' | ');
 
+        const numId = Number(i.menuItemId);
+        const hasValidNumId = !isNaN(numId) && numId > 0;
+
         return {
+          menuItemId: hasValidNumId ? numId : undefined,
           name: i.name,
           price: i.portionPrice || i.unitPrice,
           quantity: i.quantity,
-          isOpenItem: true,
+          isOpenItem: !hasValidNumId,
           notes: details || i.instructions || '',
           portion: i.portionName,
           spiceLevel: i.spiceLevel?.name,
-          extras: i.extras?.map(e => e.name).join(', ') || '',
+          extras: i.extras?.map((e) => e.name).join(', ') || '',
           instructions: i.instructions || '',
         };
       }),
@@ -165,7 +186,7 @@ async function syncOrderToRestocare(order: LiveOrder) {
         if (globalState.activeOrder?.orderId === order.orderId) {
           globalState.activeOrder.restocareId = data.order.id;
         }
-        globalState.orderHistory = globalState.orderHistory.map(o =>
+        globalState.orderHistory = globalState.orderHistory.map((o) =>
           o.orderId === order.orderId ? { ...o, restocareId: data.order.id } : o
         );
         notify();
@@ -418,10 +439,49 @@ export const wokStore = {
     notify();
   },
 
-  applyCoupon(code: string) {
+  async applyCoupon(code: string): Promise<{ success: boolean; discount: number; message: string }> {
     const clean = code.trim().toUpperCase();
-    if (clean === 'MAWA10' || clean === 'WOKFLAME') {
-      const subtotal = globalState.cart.reduce((s, i) => s + i.totalPrice, 0);
+    const subtotal = globalState.cart.reduce((s, i) => s + i.totalPrice, 0);
+
+    if (!clean) {
+      return { success: false, discount: 0, message: 'Please enter a coupon code.' };
+    }
+
+    try {
+      const endpoint = typeof window !== 'undefined' && window.location.port === '8081'
+        ? '/api/coupons/validate'
+        : 'http://localhost:5001/api/coupons/validate';
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: clean,
+          orderAmount: subtotal,
+        }),
+      }).catch(() => null);
+
+      if (res && res.ok) {
+        const data = await res.json();
+        if (data.success && data.valid) {
+          const discount = Math.round(Number(data.discount) || 0);
+          globalState = {
+            ...globalState,
+            appliedCoupon: clean,
+            discountAmount: discount,
+          };
+          notify();
+          return { success: true, discount, message: data.message || `Coupon ${clean} applied! You saved ₹${discount}` };
+        } else if (data.message) {
+          return { success: false, discount: 0, message: data.message };
+        }
+      }
+    } catch (e) {
+      // Fallback to local codes
+    }
+
+    // Local standard fallback codes
+    if (clean === 'MAWA10' || clean === 'WOKFLAME' || clean === 'FLAME10' || clean === 'WELCOME10') {
       const discount = Math.round(subtotal * 0.1);
       globalState = {
         ...globalState,
@@ -431,6 +491,7 @@ export const wokStore = {
       notify();
       return { success: true, discount, message: '10% Flame Discount Applied!' };
     }
+
     return { success: false, discount: 0, message: 'Invalid coupon code. Try MAWA10' };
   },
 
@@ -473,7 +534,7 @@ export const wokStore = {
     globalState = {
       ...globalState,
       activeOrder: order,
-      orderHistory: [order, ...globalState.orderHistory.filter(o => o.orderId !== order.orderId)],
+      orderHistory: [order, ...globalState.orderHistory.filter((o) => o.orderId !== order.orderId)],
       cart: [],
       appliedCoupon: null,
       discountAmount: 0,
@@ -488,7 +549,7 @@ export const wokStore = {
     globalState = {
       ...globalState,
       activeOrder: order,
-      orderHistory: [order, ...prevHistory.filter(o => o.orderId !== order.orderId)],
+      orderHistory: [order, ...prevHistory.filter((o) => o.orderId !== order.orderId)],
     };
     notify();
     syncOrderToRestocare(order);
@@ -536,7 +597,9 @@ export const wokStore = {
           if (data.success && data.status) {
             const rawStatus = String(data.status).toLowerCase();
             const mappedStatus: LiveOrder['status'] =
-              rawStatus === 'ready'
+              rawStatus === 'cancelled' || rawStatus === 'rejected'
+                ? 'cancelled'
+                : rawStatus === 'ready'
                 ? 'ready'
                 : rawStatus === 'completed' || rawStatus === 'served'
                 ? 'served'
@@ -544,8 +607,54 @@ export const wokStore = {
                 ? 'cooking'
                 : 'received';
 
-            if (ord.status !== mappedStatus) {
-              updatedHistory[i] = { ...ord, status: mappedStatus };
+            let updatedItems = [...ord.items];
+            const rawItems = Array.isArray(data.items)
+              ? data.items
+              : Array.isArray(data.order?.items)
+              ? data.order.items
+              : null;
+
+            if (rawItems && rawItems.length > 0) {
+              updatedItems = ord.items.map((item, idx) => {
+                const match = rawItems.find((r: any) => r.name === item.name || String(r.menuItemId) === String(item.menuItemId)) || rawItems[idx];
+                if (!match) return item;
+
+                const isCancelled = Boolean(match.cancelled || match.status === 'cancelled');
+                const isCompleted = Boolean(
+                  match.prepared || match.isCompleted || match.status === 'ready' || match.status === 'served' || match.status === 'completed' || mappedStatus === 'ready' || mappedStatus === 'served'
+                );
+                const itemStatus: CartItem['status'] = isCancelled
+                  ? 'cancelled'
+                  : isCompleted
+                  ? 'ready'
+                  : (match.status === 'cooking' || match.status === 'preparing' || mappedStatus === 'cooking')
+                  ? 'cooking'
+                  : 'pending';
+
+                return {
+                  ...item,
+                  status: itemStatus,
+                  isCompleted,
+                  isCancelled,
+                  quantity: match.quantity !== undefined ? Number(match.quantity) : item.quantity,
+                  totalPrice: match.price !== undefined ? Number(match.price) * (match.quantity || item.quantity) : item.totalPrice,
+                };
+              });
+            }
+
+            const updatedGrandTotal = data.order?.grandTotal || data.order?.totalAmount || ord.grandTotal;
+
+            if (
+              ord.status !== mappedStatus ||
+              ord.grandTotal !== updatedGrandTotal ||
+              JSON.stringify(ord.items) !== JSON.stringify(updatedItems)
+            ) {
+              updatedHistory[i] = {
+                ...ord,
+                status: mappedStatus,
+                items: updatedItems,
+                grandTotal: Number(updatedGrandTotal) || ord.grandTotal,
+              };
               hasChanges = true;
             }
           }
@@ -564,6 +673,136 @@ export const wokStore = {
       notify();
     }
   },
+
+  async checkTableActiveOrder(tableNumber: string): Promise<{ hasActiveOrder: boolean; isOccupiedByOther?: boolean; canOrder?: boolean; activeOrder: LiveOrder | null; message?: string }> {
+    const cleanNum = tableNumber.trim().toUpperCase();
+    if (!cleanNum) return { hasActiveOrder: false, activeOrder: null };
+
+    try {
+      const sessId = getClientSessionId();
+      const endpoint = typeof window !== 'undefined' && window.location.port === '8081'
+        ? `/api/tables/active/${encodeURIComponent(cleanNum)}?sessionId=${encodeURIComponent(sessId)}`
+        : `http://localhost:5001/api/tables/active/${encodeURIComponent(cleanNum)}?sessionId=${encodeURIComponent(sessId)}`;
+
+      const res = await fetch(endpoint).catch(() => null);
+      if (res && res.ok) {
+        const data = await res.json();
+
+        // If the table is currently occupied by a different customer session
+        if (data.isOccupiedByOther) {
+          return {
+            hasActiveOrder: true,
+            isOccupiedByOther: true,
+            isSameUser: false,
+            canOrder: false,
+            activeOrder: null,
+            message: data.message || `Table #${cleanNum} is currently occupied / reserved by another seated party.`,
+          };
+        }
+
+        // If the table is occupied by the same user session within 60min window
+        if (data.isSameUser) {
+          return {
+            hasActiveOrder: !!data.hasActiveOrder,
+            isOccupiedByOther: false,
+            isSameUser: true,
+            canOrder: true,
+            activeOrder: null,
+          };
+        }
+
+        if (data.success && data.hasActiveOrder && data.activeOrder) {
+          const rawOrd = data.activeOrder;
+          const rawStatus = String(rawOrd.status).toLowerCase();
+          const mappedStatus: LiveOrder['status'] =
+            rawStatus === 'cancelled' || rawStatus === 'rejected'
+              ? 'cancelled'
+              : rawStatus === 'ready'
+              ? 'ready'
+              : rawStatus === 'completed' || rawStatus === 'served'
+              ? 'served'
+              : rawStatus === 'preparing' || rawStatus === 'cooking'
+              ? 'cooking'
+              : 'received';
+
+          // If active in-progress order exists (not yet served/completed)
+          if (mappedStatus !== 'served' && mappedStatus !== 'cancelled') {
+            const liveOrd: LiveOrder = {
+              orderId: rawOrd.orderId || `WM-${rawOrd.id}`,
+              restocareId: rawOrd.id,
+              tableNumber: rawOrd.tableNumber || cleanNum,
+              items: Array.isArray(rawOrd.items) ? rawOrd.items.map((it: any, idx: number) => {
+                const isCancelled = Boolean(it.cancelled || it.status === 'cancelled');
+                const isCompleted = Boolean(
+                  it.prepared || it.isCompleted || it.status === 'ready' || it.status === 'served' || it.status === 'completed' || mappedStatus === 'ready' || mappedStatus === 'served'
+                );
+                const itemStatus: CartItem['status'] = isCancelled
+                  ? 'cancelled'
+                  : isCompleted
+                  ? 'ready'
+                  : (it.status === 'cooking' || it.status === 'preparing' || mappedStatus === 'cooking')
+                  ? 'cooking'
+                  : 'pending';
+
+                return {
+                  id: `item-${idx}`,
+                  menuItemId: String(it.menuItemId || it.id || idx),
+                  name: it.name || 'Dish',
+                  categoryName: it.categoryName || 'Main Dishes',
+                  image: it.imageUrl ? (it.imageUrl.startsWith('http') ? it.imageUrl : `/uploads/${it.imageUrl}`) : '/assets/categories/vej.png',
+                  isVeg: Boolean(it.isVeg),
+                  portionName: it.portion || 'Standard',
+                  portionPrice: Number(it.price) || 0,
+                  spiceLevel: { id: 'medium', name: it.spiceLevel || 'Medium', subtitle: '', chillies: 2, color: '#F59E0B' },
+                  extras: [],
+                  quantity: it.quantity || 1,
+                  instructions: it.notes || it.instructions || '',
+                  unitPrice: Number(it.price) || 0,
+                  totalPrice: (Number(it.price) || 0) * (it.quantity || 1),
+                  status: itemStatus,
+                  isCompleted,
+                  isCancelled,
+                };
+              }) : [],
+              itemTotal: Number(rawOrd.subtotal || rawOrd.totalAmount) || 0,
+              taxGst: Math.round((Number(rawOrd.subtotal || rawOrd.totalAmount) || 0) * 0.05),
+              packagingCharge: 25,
+              discount: Number(rawOrd.discountAmount) || 0,
+              grandTotal: Number(rawOrd.totalAmount || rawOrd.grandTotal) || 0,
+              paymentMethod: rawOrd.paymentMethod === 'upi' ? 'upi' : rawOrd.paymentMethod === 'card' ? 'card' : 'counter',
+              status: mappedStatus,
+              createdAt: rawOrd.createdAt || new Date().toISOString(),
+              prepTimeMinutes: rawOrd.prepMinutes || 14,
+              customer: {
+                name: rawOrd.customerName || 'Diner',
+                phone: rawOrd.customerPhone || '',
+                email: '',
+                isGuest: !rawOrd.customerName,
+              },
+            };
+
+            globalState = {
+              ...globalState,
+              tableNumber: cleanNum,
+              activeOrder: liveOrd,
+              orderHistory: [liveOrd, ...globalState.orderHistory.filter((o) => o.orderId !== liveOrd.orderId && o.restocareId !== liveOrd.restocareId)],
+            };
+            notify();
+
+            return {
+              hasActiveOrder: true,
+              activeOrder: liveOrd,
+              message: `Table #${cleanNum} has an active order in progress (#${liveOrd.orderId}).`,
+            };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to check active table order:', err);
+    }
+
+    return { hasActiveOrder: false, activeOrder: null };
+  },
 };
 
 export function useWokStore() {
@@ -578,6 +817,17 @@ export function useWokStore() {
       listeners.delete(listener);
     };
   }, []);
+
+  // Poll order status periodically from Restocare backend if active order exists
+  useEffect(() => {
+    if (!state.activeOrder || state.activeOrder.status === 'served') return;
+
+    const interval = setInterval(() => {
+      wokStore.syncAllOrdersStatus();
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [state.activeOrder?.orderId, state.activeOrder?.status]);
 
   const itemTotal = state.cart.reduce((sum, item) => sum + item.totalPrice, 0);
   const taxGst = Math.round(itemTotal * 0.05);

@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
-import { CATEGORIES, MENU_ITEMS } from "@/lib/wokmawa-menu";
+import { useLiveMenu } from "@/lib/wokmawa-api-menu";
 import { useWokStore } from "@/lib/wokmawa-store";
 import { WokHeader } from "@/components/wokmawa/WokHeader";
 import { VegBadge, MawaHotBadge } from "@/components/wokmawa/WokBadge";
@@ -15,10 +15,18 @@ export const Route = createFileRoute("/menu")({
 
 function WokMenuPage() {
   const navigate = useNavigate();
-  const { searchQuery } = useWokStore();
-  const [selectedCategory, setSelectedCategory] = useState<string>(CATEGORIES[0]?.slug || 'wok-noodles');
+  const { searchQuery, tableNumber, activeOrder } = useWokStore();
+  const { categories: CATEGORIES, items: MENU_ITEMS, isLoading } = useLiveMenu();
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedModalItem, setSelectedModalItem] = useState<any>(null);
   const [isSticky, setIsSticky] = useState(false);
+
+  // Set initial category when loaded
+  useEffect(() => {
+    if (!selectedCategory && CATEGORIES.length > 0) {
+      setSelectedCategory(CATEGORIES[0].slug);
+    }
+  }, [CATEGORIES, selectedCategory]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -49,6 +57,34 @@ function WokMenuPage() {
       <WokHeader title="Menu" showBack backTo="/" />
 
       <main className="max-w-xl mx-auto px-4 space-y-5 pt-3">
+        {/* Active Order in Progress Banner */}
+        {activeOrder && activeOrder.status !== 'served' && (
+          <div className="p-3.5 bg-gradient-to-r from-[#18150C] via-[#241A0B] to-[#18150C] border border-[#D4AF37]/70 rounded-2xl flex items-center justify-between gap-3 shadow-[0_4px_25px_rgba(0,0,0,0.85)] backdrop-blur-md">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full bg-[#1F190D] border border-[#D4AF37] flex items-center justify-center text-base shrink-0 animate-pulse">
+                🔥
+              </div>
+              <div>
+                <div className="text-xs font-black text-white flex items-center gap-1.5">
+                  <span>Order #{activeOrder.orderId} Active</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-[#D4AF37]/20 text-[#D4AF37] font-bold uppercase">
+                    Table {activeOrder.tableNumber || tableNumber}
+                  </span>
+                </div>
+                <div className="text-[10px] text-[#A1A1AA] font-medium">
+                  Status: <span className="text-[#D4AF37] font-bold uppercase">{activeOrder.status === 'cooking' ? 'Cooking in Wok' : activeOrder.status === 'ready' ? 'Ready to Serve' : 'Preparing'}</span>
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate({ to: '/orders' })}
+              className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#F7D360] to-[#D4AF37] text-black font-black text-[11px] uppercase tracking-wider shadow-gold-glow shrink-0 hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+            >
+              Track →
+            </button>
+          </div>
+        )}
         {/* Top Story Category Circles (Sticky on scroll to top, blurred only when stuck) */}
         <section
           className={`sticky top-0 z-40 -mx-4 px-5 sm:px-6 py-2.5 flex gap-3.5 sm:gap-4 overflow-x-auto no-scrollbar snap-x scroll-pl-5 transition-all duration-300 ${
@@ -110,6 +146,15 @@ function WokMenuPage() {
                   alt={item.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    const cat = CATEGORIES.find((c) => c.slug === item.categorySlug || c.name.toLowerCase() === item.categoryName.toLowerCase());
+                    if (cat && cat.image && target.src !== cat.image) {
+                      target.src = cat.image;
+                    } else {
+                      target.src = '/assets/categories/vej.png';
+                    }
+                  }}
                 />
                 <div className="absolute top-2 left-2">
                   <VegBadge isVeg={item.isVeg} size="sm" />

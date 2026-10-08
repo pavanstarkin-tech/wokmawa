@@ -99,12 +99,22 @@ export const WokHeader: React.FC<WokHeaderProps> = ({
 
           {/* Right Side: TABLE Badge (View Only) & Optional Shopping Cart (10px Top Gap) */}
           <div className="flex items-center gap-2.5 shrink-0 mt-[10px]">
-            {/* Gold-outlined TABLE Pill (View Only) */}
-            <div className="flex items-center justify-center px-3.5 sm:px-4 py-2 rounded-full border border-[#D4AF37] bg-transparent shadow-sm select-none">
+            {/* Gold-outlined TABLE Pill */}
+            <button
+              type="button"
+              onClick={() => {
+                const newTable = window.prompt("Enter your Table number:", tableNumber);
+                if (newTable && newTable.trim()) {
+                  actions.setTableNumber(newTable.trim().toUpperCase());
+                }
+              }}
+              className="flex items-center justify-center px-3.5 sm:px-4 py-2 rounded-full border border-[#D4AF37] bg-transparent hover:bg-[#D4AF37]/10 active:scale-95 transition-all shadow-sm select-none cursor-pointer"
+              title="Click to change Table number"
+            >
               <span className="font-display font-black text-xs sm:text-sm text-white tracking-wider uppercase">
                 TABLE {tableNumber.padStart(2, '0')}
               </span>
-            </div>
+            </button>
 
             {/* Shopping Cart Icon with Corner Red Bubble (Hidden on Cart Page) */}
             {shouldShowCart && (

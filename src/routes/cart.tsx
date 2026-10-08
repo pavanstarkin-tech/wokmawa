@@ -66,7 +66,7 @@ export const Route = createFileRoute("/cart")({
 
 function WokCartPage() {
   const navigate = useNavigate();
-  const { cart, totals, tableNumber, appliedCoupon, customer, actions } = useWokStore();
+  const { cart, totals, tableNumber, appliedCoupon, customer, activeOrder, actions } = useWokStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -99,6 +99,11 @@ function WokCartPage() {
   };
 
   const handleConfirmAndPay = () => {
+    if (activeOrder && activeOrder.status !== 'served') {
+      navigate({ to: '/orders' });
+      return;
+    }
+
     const formattedId = `WM-${Math.floor(1000 + Math.random() * 9000)}`;
     const now = new Date();
     const formattedDate = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -755,6 +760,30 @@ function WokCartPage() {
             </div>
           </div>
         </div>
+
+        {/* Active Order Lock Notice */}
+        {activeOrder && activeOrder.status !== 'served' && (
+          <div className="p-4 bg-gradient-to-r from-[#241A0B] via-[#1A1208] to-[#241A0B] border-2 border-[#D4AF37] rounded-2xl space-y-2.5 shadow-[0_4px_25px_rgba(0,0,0,0.85)]">
+            <div className="flex items-start gap-2.5">
+              <span className="text-2xl shrink-0">⚠️</span>
+              <div className="flex-1">
+                <h4 className="font-display font-black text-sm text-[#F3D362]">
+                  Table #{activeOrder.tableNumber || tableNumber} Has an Active Order
+                </h4>
+                <p className="text-xs text-[#D4D4D8] mt-0.5 leading-relaxed">
+                  Order <span className="font-bold text-white">#{activeOrder.orderId}</span> is currently in progress in the kitchen. New items cannot be ordered until your active order is completed.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate({ to: '/orders' })}
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-[#F7D360] via-[#E5B83B] to-[#D4A328] text-black font-display font-black text-xs uppercase tracking-wider shadow-gold-glow hover:brightness-110 active:scale-95 transition-all cursor-pointer"
+            >
+              View Active Order in Kitchen →
+            </button>
+          </div>
+        )}
 
         {/* ================= STEP 1: CART ================= */}
         {currentStep === 1 && (
